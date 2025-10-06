@@ -114,126 +114,140 @@
         </div>
     </div>
 
-   <!-- New Customer Section -->
-<div id="newPanel" class="hidden">
-    <div class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-8">
-        <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100 tracking-wide flex items-center gap-2">
-            <!-- Heroicon: UserPlus -->
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                 stroke-width="1.5" stroke="currentColor" class="w-7 h-7 text-blue-600">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                      d="M18 9v6m3-3h-6m-2-4a4 4 0 11-8 0 4 4 0 018 0zm-6 8a6 6 0 0112 0H7z" />
-            </svg>
-            Register New Account
-        </h2>
+    <!-- New Customer Section -->
+    <div id="newPanel" class="hidden">
+        <div class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-8">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100 tracking-wide flex items-center gap-2">
+                <!-- Heroicon: UserPlus -->
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                     stroke-width="1.5" stroke="currentColor" class="w-7 h-7 text-blue-600">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M18 9v6m3-3h-6m-2-4a4 4 0 11-8 0 4 4 0 018 0zm-6 8a6 6 0 0112 0H7z" />
+                </svg>
+                Register New Account
+            </h2>
 
-        <form class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Full Name -->
-            <div class="col-span-2">
-                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Full Name</label>
-                <input type="text"
-                       class="w-full border rounded-xl px-4 h-[45px] text-sm shadow-sm
-                              bg-white dark:bg-gray-700
-                              text-gray-800 dark:text-gray-100
-                              border-gray-300 dark:border-gray-600
-                              focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
+            <form class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- First Name -->
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">First Name</label>
+                    <input type="text" name="first_name"
+                           class="w-full border rounded-xl px-4 h-[45px] text-sm shadow-sm
+                                  bg-white dark:bg-gray-700
+                                  text-gray-800 dark:text-gray-100
+                                  border-gray-300 dark:border-gray-600
+                                  focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           required>
+                </div>
 
-            <!-- Address -->
-            <div class="col-span-2">
-                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Address</label>
-                <textarea rows="3"
-                          class="w-full border rounded-xl px-4 py-2 text-sm shadow-sm
-                                 bg-white dark:bg-gray-700
-                                 text-gray-800 dark:text-gray-100
-                                 border-gray-300 dark:border-gray-600
-                                 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-            </div>
+                <!-- Last Name -->
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Last Name</label>
+                    <input type="text" name="last_name"
+                           class="w-full border rounded-xl px-4 h-[45px] text-sm shadow-sm
+                                  bg-white dark:bg-gray-700
+                                  text-gray-800 dark:text-gray-100
+                                  border-gray-300 dark:border-gray-600
+                                  focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           required>
+                </div>
 
-            <!-- Contact Number -->
-            <div>
-                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Contact Number</label>
-                <input type="text"
-                       class="w-full border rounded-xl px-4 h-[45px] text-sm shadow-sm
-                              bg-white dark:bg-gray-700
-                              text-gray-800 dark:text-gray-100
-                              border-gray-300 dark:border-gray-600
-                              focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
+                <!-- Address -->
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Address</label>
+                    <textarea name="address" rows="3"
+                              class="w-full border rounded-xl px-4 py-2 text-sm shadow-sm
+                                     bg-white dark:bg-gray-700
+                                     text-gray-800 dark:text-gray-100
+                                     border-gray-300 dark:border-gray-600
+                                     focus:outline-none focus:ring-2 focus:ring-blue-500">Barangay Manambulan, Davao City</textarea>
+                </div>
 
-            <!-- Start Date -->
-            <div>
-                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Start Date</label>
-                <input type="date"
-                       class="w-full border rounded-xl px-4 h-[45px] text-sm shadow-sm
-                              bg-white dark:bg-gray-700
-                              text-gray-800 dark:text-gray-100
-                              border-gray-300 dark:border-gray-600
-                              focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
+                <!-- Contact Number -->
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Contact Number</label>
+                    <input type="text" name="contact_number"
+                           class="w-full border rounded-xl px-4 h-[45px] text-sm shadow-sm
+                                  bg-white dark:bg-gray-700
+                                  text-gray-800 dark:text-gray-100
+                                  border-gray-300 dark:border-gray-600
+                                  focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
 
-            <!-- Meter No. -->
-            <div>
-                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Meter No.</label>
-                <input type="text"
-                       class="w-full border rounded-xl px-4 h-[45px] text-sm shadow-sm
-                              bg-white dark:bg-gray-700
-                              text-gray-800 dark:text-gray-100
-                              border-gray-300 dark:border-gray-600
-                              focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
+                <!-- Start Date -->
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Start Date</label>
+                    <input type="date" name="start_date"
+                           class="w-full border rounded-xl px-4 h-[45px] text-sm shadow-sm
+                                  bg-white dark:bg-gray-700
+                                  text-gray-800 dark:text-gray-100
+                                  border-gray-300 dark:border-gray-600
+                                  focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
 
-            <!-- Meter Size -->
-            <div>
-                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Meter Size</label>
-                <select class="w-full border rounded-xl px-4 h-[45px] text-sm shadow-sm
-                               bg-white dark:bg-gray-700
-                               text-gray-800 dark:text-gray-100
-                               border-gray-300 dark:border-gray-600
-                               focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="">Select Size</option>
-                    <option>1/2"</option>
-                    <option>3/4"</option>
-                    <option>1"</option>
-                    <option>2"</option>
-                </select>
-            </div>
+                <!-- Meter No. -->
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Meter No.</label>
+                    <input type="text" name="meter_no"
+                           class="w-full border rounded-xl px-4 h-[45px] text-sm shadow-sm
+                                  bg-white dark:bg-gray-700
+                                  text-gray-800 dark:text-gray-100
+                                  border-gray-300 dark:border-gray-600
+                                  focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
 
-            <!-- Connection Classification -->
-            <div class="col-span-2">
-                <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                    Connection Classification
-                </label>
-                <select class="w-full border rounded-xl px-4 h-[45px] text-sm shadow-sm
-                               bg-white dark:bg-gray-700
-                               text-gray-800 dark:text-gray-100
-                               border-gray-300 dark:border-gray-600
-                               focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="">Select Classification</option>
-                    <option>Residential</option>
-                    <option>Commercial</option>
-                    <option>Industrial</option>
-                    <option>Agricultural</option>
-                </select>
-            </div>
+                <!-- Meter Size -->
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Meter Size</label>
+                    <select name="meter_size"
+                            class="w-full border rounded-xl px-4 h-[45px] text-sm shadow-sm
+                                   bg-white dark:bg-gray-700
+                                   text-gray-800 dark:text-gray-100
+                                   border-gray-300 dark:border-gray-600
+                                   focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select Size</option>
+                        <option>1/2"</option>
+                        <option>3/4"</option>
+                        <option>1"</option>
+                        <option>2"</option>
+                    </select>
+                </div>
 
-            <!-- Submit Button -->
-            <div class="col-span-2">
-                <button class="w-full bg-blue-600 text-white h-[50px] rounded-xl text-sm font-medium 
-                               hover:bg-blue-700 shadow-md transition flex items-center justify-center space-x-2">
-                    <!-- Heroicon: UserPlus -->
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                         stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M18 9v6m3-3h-6m-2-4a4 4 0 11-8 0 4 4 0 018 0zm-6 8a6 6 0 0112 0H7z" />
-                    </svg>
-                    <span>Register Account</span>
-                </button>
-            </div>
-        </form>
+                <!-- Connection Classification -->
+                <div class="col-span-2">
+                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                        Connection Classification
+                    </label>
+                    <select name="classification"
+                            class="w-full border rounded-xl px-4 h-[45px] text-sm shadow-sm
+                                   bg-white dark:bg-gray-700
+                                   text-gray-800 dark:text-gray-100
+                                   border-gray-300 dark:border-gray-600
+                                   focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select Classification</option>
+                        <option>Residential</option>
+                        <option>Commercial</option>
+                        <option>Industrial</option>
+                        <option>Agricultural</option>
+                    </select>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="col-span-2">
+                    <button class="w-full bg-blue-600 text-white h-[50px] rounded-xl text-sm font-medium 
+                                   hover:bg-blue-700 shadow-md transition flex items-center justify-center space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                             stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M18 9v6m3-3h-6m-2-4a4 4 0 11-8 0 4 4 0 018 0zm-6 8a6 6 0 0112 0H7z" />
+                        </svg>
+                        <span>Register Account</span>
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
-
 
 <!-- Register Existing Modal -->
 <x-modal name="register-existing" :show="false">
@@ -312,3 +326,4 @@
     }
 </script>
 @endsection
+

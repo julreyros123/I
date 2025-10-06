@@ -102,7 +102,6 @@
     </nav>
 
    {{-- Report Issue --}}
-{{-- Report Issue --}}
 <div x-data="{ showModal: false, category: '' }" class="p-4 border-t border-blue-700 dark:border-gray-800">
     <!-- Trigger Button -->
     <button @click="showModal = true"
@@ -131,35 +130,43 @@
                 @csrf
 
                 <div>
-                    <span class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Problem category</span>
+                    <span class="block text-xs font-medium text-gray-800 dark:text-gray-300 mb-1">Problem category</span>
                     <div class="grid grid-cols-2 gap-2">
-                        <label class="flex items-center gap-2">
-                            <input type="radio" name="category" value="UI bug" x-model="category" class="text-blue-600">
+                        <label class="flex items-center gap-2 text-gray-800 dark:text-gray-200">
+                            <input type="radio" name="category" value="UI bug" x-model="category" class="text-blue-600 focus:ring-blue-500">
                             <span>UI bug</span>
                         </label>
-                        <label class="flex items-center gap-2">
-                            <input type="radio" name="category" value="Delay issue" x-model="category" class="text-blue-600">
+                        <label class="flex items-center gap-2 text-gray-800 dark:text-gray-200">
+                            <input type="radio" name="category" value="Delay issue" x-model="category" class="text-blue-600 focus:ring-blue-500">
                             <span>Delay issue</span>
                         </label>
-                        <label class="flex items-center gap-2">
-                            <input type="radio" name="category" value="Billing problem" x-model="category" class="text-blue-600">
+                        <label class="flex items-center gap-2 text-gray-800 dark:text-gray-200">
+                            <input type="radio" name="category" value="Billing problem" x-model="category" class="text-blue-600 focus:ring-blue-500">
                             <span>Billing problem</span>
                         </label>
-                        <label class="flex items-center gap-2">
-                            <input type="radio" name="category" value="Other" x-model="category" class="text-blue-600">
+                        <label class="flex items-center gap-2 text-gray-800 dark:text-gray-200">
+                            <input type="radio" name="category" value="Other" x-model="category" class="text-blue-600 focus:ring-blue-500">
                             <span>Other</span>
                         </label>
                     </div>
                 </div>
 
                 <div x-show="category === 'Other'" x-cloak>
-                    <label for="other_problem" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Other problem</label>
-                    <input type="text" id="other_problem" name="other_problem" class="w-full border rounded p-2 text-sm dark:bg-gray-800 dark:border-gray-700" placeholder="Specify your problem">
+                    <label for="other_problem" class="block text-xs font-medium text-gray-800 dark:text-gray-300 mb-1">Other problem</label>
+                    <input type="text" id="other_problem" name="other_problem"
+                           class="w-full border border-gray-300 dark:border-gray-700 rounded p-2 text-sm 
+                                  text-gray-900 dark:text-gray-100 
+                                  bg-white dark:bg-gray-800"
+                           placeholder="Specify your problem">
                 </div>
 
                 <div>
-                    <label for="message" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Describe the issue</label>
-                    <textarea id="message" name="message" rows="4" class="w-full border rounded p-2 text-sm dark:bg-gray-800 dark:border-gray-700" placeholder="Provide as much detail as possible..."></textarea>
+                    <label for="message" class="block text-xs font-medium text-gray-800 dark:text-gray-300 mb-1">Describe the issue</label>
+                    <textarea id="message" name="message" rows="4"
+                              class="w-full border border-gray-300 dark:border-gray-700 rounded p-2 text-sm 
+                                     text-gray-900 dark:text-gray-100 
+                                     bg-white dark:bg-gray-800"
+                              placeholder="Provide as much detail as possible..."></textarea>
                 </div>
 
                 <div class="flex justify-end gap-2">
@@ -182,3 +189,4 @@
 </div>
 
 </div>
+
