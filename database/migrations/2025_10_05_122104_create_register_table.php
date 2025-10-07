@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('register', function (Blueprint $table) {
             $table->id();
-            $table->string('account_no')->unique()->nullable(); // For linking existing or new
+            $table->string('account_no')->unique(); // Remove nullable, make it required
             $table->string('name');
             $table->text('address')->nullable();
             $table->string('contact_no', 50)->nullable();
@@ -25,4 +25,3 @@ return new class extends Migration
         Schema::dropIfExists('register');
     }
 };
-

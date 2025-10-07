@@ -32,7 +32,7 @@
                 class="w-full md:w-1/2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm 
                        focus:ring-2 focus:ring-blue-500 focus:outline-none bg-gray-50 dark:bg-gray-700 
                        text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-300"
-                placeholder="Search by name, address, account no., or email">
+                placeholder="Search by name, address, or account no.">
         </div>
 
         <!-- Table -->
@@ -46,7 +46,6 @@
                         <th class="px-6 py-3 border-b border-gray-300 dark:border-gray-600">Account No.</th>
                         <th class="px-6 py-3 border-b border-gray-300 dark:border-gray-600">Name</th>
                         <th class="px-6 py-3 border-b border-gray-300 dark:border-gray-600">Address</th>
-                        <th class="px-6 py-3 border-b border-gray-300 dark:border-gray-600">Email</th>
                         <th class="px-6 py-3 border-b border-gray-300 dark:border-gray-600">Contact No.</th>
                         <th class="px-6 py-3 border-b border-gray-300 dark:border-gray-600">Status</th>
                         <th class="px-6 py-3 border-b border-gray-300 dark:border-gray-600">Created At</th>
@@ -55,18 +54,17 @@
                 <tbody id="customerTable" class="divide-y divide-gray-200 dark:divide-gray-700">
                     @forelse ($customers as $c)
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                        <td class="px-4 py-3"><input type="checkbox" class="rowCheckbox w-4 h-4 accent-blue-600"></td>
+                        <td class="px-4 py-3"><input type="checkbox" class="rowCheckbox w-4 h-4 accent-blue-600" value="{{ $c->id }}"></td>
                         <td class="px-6 py-3">{{ $c->account_no }}</td>
                         <td class="px-6 py-3">{{ $c->name }}</td>
                         <td class="px-6 py-3">{{ $c->address }}</td>
-                        <td class="px-6 py-3">{{ $c->email ?? '' }}</td>
                         <td class="px-6 py-3">{{ $c->contact_no ?? '' }}</td>
                         <td class="px-6 py-3 font-medium {{ ($c->status === 'Active') ? 'text-green-600' : (($c->status === 'Disconnected') ? 'text-red-500' : 'text-yellow-500') }}">{{ $c->status }}</td>
                         <td class="px-6 py-3">{{ optional($c->created_at)->format('Y-m-d') }}</td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="8" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No customers yet.</td>
+                        <td colspan="7" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No customers yet.</td>
                     </tr>
                     @endforelse
                 </tbody>
@@ -100,11 +98,60 @@
     // 🎯 Individual Checkbox Change
     document.querySelectorAll('.rowCheckbox').forEach(cb => cb.addEventListener('change', toggleClearButton));
 
-    // 🗑️ Clear Selected Rows
-    clearSelectedBtn.addEventListener('click', () => {
-        document.querySelectorAll('.rowCheckbox:checked').forEach(cb => cb.closest('tr').remove());
-        selectAll.checked = false;
-        toggleClearButton();
+    // 🗑️ Clear Selected Rows (Delete from database)
+    clearSelectedBtn.addEventListener('click', async () => {
+        const checkedBoxes = document.querySelectorAll('.rowCheckbox:checked');
+        if (checkedBoxes.length === 0) return;
+
+        // Confirm deletion
+        if (!confirm(`Are you sure you want to delete ${checkedBoxes.length} customer(s)? This action cannot be undone.`)) {
+            return;
+        }
+
+        // Get customer IDs
+        const customerIds = Array.from(checkedBoxes).map(cb => cb.value);
+        
+        try {
+            // Show loading state
+            clearSelectedBtn.disabled = true;
+            clearSelectedBtn.textContent = 'Deleting...';
+
+            // Send delete request
+            const response = await fetch('{{ route("customer.deleteMultiple") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    customer_ids: customerIds
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.ok) {
+                // Remove rows from table
+                checkedBoxes.forEach(cb => cb.closest('tr').remove());
+                selectAll.checked = false;
+                toggleClearButton();
+                
+                // Show success message
+                alert(result.message);
+                
+                // Reload page to refresh data
+                window.location.reload();
+            } else {
+                alert('Error: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Delete error:', error);
+            alert('Failed to delete customers. Please try again.');
+        } finally {
+            // Reset button state
+            clearSelectedBtn.disabled = false;
+            clearSelectedBtn.textContent = 'Clear Selected';
+        }
     });
 
     function toggleClearButton() {

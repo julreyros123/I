@@ -45,7 +45,10 @@ Route::middleware('auth')->group(function () {
 // Routes for sidebar links with folder structure
 Route::get('/register', [RegisterController::class, 'index'])->name('register.index');
 Route::get('/register/new', [RegisterController::class, 'new'])->name('register.new');
+Route::post('/register', [RegisterController::class, 'store'])->name('register.store');
+Route::get('/api/register/search', [RegisterController::class, 'search'])->name('register.search');
 Route::get('/customer', [CustomerController::class, 'index'])->name('customer.index');
+Route::post('/api/customer/delete-multiple', [CustomerController::class, 'deleteMultiple'])->name('customer.deleteMultiple');
 Route::get('/records/billing', [RecordController::class, 'billing'])->name('records.billing');
 Route::get('/records/payments', [RecordController::class, 'payments'])->name('records.payments');
 Route::get('/records/reports', [RecordController::class, 'reports'])->name('records.reports');

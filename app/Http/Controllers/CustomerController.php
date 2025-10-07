@@ -83,4 +83,28 @@ class CustomerController extends Controller
 
         return response()->json(['ok' => true, 'customer' => $customer]);
     }
+
+    // Delete multiple customers
+    public function deleteMultiple(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'customer_ids' => ['required', 'array', 'min:1'],
+            'customer_ids.*' => ['required', 'integer', 'exists:customers,id'],
+        ]);
+
+        try {
+            $deletedCount = Customer::whereIn('id', $validated['customer_ids'])->delete();
+            
+            return response()->json([
+                'ok' => true,
+                'message' => "Successfully deleted {$deletedCount} customer(s).",
+                'deleted_count' => $deletedCount
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Failed to delete customers: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

@@ -129,12 +129,14 @@
                             value="25" min="0" step="0.01">
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold mb-2">VAT (12%)</label>
+                        <!--
+                       <label class="block text-sm font-semibold mb-2">VAT (12%)</label>
                         <input type="text" id="vat_fee"
                             class="w-full px-4 py-2 border border-gray-300 dark:border-gray-500 rounded-lg
                                 bg-gray-50 dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-200"
-                            readonly>
+                            readonly>  -->
                     </div>
+
                     <div>
                         <label class="block text-sm font-semibold mb-2">Total Amount Due</label>
                         <input type="text" id="total_amount"

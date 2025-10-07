@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('customers', function (Blueprint $table) {
             $table->id();
-            $table->string('account_no')->index();
+            $table->string('account_no')->unique()->index(); // Make it unique
             $table->string('name');
             $table->string('address')->nullable();
             $table->string('meter_no')->nullable();
