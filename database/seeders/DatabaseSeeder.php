@@ -26,6 +26,17 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        // Ensure an admin exists
+        User::query()->updateOrCreate(
+            ['email' => 'admin@mawasa.com'],
+            [
+                'name' => 'Admin User',
+                'password' => Hash::make('password123'),
+                'role' => 'admin',
+                'email_verified_at' => now(),
+            ]
+        );
+
         // Intentionally not seeding customers; keep register page empty by default.
         // $this->call([
         //     CustomerSeeder::class,

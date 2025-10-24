@@ -10,6 +10,8 @@ use App\Http\Controllers\StaffPortalController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\BillingController;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\NotificationController;
 
 
 Route::get('/', function () {
@@ -20,9 +22,9 @@ Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'customLogin'])->name('login.custom');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-Route::get('/admin/dashboard', function () {
-    return "Admin Dashboard";
-})->name('admin.dashboard')->middleware('auth');
+Route::get('/admin', [AdminController::class, 'index'])->middleware('auth')->name('admin.dashboard');
+Route::get('/admin/notices', [AdminController::class, 'notices'])->middleware('auth')->name('admin.notices');
+Route::get('/admin/reports', [AdminController::class, 'reports'])->middleware('auth')->name('admin.reports');
 
 // Use StaffPortalController for the dashboard (staff portal)
 Route::get('/dashboard', [StaffPortalController::class, 'index'])->name('dashboard')->middleware(['auth', 'verified']);
@@ -43,6 +45,7 @@ Route::middleware('auth')->group(function () {
 });
 
 // Routes for sidebar links with folder structure
+// Customer Register module (internal tool) — keep distinct from auth register
 Route::get('/register', [RegisterController::class, 'index'])->name('register.index');
 Route::get('/register/new', [RegisterController::class, 'new'])->name('register.new');
 Route::post('/register', [RegisterController::class, 'store'])->name('register.store');
@@ -54,10 +57,18 @@ Route::get('/records/payments', [RecordController::class, 'payments'])->name('re
 Route::get('/records/reports', [RecordController::class, 'reports'])->name('records.reports');
 Route::post('/reports', [ReportController::class, 'store'])->middleware('auth')->name('reports.store');
 Route::get('/records/history', [RecordController::class, 'history'])->name('records.history');
+Route::get('/api/records/history', [RecordController::class, 'historyApi'])->middleware('auth')->name('api.records.history');
+
+// Notifications
+Route::get('/api/notifications', [NotificationController::class, 'index'])->middleware('auth')->name('api.notifications.index');
+Route::post('/api/notifications/read', [NotificationController::class, 'markRead'])->middleware('auth')->name('api.notifications.read');
+Route::post('/api/notifications/broadcast', [NotificationController::class, 'broadcast'])->middleware('auth')->name('api.notifications.broadcast');
+Route::get('/api/notifications/recent', [NotificationController::class, 'recent'])->middleware('auth')->name('api.notifications.recent');
 
 // Billing compute API
 Route::post('/api/billing/compute', [BillingController::class, 'compute'])->middleware('auth')->name('api.billing.compute');
 Route::post('/api/billing/store', [BillingController::class, 'store'])->middleware('auth')->name('api.billing.store');
+Route::get('/api/billing/payment-history', [BillingController::class, 'getPaymentHistory'])->middleware('auth')->name('api.billing.payment-history');
 
 // Register existing customer attach endpoint
 Route::post('/api/customer/attach', [CustomerController::class, 'attach'])->middleware('auth')->name('customer.attach');
@@ -67,5 +78,5 @@ Route::post('/api/customer', [CustomerController::class, 'store'])->name('custom
 
 
 
-// Comment out if custom login works without conflicts
-// require __DIR__.'/auth.php';
+// Enable built-in auth & email verification routes (required by profile page)
+require __DIR__.'/auth.php';

@@ -18,8 +18,21 @@
                 </div>
             </div>
 
-            <!-- Settings Dropdown -->
+            <!-- Notifications + Settings -->
             <div class="hidden sm:flex sm:items-center sm:ms-6">
+                <!-- Bell -->
+                <div class="relative mr-4">
+                    <button id="notifBell" class="relative inline-flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-700 dark:text-gray-200">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V8.25A6.75 6.75 0 004.5 8.25v1.5A8.967 8.967 0 013.689 15.77c1.733.64 3.56 1.085 5.454 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                        </svg>
+                        <span id="notifDot" class="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-red-500 hidden"></span>
+                    </button>
+                    <div id="notifMenu" class="hidden absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50">
+                        <div class="p-3 border-b border-gray-100 dark:border-gray-700 text-sm font-semibold">Notifications</div>
+                        <ul id="notifList" class="max-h-80 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700"></ul>
+                    </div>
+                </div>
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150">
@@ -98,3 +111,39 @@
         </div>
     </div>
 </nav>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', async function(){
+    const bell = document.getElementById('notifBell');
+    const dot = document.getElementById('notifDot');
+    const menu = document.getElementById('notifMenu');
+    const list = document.getElementById('notifList');
+    async function loadNotifs(){
+        const res = await fetch("{{ route('api.notifications.index') }}");
+        if(!res.ok) return;
+        const data = await res.json();
+        const items = data.notifications || [];
+        dot.classList.toggle('hidden', items.filter(n => !n.read_at).length === 0);
+        list.innerHTML = items.map(n => `
+            <li class="p-3 text-sm">
+                <div class="flex items-start justify-between gap-2">
+                    <div>
+                        <p class="font-medium">${n.title}</p>
+                        <p class="opacity-80">${n.message ?? ''}</p>
+                    </div>
+                    ${n.read_at ? '' : `<button data-id="${n.id}" class="markRead text-blue-600 hover:underline">Mark read</button>`}
+                </div>
+            </li>`).join('');
+        list.querySelectorAll('.markRead').forEach(btn => btn.addEventListener('click', async ()=>{
+            const id = btn.getAttribute('data-id');
+            await fetch("{{ route('api.notifications.read') }}", {method:'POST', headers:{'Content-Type':'application/json','X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.getAttribute('content')||''}, body: JSON.stringify({id})});
+            loadNotifs();
+        }));
+    }
+    bell?.addEventListener('click', () => menu.classList.toggle('hidden'));
+    document.addEventListener('click', (e) => { if(!e.target.closest('#notifMenu') && !e.target.closest('#notifBell')) menu.classList.add('hidden'); });
+    loadNotifs();
+});
+</script>
+@endpush

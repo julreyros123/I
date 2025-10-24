@@ -50,30 +50,20 @@
         <!-- Divider -->
         <div class="h-6 w-px bg-gray-300 dark:bg-gray-600"></div>
 
-        <!-- Notifications -->
-        <div x-data="{ open: false }" class="relative">
-            <button @click="open = !open" 
+        <!-- Notifications (dynamic) -->
+        <div class="relative">
+            <button id="topbarNotifBell" 
                 class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 relative">
-                <!-- Larger bell -->
                 <x-heroicon-o-bell class="w-6 h-6 text-gray-700 dark:text-gray-200" />
-                <!-- Bigger badge -->
-                <span class="absolute -top-1 -right-1 w-5 h-5 text-[11px] font-bold text-white 
-                             bg-red-500 rounded-full flex items-center justify-center shadow">
-                    3
-                </span>
+                <span id="topbarNotifDot" class="absolute -top-1 -right-1 w-5 h-5 text-[11px] font-bold text-white bg-red-500 rounded-full flex items-center justify-center shadow hidden">0</span>
             </button>
-
-            <!-- Dropdown -->
-            <div x-show="open" x-transition 
-                 @click.away="open = false"
-                 class="absolute right-0 mt-2 w-64 
-                        bg-white dark:bg-gray-900 
-                        rounded-xl shadow-lg 
-                        border border-gray-200 dark:border-gray-700 
-                        py-2 z-50">
-                <a href="#" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800">💰 New payment received</a>
-                <a href="#" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800">📅 Meeting at 2 PM</a>
-                <a href="#" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800">⚙️ System update available</a>
+            <div id="topbarNotifMenu" 
+                 class="hidden absolute right-0 mt-2 w-72 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                <div class="px-4 py-2 text-sm font-semibold">Notifications</div>
+                <ul id="topbarNotifList" class="max-h-80 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800"></ul>
+                <div class="px-4 py-2 text-xs text-right">
+                    <a href="{{ route('admin.notices') }}" class="text-blue-600 hover:text-blue-700">Manage notices</a>
+                </div>
             </div>
         </div>
 
@@ -85,8 +75,9 @@
                      class="h-8 w-8 rounded-full border border-gray-200 dark:border-gray-700">
                 
                 <div class="hidden sm:block text-left">
-                    <span class="block text-sm font-medium text-gray-900 dark:text-white">Aldren Reyes</span>
-                    <span class="block text-xs text-gray-500 dark:text-gray-400">Desk Staff</span>
+                    @php($isAdmin = optional(auth()->user())->role === 'admin')
+                    <span class="block text-sm font-medium text-gray-900 dark:text-white">{{ $isAdmin ? 'Administrator' : (auth()->user()->name ?? 'User') }}</span>
+                    <span class="block text-xs text-gray-500 dark:text-gray-400">{{ $isAdmin ? 'Admin User' : 'Desk Staff' }}</span>
                 </div>
                 <x-heroicon-o-ellipsis-vertical class="w-5 h-5 text-gray-500 dark:text-gray-300" />
             </button>
@@ -126,5 +117,40 @@
     </div>
 </nav>
 
-
-
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const bell = document.getElementById('topbarNotifBell');
+  const dot = document.getElementById('topbarNotifDot');
+  const menu = document.getElementById('topbarNotifMenu');
+  const list = document.getElementById('topbarNotifList');
+  async function load() {
+    try {
+      const res = await fetch("{{ route('api.notifications.index') }}");
+      if (!res.ok) return;
+      const data = await res.json();
+      const items = data.notifications || [];
+      const unread = items.filter(n => !n.read_at).length;
+      dot.textContent = unread;
+      dot.classList.toggle('hidden', unread === 0);
+      list.innerHTML = items.length ? items.map(n => `
+        <li class="px-4 py-2 text-sm flex items-start justify-between gap-2">
+          <div>
+            <p class="font-medium">${n.title}</p>
+            <p class="opacity-80">${n.message ?? ''}</p>
+          </div>
+          ${n.read_at ? '' : `<button data-id="${n.id}" class="markRead text-blue-600 hover:underline">Mark read</button>`}
+        </li>`).join('') : '<li class="px-4 py-2 text-sm text-gray-500">No notifications</li>';
+      list.querySelectorAll('.markRead').forEach(btn => btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-id');
+        await fetch("{{ route('api.notifications.read') }}", { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.getAttribute('content')||'' }, body: JSON.stringify({ id }) });
+        load();
+      }));
+    } catch (e) { /* ignore */ }
+  }
+  bell?.addEventListener('click', () => menu.classList.toggle('hidden'));
+  document.addEventListener('click', (e) => { if (!e.target.closest('#topbarNotifMenu') && !e.target.closest('#topbarNotifBell')) menu.classList.add('hidden'); });
+  load();
+});
+</script>
+@endpush

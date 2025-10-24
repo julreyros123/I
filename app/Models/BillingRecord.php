@@ -36,6 +36,11 @@ class BillingRecord extends Model
         'date_from' => 'date',
         'date_to' => 'date',
     ];
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
 }
 
 

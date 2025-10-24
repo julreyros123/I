@@ -40,6 +40,16 @@
             <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100 tracking-wide">
                 Customer Register
             </h2>
+            <style>
+                /* Keep hover highlight and persistent selection */
+                .customer-card.selected,
+                .customer-card.hovering,
+                .customer-card:hover { background-color: #f3f4f6 !important; }
+                /* Dark mode highlight */
+                .dark .customer-card.selected,
+                .dark .customer-card.hovering,
+                .dark .customer-card:hover { background-color: #374151 !important; /* gray-700 */ }
+            </style>
             <form class="flex space-x-3 mb-6" id="searchForm">
                 <input type="text" name="search" placeholder="Search by name, address, or account no."
                     id="searchInput"
@@ -72,27 +82,15 @@
                      data-meter-size="{{ $c->meter_size }}"
                      data-status="{{ $c->status }}"
                      onmouseenter="showProfilePreview(this)"
-                     onmouseleave="hideProfilePreview()">
-                    <div class="flex items-start justify-between">
-                        <div>
-                            <p class="font-semibold text-lg text-gray-800 dark:text-gray-100">{{ $c->name }}</p>
-                            <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                                Acct. {{ $c->account_no }} - 
-                                <span class="text-green-600 dark:text-green-400 font-medium">Active</span>
-                            </p>
-                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ $c->address }}</p>
-                        </div>
-                        <button 
-                            class="ml-3 px-3 h-[32px] rounded-[6px] bg-blue-600 hover:bg-blue-700 text-white text-xs register-btn"
-                            data-account-no="{{ $c->account_no }}"
-                            data-name="{{ $c->name }}"
-                            data-address="{{ $c->address }}"
-                            data-meter-no="{{ $c->meter_no }}"
-                            data-meter-size="{{ $c->meter_size }}"
-                            data-status="{{ $c->status }}"
-                            onclick="selectCustomer(this)">
-                            Register
-                        </button>
+                     onmouseleave="hideProfilePreview()"
+                     onclick="selectCustomerCard(this)">
+                    <div>
+                        <p class="font-semibold text-lg text-gray-800 dark:text-gray-100">{{ $c->name }}</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                            Acct. {{ $c->account_no }} - 
+                            <span class="text-green-600 dark:text-green-400 font-medium">Active</span>
+                        </p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ $c->address }}</p>
                     </div>
                 </div>
                 @empty
@@ -421,6 +419,7 @@
 <!-- Toggle Script -->
 <script>
     let selectedCustomer = null;
+    let selectedCard = null;
     let searchTimeout = null;
 
     function showPanel(panel) {
@@ -502,7 +501,8 @@
                  data-meter-size="${customer.meter_size || ''}"
                  data-status="${customer.status}"
                  onmouseenter="showProfilePreview(this)"
-                 onmouseleave="hideProfilePreview()">
+                 onmouseleave="hideProfilePreview()"
+                 onclick="selectCustomerCard(this)">
                 <div class="flex items-start justify-between">
                     <div>
                         <p class="font-semibold text-lg text-gray-800 dark:text-gray-100">${customer.name}</p>
@@ -530,6 +530,10 @@
 
     // Show profile preview on hover
     function showProfilePreview(card) {
+        // If not selected, highlight only on hover
+        if (!card.classList.contains('selected')) {
+            card.classList.add('hovering');
+        }
         const accountNo = card.getAttribute('data-account-no');
         const name = card.getAttribute('data-name');
         const address = card.getAttribute('data-address');
@@ -548,10 +552,46 @@
 
     // Hide profile preview
     function hideProfilePreview() {
+        // Remove hover highlight
+        document.querySelectorAll('.customer-card.hovering').forEach(function(c){
+            c.classList.remove('hovering');
+        });
         // Only clear if no customer is selected
         if (!selectedCustomer) {
             clearProfile();
         }
+    }
+
+    // Select customer card and keep highlight; clicking again on same card clears
+    function selectCustomerCard(card) {
+        if (selectedCard === card) {
+            // Toggle off
+            clearProfile();
+            return;
+        }
+        // Remove previous selection
+        if (selectedCard) {
+            selectedCard.classList.remove('selected');
+        }
+        // Set new selection
+        card.classList.add('selected');
+        selectedCard = card;
+        // Store selected customer
+        selectedCustomer = {
+            accountNo: card.getAttribute('data-account-no'),
+            name: card.getAttribute('data-name'),
+            address: card.getAttribute('data-address'),
+            meterNo: card.getAttribute('data-meter-no'),
+            meterSize: card.getAttribute('data-meter-size'),
+            status: card.getAttribute('data-status')
+        };
+        // Show profile info
+        document.getElementById('profile_account_no').value = selectedCustomer.accountNo || '';
+        document.getElementById('profile_name').value = selectedCustomer.name || '';
+        document.getElementById('profile_address').value = selectedCustomer.address || '';
+        document.getElementById('profile_meter_no').value = selectedCustomer.meterNo || '';
+        document.getElementById('profile_meter_size').value = selectedCustomer.meterSize || '';
+        document.getElementById('profile_status').value = selectedCustomer.status || '';
     }
 
     // Select customer and hide register button completely
@@ -586,6 +626,12 @@
 
     // Clear profile information
     function clearProfile() {
+        // Remove selection highlight
+        if (selectedCard) {
+            selectedCard.classList.remove('selected');
+            selectedCard = null;
+        }
+        selectedCustomer = null;
         document.getElementById('profile_account_no').value = '';
         document.getElementById('profile_name').value = '';
         document.getElementById('profile_address').value = '';
@@ -601,6 +647,14 @@
             btn.style.display = 'block';
         });
     }
+
+    // Click outside to clear selection
+    document.addEventListener('click', function(e){
+        const card = e.target.closest('.customer-card');
+        if (!card && selectedCard) {
+            clearProfile();
+        }
+    });
 
     // Clear search
     function clearSearch() {

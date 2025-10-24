@@ -38,9 +38,43 @@
                 </a>
             </li>
 
+            {{-- Admin (visible to admins only) --}}
+            @auth
+                @if(optional(auth()->user())->role === 'admin')
+                <li>
+                    <a href="{{ route('admin.dashboard') }}"
+                       class="flex items-center gap-3 px-3 py-2 rounded-lg 
+                              hover:bg-blue-700/60 dark:hover:bg-gray-800 
+                              transition-all duration-200 ease-in-out font-medium">
+                        <x-heroicon-o-cog-6-tooth class="w-5 h-5 text-blue-300 dark:text-gray-400" />
+                        <span>Admin</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.notices') }}"
+                       class="flex items-center gap-3 px-3 py-2 rounded-lg 
+                              hover:bg-blue-700/60 dark:hover:bg-gray-800 
+                              transition-all duration-200 ease-in-out font-medium">
+                        <x-heroicon-o-bell class="w-5 h-5 text-blue-300 dark:text-gray-400" />
+                        <span>Notice to Staff</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.reports') }}"
+                       class="flex items-center gap-3 px-3 py-2 rounded-lg 
+                              hover:bg-blue-700/60 dark:hover:bg-gray-800 
+                              transition-all duration-200 ease-in-out font-medium">
+                        <x-heroicon-o-exclamation-triangle class="w-5 h-5 text-yellow-400" />
+                        <span>Issue Complaints</span>
+                    </a>
+                </li>
+                @endif
+            @endauth
+
             {{-- Register --}}
             <li>
-                <a href="{{ route('register.index') }}"
+                @php($registerUrl = \Illuminate\Support\Facades\Route::has('register.index') ? route('register.index') : url('/register'))
+                <a href="{{ $registerUrl }}"
                    class="flex items-center gap-3 px-3 py-2 rounded-lg 
                           hover:bg-blue-700/60 dark:hover:bg-gray-800 
                           transition-all duration-200 ease-in-out font-medium">

@@ -57,13 +57,14 @@
     <div class="login-panel shadow-lg rounded-lg p-6 mx-auto border">
         <!-- Logo -->
         <div class="text-center mb-6">
-            <div class="w-16 h-16 bg-gray-300 rounded-full mx-auto mb-2"></div>
+            <img src="{{ asset('images/mawasa-logo.png') }}" alt="MAWASA Logo" class="w-16 h-16 rounded-full mx-auto mb-2 shadow" />
             <h1 class="text-xl font-bold text-blue-700">MAWASA</h1>
             <p class="text-xs text-gray-500">Manambulan Water and Sanitation</p>
         </div>
 
         <!-- Login Form -->
-        <form method="POST" action="{{ route('login.custom') }}" class="space-y-4" id="loginForm">
+        @php($loginAction = \Illuminate\Support\Facades\Route::has('login.custom') ? route('login.custom') : url('/login'))
+        <form method="POST" action="{{ $loginAction }}" class="space-y-4" id="loginForm">
             @csrf
 
             <!-- Validation Errors -->
