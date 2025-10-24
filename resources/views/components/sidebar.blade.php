@@ -94,6 +94,28 @@
                 </a>
             </li>
 
+            {{-- Billing --}}
+            <li>
+                <a href="{{ route('billing.management') }}"
+                   class="flex items-center gap-3 px-3 py-2 rounded-lg 
+                          hover:bg-blue-700/60 dark:hover:bg-gray-800 
+                          transition-all duration-200 ease-in-out font-medium">
+                    <x-heroicon-o-clipboard-document-list class="w-5 h-5 text-blue-300 dark:text-gray-400" />
+                    <span>Billing</span>
+                </a>
+            </li>
+
+            {{-- Payment --}}
+            <li>
+                <a href="{{ route('payment.index') }}"
+                   class="flex items-center gap-3 px-3 py-2 rounded-lg 
+                          hover:bg-blue-700/60 dark:hover:bg-gray-800 
+                          transition-all duration-200 ease-in-out font-medium">
+                    <x-heroicon-o-credit-card class="w-5 h-5 text-blue-300 dark:text-gray-400" />
+                    <span>Payment</span>
+                </a>
+            </li>
+
             {{-- Records Dropdown --}}
             <li class="relative">
                 <button @click="open = !open"

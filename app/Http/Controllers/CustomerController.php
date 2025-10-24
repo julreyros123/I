@@ -58,6 +58,28 @@ class CustomerController extends Controller
         return response()->json(['ok' => true, 'customer' => $customer]);
     }
 
+    public function searchAccounts(Request $request): JsonResponse
+    {
+        $request->validate(['q' => ['required','string','max:50']]);
+        $query = $request->string('q')->toString();
+        
+        $customers = Customer::active()
+            ->where('account_no', 'like', "%{$query}%")
+            ->orderBy('account_no')
+            ->limit(10)
+            ->get(['account_no', 'name', 'address']);
+            
+        return response()->json([
+            'suggestions' => $customers->map(function ($customer) {
+                return [
+                    'account_no' => $customer->account_no,
+                    'name' => $customer->name,
+                    'address' => $customer->address,
+                ];
+            })
+        ]);
+    }
+
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -82,6 +104,45 @@ class CustomerController extends Controller
         ]);
 
         return response()->json(['ok' => true, 'customer' => $customer]);
+    }
+
+    /**
+     * Transfer ownership API
+     */
+    public function transferOwnership(Request $request, \App\Services\TransferOwnershipService $service): JsonResponse
+    {
+        $validated = $request->validate([
+            'account_no' => ['required','string','max:50'],
+            'new_name' => ['required','string','max:255'],
+            'notes' => ['nullable','string','max:1000'],
+        ]);
+
+        $result = $service->transfer($validated['account_no'], $validated['new_name'], $validated['notes'] ?? null);
+
+        if (!$result) {
+            return response()->json(['ok' => false, 'message' => 'Account not found'], 404);
+        }
+
+        return response()->json(['ok' => true, 'customer' => $result, 'message' => 'Ownership transferred successfully']);
+    }
+
+    /**
+     * Reconnect service API
+     */
+    public function reconnectService(Request $request, \App\Services\ReconnectService $service): JsonResponse
+    {
+        $validated = $request->validate([
+            'account_no' => ['required','string','max:50'],
+            'notes' => ['nullable','string','max:1000'],
+        ]);
+
+        $result = $service->reconnect($validated['account_no'], $validated['notes'] ?? null);
+
+        if (!$result) {
+            return response()->json(['ok' => false, 'message' => 'Account not found'], 404);
+        }
+
+        return response()->json(['ok' => true, 'customer' => $result, 'message' => 'Service reconnected successfully']);
     }
 
     // Delete multiple customers

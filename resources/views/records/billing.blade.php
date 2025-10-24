@@ -31,6 +31,7 @@
                         <th class="px-6 py-3 border-b dark:border-gray-600">Consump (m³)</th>
                         <th class="px-6 py-3 border-b dark:border-gray-600">Rate</th>
                         <th class="px-6 py-3 border-b dark:border-gray-600">Total</th>
+                        <th class="px-6 py-3 border-b dark:border-gray-600">Status</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -44,10 +45,15 @@
                         <td class="px-6 py-3">{{ number_format($r->consumption_cu_m, 2) }}</td>
                         <td class="px-6 py-3">₱{{ number_format($r->base_rate, 2) }}</td>
                         <td class="px-6 py-3 font-semibold text-green-600 dark:text-green-400">₱{{ number_format($r->total_amount, 2) }}</td>
+                        <td class="px-6 py-3">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $r->getStatusBadgeClass() }}">
+                                {{ $r->bill_status }}
+                            </span>
+                        </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="10" class="px-6 py-6 text-center text-gray-500 dark:text-gray-400">No billing records found.</td>
+                        <td colspan="9" class="px-6 py-6 text-center text-gray-500 dark:text-gray-400">No billing records found.</td>
                     </tr>
                     @endforelse
                 </tbody>

@@ -41,14 +41,47 @@
                 Customer Register
             </h2>
             <style>
-                /* Keep hover highlight and persistent selection */
-                .customer-card.selected,
-                .customer-card.hovering,
-                .customer-card:hover { background-color: #f3f4f6 !important; }
-                /* Dark mode highlight */
-                .dark .customer-card.selected,
-                .dark .customer-card.hovering,
-                .dark .customer-card:hover { background-color: #374151 !important; /* gray-700 */ }
+                /* Overflow Menu Styles */
+                .overflow-menu-btn {
+                    transition: all 0.2s ease;
+                }
+                
+                .overflow-menu-btn:hover {
+                    transform: scale(1.05);
+                }
+                
+                .overflow-menu {
+                    animation: fadeIn 0.15s ease-out;
+                }
+                
+                @keyframes fadeIn {
+                    from {
+                        opacity: 0;
+                        transform: translateY(-5px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+                
+                /* Responsive adjustments */
+                @media (max-width: 768px) {
+                    .overflow-menu {
+                        width: 44rem; /* w-44 equivalent */
+                        right: -1rem; /* Adjust positioning on mobile */
+                    }
+                }
+                
+                /* Ensure proper z-index stacking */
+                .customer-card {
+                    position: relative;
+                    z-index: 1;
+                }
+                
+                .overflow-menu {
+                    z-index: 50;
+                }
             </style>
             <form class="flex space-x-3 mb-6" id="searchForm">
                 <input type="text" name="search" placeholder="Search by name, address, or account no."
@@ -70,27 +103,80 @@
                 </button>
             </form>
 
-            <!-- Dynamic Results with Register button -->
-            <div id="customersContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Dynamic Results with Overflow Menu -->
+            <div id="customersContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 @forelse (($customers ?? []) as $c)
                 <div class="customer-card bg-gray-50 dark:bg-gray-700 border dark:border-gray-600 
-                            rounded-[5px] p-5 shadow-md hover:shadow-lg transition cursor-pointer"
+                            rounded-[5px] p-5 shadow-md hover:shadow-lg transition relative flex flex-col h-full"
                      data-account-no="{{ $c->account_no }}"
                      data-name="{{ $c->name }}"
                      data-address="{{ $c->address }}"
                      data-meter-no="{{ $c->meter_no }}"
                      data-meter-size="{{ $c->meter_size }}"
-                     data-status="{{ $c->status }}"
-                     onmouseenter="showProfilePreview(this)"
-                     onmouseleave="hideProfilePreview()"
-                     onclick="selectCustomerCard(this)">
-                    <div>
-                        <p class="font-semibold text-lg text-gray-800 dark:text-gray-100">{{ $c->name }}</p>
+                     data-status="{{ $c->status }}">
+                    <!-- Card Header with Menu -->
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex-1 min-w-0">
+                            <p class="font-semibold text-lg text-gray-800 dark:text-gray-100 truncate">{{ $c->name }}</p>
                         <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">
                             Acct. {{ $c->account_no }} - 
                             <span class="text-green-600 dark:text-green-400 font-medium">Active</span>
                         </p>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ $c->address }}</p>
+                        </div>
+                        
+                        <!-- Overflow Menu -->
+                        <div class="relative ml-3 flex-shrink-0">
+                            <button class="overflow-menu-btn p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                    onclick="event.stopPropagation(); toggleOverflowMenu(this)"
+                                    data-account-no="{{ $c->account_no }}"
+                                    data-name="{{ $c->name }}"
+                                    data-address="{{ $c->address }}"
+                                    data-meter-no="{{ $c->meter_no }}"
+                                    data-meter-size="{{ $c->meter_size }}"
+                                    data-status="{{ $c->status }}">
+                                <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
+                                </svg>
+                            </button>
+                            
+                            <!-- Dropdown Menu -->
+                            <div class="overflow-menu absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg z-10 hidden">
+                                <div class="py-1">
+                                    <button class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                            onclick="handleTransferOwnership(this)">
+                                        <div class="flex items-center">
+                                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                                            </svg>
+                                            Transfer Ownership
+                                        </div>
+                                    </button>
+                                    <button class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                            onclick="handleReconnectService(this)">
+                                        <div class="flex items-center">
+                                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                            </svg>
+                                            Reconnect Service
+                                        </div>
+                                    </button>
+                                    <button class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                            onclick="handleUpdateMeter(this)">
+                                        <div class="flex items-center">
+                                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                            </svg>
+                                            Update Meter
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Card Content -->
+                    <div class="flex-1 flex flex-col">
+                        <p class="text-sm text-gray-500 dark:text-gray-400 flex-1">{{ $c->address }}</p>
                     </div>
                 </div>
                 @empty
@@ -113,92 +199,6 @@
             </div>
         </div>
 
-        <!-- Profile and Action Section -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Profile -->
-            <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6">
-                <h3 class="text-xl font-semibold mb-5 text-gray-800 dark:text-gray-100">
-                    Profile Information
-                </h3>
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Account No.</label>
-                        <input type="text" id="profile_account_no" readonly
-                               class="w-full border rounded-[5px] px-4 h-[30px] text-sm shadow-sm
-                                      bg-gray-100 dark:bg-gray-600
-                                      text-gray-800 dark:text-gray-100
-                                      border-gray-300 dark:border-gray-600">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Name</label>
-                        <input type="text" id="profile_name" readonly
-                               class="w-full border rounded-[5px] px-4 h-[30px] text-sm shadow-sm
-                                      bg-gray-100 dark:bg-gray-600
-                                      text-gray-800 dark:text-gray-100
-                                      border-gray-300 dark:border-gray-600">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Address</label>
-                        <input type="text" id="profile_address" readonly
-                               class="w-full border rounded-[5px] px-4 h-[30px] text-sm shadow-sm
-                                      bg-gray-100 dark:bg-gray-600
-                                      text-gray-800 dark:text-gray-100
-                                      border-gray-300 dark:border-gray-600">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Meter No.</label>
-                        <input type="text" id="profile_meter_no" readonly
-                               class="w-full border rounded-[5px] px-4 h-[30px] text-sm shadow-sm
-                                      bg-gray-100 dark:bg-gray-600
-                                      text-gray-800 dark:text-gray-100
-                                      border-gray-300 dark:border-gray-600">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Meter Size</label>
-                        <input type="text" id="profile_meter_size" readonly
-                               class="w-full border rounded-[5px] px-4 h-[30px] text-sm shadow-sm
-                                      bg-gray-100 dark:bg-gray-600
-                                      text-gray-800 dark:text-gray-100
-                                      border-gray-300 dark:border-gray-600">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Status</label>
-                        <input type="text" id="profile_status" readonly
-                               class="w-full border rounded-[5px] px-4 h-[30px] text-sm shadow-sm
-                                      bg-gray-100 dark:bg-gray-600
-                                      text-gray-800 dark:text-gray-100
-                                      border-gray-300 dark:border-gray-600">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Action -->
-            <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6">
-                <h3 class="text-xl font-semibold mb-5 text-gray-800 dark:text-gray-100">
-                    Actions
-                </h3>
-                <div class="space-y-4">
-                    <button onclick="clearProfile()" class="w-full bg-orange-600 text-white h-[50px] rounded-[5px] text-sm font-medium 
-                                   hover:bg-orange-700 shadow transition">
-                        Clear Selection
-                    </button>
-                    <button class="w-full bg-blue-600 text-white h-[50px] rounded-[5px] text-sm font-medium 
-                                   hover:bg-blue-700 shadow transition">
-                        Transfer Ownership
-                    </button>
-                    <button class="w-full bg-cyan-600 text-white h-[50px] rounded-[5px] text-sm font-medium 
-                                   hover:bg-cyan-700 shadow transition">
-                        Reconnect Service
-                    </button>
-                    <button class="w-full bg-gray-200 dark:bg-gray-600 
-                                   text-gray-800 dark:text-gray-100 
-                                   h-[50px] rounded-[5px] text-sm font-medium hover:bg-gray-300 
-                                   dark:hover:bg-gray-500 shadow transition">
-                        Update Meter
-                    </button>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- New Customer Section -->
@@ -408,9 +408,154 @@
             });
             if(res.ok){
                 window.dispatchEvent(new CustomEvent('close-modal', { detail: 'register-existing' }));
-                alert('Customer registered to existing account.');
+                showToast('Customer registered to existing account.', 'success');
             } else {
-                alert('Failed to register customer.');
+                showToast('Failed to register customer.', 'error');
+            }
+        });
+    </script>
+</x-modal>
+
+<!-- Transfer Ownership Modal -->
+<x-modal name="transfer-ownership" :show="false">
+    <div class="p-6">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Transfer Ownership</h3>
+        <form id="transferOwnershipForm" class="space-y-4">
+            <input type="hidden" name="account_no" id="transfer_account_no">
+            <div>
+                <label class="block text-sm text-gray-700 dark:text-gray-300 mb-1">Account No.</label>
+                <input type="text" id="transfer_account_no_display" class="w-full border rounded px-3 h-[40px] bg-gray-100" readonly>
+            </div>
+            <div>
+                <label class="block text-sm text-gray-700 dark:text-gray-300 mb-1">Current Owner</label>
+                <input type="text" id="transfer_current_owner" class="w-full border rounded px-3 h-[40px] bg-gray-100" readonly>
+            </div>
+            <div>
+                <label class="block text-sm text-gray-700 dark:text-gray-300 mb-1">New Owner Full Name</label>
+                <input type="text" id="transfer_new_owner" name="new_name" class="w-full border rounded px-3 h-[40px]" required>
+            </div>
+            <div>
+                <label class="block text-sm text-gray-700 dark:text-gray-300 mb-1">Notes (optional)</label>
+                <textarea id="transfer_notes" name="notes" rows="3" class="w-full border rounded px-3 py-2"></textarea>
+            </div>
+            <div class="flex justify-end space-x-2 pt-2">
+                <button type="button" class="px-4 h-[40px] rounded bg-gray-300" onclick="window.dispatchEvent(new CustomEvent('close-modal',{detail:'transfer-ownership'}))">Cancel</button>
+                <button type="submit" class="px-4 h-[40px] rounded bg-blue-600 text-white">Transfer</button>
+            </div>
+        </form>
+    </div>
+    <script>
+        function openTransferOwnershipModal(acct, name){
+            document.getElementById('transfer_account_no').value = acct;
+            document.getElementById('transfer_account_no_display').value = acct;
+            document.getElementById('transfer_current_owner').value = name;
+            document.getElementById('transfer_new_owner').value = name;
+            document.getElementById('transfer_notes').value = '';
+            window.dispatchEvent(new CustomEvent('open-modal', { detail: 'transfer-ownership' }));
+        }
+
+        document.getElementById('transferOwnershipForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = {
+                account_no: document.getElementById('transfer_account_no').value,
+                new_name: document.getElementById('transfer_new_owner').value,
+                notes: document.getElementById('transfer_notes').value || null
+            };
+
+            try {
+                const res = await fetch("{{ route('customer.transfer') }}", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || '' },
+                    body: JSON.stringify(payload)
+                });
+
+                    if (res.ok) {
+                    const data = await res.json();
+                    window.dispatchEvent(new CustomEvent('close-modal', { detail: 'transfer-ownership' }));
+                    showToast(data.message || 'Ownership transferred', 'success');
+                    // Update card name if present on page
+                    const btn = document.querySelector(`[data-account-no='${payload.account_no}']`);
+                    if (btn) {
+                        btn.setAttribute('data-name', data.customer.name);
+                        const nameEl = btn.parentElement.querySelector('p');
+                        if (nameEl) nameEl.textContent = data.customer.name;
+                    }
+                } else {
+                    const err = await res.json().catch(() => ({}));
+                    showToast(err.message || 'Failed to transfer ownership', 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Network error while transferring ownership', 'error');
+            }
+        });
+    </script>
+</x-modal>
+
+<!-- Reconnect Service Modal -->
+<x-modal name="reconnect-service" :show="false">
+    <div class="p-6">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Reconnect Service</h3>
+        <form id="reconnectServiceForm" class="space-y-4">
+            <input type="hidden" name="account_no" id="reconnect_account_no">
+            <div>
+                <label class="block text-sm text-gray-700 dark:text-gray-300 mb-1">Account No.</label>
+                <input type="text" id="reconnect_account_no_display" class="w-full border rounded px-3 h-[40px] bg-gray-100" readonly>
+            </div>
+            <div>
+                <label class="block text-sm text-gray-700 dark:text-gray-300 mb-1">Customer Name</label>
+                <input type="text" id="reconnect_customer_name" class="w-full border rounded px-3 h-[40px] bg-gray-100" readonly>
+            </div>
+            <div>
+                <label class="block text-sm text-gray-700 dark:text-gray-300 mb-1">Notes (optional)</label>
+                <textarea id="reconnect_notes" name="notes" rows="3" class="w-full border rounded px-3 py-2"></textarea>
+            </div>
+            <div class="flex justify-end space-x-2 pt-2">
+                <button type="button" class="px-4 h-[40px] rounded bg-gray-300" onclick="window.dispatchEvent(new CustomEvent('close-modal',{detail:'reconnect-service'}))">Cancel</button>
+                <button type="submit" class="px-4 h-[40px] rounded bg-blue-600 text-white">Reconnect</button>
+            </div>
+        </form>
+    </div>
+    <script>
+        function openReconnectServiceModal(acct, name){
+            document.getElementById('reconnect_account_no').value = acct;
+            document.getElementById('reconnect_account_no_display').value = acct;
+            document.getElementById('reconnect_customer_name').value = name;
+            document.getElementById('reconnect_notes').value = '';
+            window.dispatchEvent(new CustomEvent('open-modal', { detail: 'reconnect-service' }));
+        }
+
+        document.getElementById('reconnectServiceForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = {
+                account_no: document.getElementById('reconnect_account_no').value,
+                notes: document.getElementById('reconnect_notes').value || null
+            };
+
+            try {
+                const res = await fetch("{{ route('customer.reconnect') }}", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || '' },
+                    body: JSON.stringify(payload)
+                });
+
+                    if (res.ok) {
+                    const data = await res.json();
+                    window.dispatchEvent(new CustomEvent('close-modal', { detail: 'reconnect-service' }));
+                    showToast(data.message || 'Service reconnected', 'success');
+                    // Update status badge if present
+                    const btn = document.querySelector(`[data-account-no='${payload.account_no}']`);
+                    if (btn) {
+                        const statusEl = btn.parentElement.querySelector('.text-green-600');
+                        if (statusEl) statusEl.textContent = 'Active';
+                    }
+                } else {
+                    const err = await res.json().catch(() => ({}));
+                    showToast(err.message || 'Failed to reconnect service', 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Network error while reconnecting service', 'error');
             }
         });
     </script>
@@ -418,8 +563,6 @@
 
 <!-- Toggle Script -->
 <script>
-    let selectedCustomer = null;
-    let selectedCard = null;
     let searchTimeout = null;
 
     function showPanel(panel) {
@@ -493,168 +636,150 @@
 
         container.innerHTML = customers.map(customer => `
             <div class="customer-card bg-gray-50 dark:bg-gray-700 border dark:border-gray-600 
-                        rounded-[5px] p-5 shadow-md hover:shadow-lg transition cursor-pointer"
+                        rounded-[5px] p-5 shadow-md hover:shadow-lg transition relative flex flex-col h-full"
                  data-account-no="${customer.account_no}"
                  data-name="${customer.name}"
                  data-address="${customer.address}"
                  data-meter-no="${customer.meter_no || ''}"
                  data-meter-size="${customer.meter_size || ''}"
-                 data-status="${customer.status}"
-                 onmouseenter="showProfilePreview(this)"
-                 onmouseleave="hideProfilePreview()"
-                 onclick="selectCustomerCard(this)">
-                <div class="flex items-start justify-between">
-                    <div>
-                        <p class="font-semibold text-lg text-gray-800 dark:text-gray-100">${customer.name}</p>
+                 data-status="${customer.status}">
+                <!-- Card Header with Menu -->
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex-1 min-w-0">
+                        <p class="font-semibold text-lg text-gray-800 dark:text-gray-100 truncate">${customer.name}</p>
                         <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">
                             Acct. ${customer.account_no} - 
                             <span class="text-green-600 dark:text-green-400 font-medium">Active</span>
                         </p>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">${customer.address}</p>
                     </div>
-                    <button 
-                        class="ml-3 px-3 h-[32px] rounded-[6px] bg-blue-600 hover:bg-blue-700 text-white text-xs register-btn"
+                    
+                    <!-- Overflow Menu -->
+                    <div class="relative ml-3 flex-shrink-0">
+                        <button class="overflow-menu-btn p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                onclick="event.stopPropagation(); toggleOverflowMenu(this)"
                         data-account-no="${customer.account_no}"
                         data-name="${customer.name}"
                         data-address="${customer.address}"
                         data-meter-no="${customer.meter_no || ''}"
                         data-meter-size="${customer.meter_size || ''}"
-                        data-status="${customer.status}"
-                        onclick="selectCustomer(this)">
-                        Register
+                                data-status="${customer.status}">
+                            <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
+                            </svg>
+                        </button>
+                        
+                        <!-- Dropdown Menu -->
+                        <div class="overflow-menu absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg z-10 hidden">
+                            <div class="py-1">
+                                <button class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                        onclick="handleTransferOwnership(this)">
+                                    <div class="flex items-center">
+                                        <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                                        </svg>
+                                        Transfer Ownership
+                                    </div>
+                                </button>
+                                <button class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                        onclick="handleReconnectService(this)">
+                                    <div class="flex items-center">
+                                        <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                        </svg>
+                                        Reconnect Service
+                                    </div>
+                                </button>
+                                <button class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                        onclick="handleUpdateMeter(this)">
+                                    <div class="flex items-center">
+                                        <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                        </svg>
+                                        Update Meter
+                                    </div>
                     </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Card Content -->
+                <div class="flex-1 flex flex-col">
+                    <p class="text-sm text-gray-500 dark:text-gray-400 flex-1">${customer.address}</p>
                 </div>
             </div>
         `).join('');
     }
 
-    // Show profile preview on hover
-    function showProfilePreview(card) {
-        // If not selected, highlight only on hover
-        if (!card.classList.contains('selected')) {
-            card.classList.add('hovering');
-        }
-        const accountNo = card.getAttribute('data-account-no');
-        const name = card.getAttribute('data-name');
-        const address = card.getAttribute('data-address');
-        const meterNo = card.getAttribute('data-meter-no');
-        const meterSize = card.getAttribute('data-meter-size');
-        const status = card.getAttribute('data-status');
-
-        // Update profile fields with preview data
-        document.getElementById('profile_account_no').value = accountNo || '';
-        document.getElementById('profile_name').value = name || '';
-        document.getElementById('profile_address').value = address || '';
-        document.getElementById('profile_meter_no').value = meterNo || '';
-        document.getElementById('profile_meter_size').value = meterSize || '';
-        document.getElementById('profile_status').value = status || '';
-    }
-
-    // Hide profile preview
-    function hideProfilePreview() {
-        // Remove hover highlight
-        document.querySelectorAll('.customer-card.hovering').forEach(function(c){
-            c.classList.remove('hovering');
+    // Overflow Menu Functions
+    function toggleOverflowMenu(button) {
+        // Close all other menus first
+        document.querySelectorAll('.overflow-menu').forEach(menu => {
+            if (menu !== button.nextElementSibling) {
+                menu.classList.add('hidden');
+            }
         });
-        // Only clear if no customer is selected
-        if (!selectedCustomer) {
-            clearProfile();
+        
+        // Toggle current menu
+        const menu = button.nextElementSibling;
+        menu.classList.toggle('hidden');
+    }
+
+    function handleTransferOwnership(button) {
+        const menu = button.closest('.overflow-menu');
+        const menuBtn = menu.previousElementSibling;
+        const accountNo = menuBtn.getAttribute('data-account-no');
+        const name = menuBtn.getAttribute('data-name');
+        
+        // Close menu
+        menu.classList.add('hidden');
+        
+        // Show confirmation and handle action
+        // Open modal to capture new owner name and notes
+        openTransferOwnershipModal(accountNo, name);
+    }
+
+    function handleReconnectService(button) {
+        const menu = button.closest('.overflow-menu');
+        const menuBtn = menu.previousElementSibling;
+        const accountNo = menuBtn.getAttribute('data-account-no');
+        const name = menuBtn.getAttribute('data-name');
+        
+        // Close menu
+        menu.classList.add('hidden');
+        
+        // Show confirmation and handle action
+        // Open modal to capture optional notes and confirm reconnect
+        openReconnectServiceModal(accountNo, name);
+    }
+
+    function handleUpdateMeter(button) {
+        const menu = button.closest('.overflow-menu');
+        const menuBtn = menu.previousElementSibling;
+        const accountNo = menuBtn.getAttribute('data-account-no');
+        const name = menuBtn.getAttribute('data-name');
+        const meterNo = menuBtn.getAttribute('data-meter-no');
+        const meterSize = menuBtn.getAttribute('data-meter-size');
+        
+        // Close menu
+        menu.classList.add('hidden');
+        
+        // Show confirmation and handle action
+        if (confirm(`Update meter for ${name} (Account: ${accountNo})?\nCurrent Meter: ${meterNo} (${meterSize})`)) {
+            // Here you would typically make an API call or show a modal
+            showToast('Update Meter functionality would be implemented here', 'info');
         }
     }
 
-    // Select customer card and keep highlight; clicking again on same card clears
-    function selectCustomerCard(card) {
-        if (selectedCard === card) {
-            // Toggle off
-            clearProfile();
-            return;
-        }
-        // Remove previous selection
-        if (selectedCard) {
-            selectedCard.classList.remove('selected');
-        }
-        // Set new selection
-        card.classList.add('selected');
-        selectedCard = card;
-        // Store selected customer
-        selectedCustomer = {
-            accountNo: card.getAttribute('data-account-no'),
-            name: card.getAttribute('data-name'),
-            address: card.getAttribute('data-address'),
-            meterNo: card.getAttribute('data-meter-no'),
-            meterSize: card.getAttribute('data-meter-size'),
-            status: card.getAttribute('data-status')
-        };
-        // Show profile info
-        document.getElementById('profile_account_no').value = selectedCustomer.accountNo || '';
-        document.getElementById('profile_name').value = selectedCustomer.name || '';
-        document.getElementById('profile_address').value = selectedCustomer.address || '';
-        document.getElementById('profile_meter_no').value = selectedCustomer.meterNo || '';
-        document.getElementById('profile_meter_size').value = selectedCustomer.meterSize || '';
-        document.getElementById('profile_status').value = selectedCustomer.status || '';
-    }
-
-    // Select customer and hide register button completely
-    function selectCustomer(button) {
-        // Get customer data from button attributes
-        const accountNo = button.getAttribute('data-account-no');
-        const name = button.getAttribute('data-name');
-        const address = button.getAttribute('data-address');
-        const meterNo = button.getAttribute('data-meter-no');
-        const meterSize = button.getAttribute('data-meter-size');
-        const status = button.getAttribute('data-status');
-
-        // Store selected customer
-        selectedCustomer = {
-            accountNo, name, address, meterNo, meterSize, status
-        };
-
-        // Auto-fill profile information
-        document.getElementById('profile_account_no').value = accountNo || '';
-        document.getElementById('profile_name').value = name || '';
-        document.getElementById('profile_address').value = address || '';
-        document.getElementById('profile_meter_no').value = meterNo || '';
-        document.getElementById('profile_meter_size').value = meterSize || '';
-        document.getElementById('profile_status').value = status || '';
-
-        // Hide the register button completely
-        button.style.display = 'none';
-
-        // Open the registration modal with pre-filled data
-        openRegisterExistingModal(accountNo, name);
-    }
-
-    // Clear profile information
-    function clearProfile() {
-        // Remove selection highlight
-        if (selectedCard) {
-            selectedCard.classList.remove('selected');
-            selectedCard = null;
-        }
-        selectedCustomer = null;
-        document.getElementById('profile_account_no').value = '';
-        document.getElementById('profile_name').value = '';
-        document.getElementById('profile_address').value = '';
-        document.getElementById('profile_meter_no').value = '';
-        document.getElementById('profile_meter_size').value = '';
-        document.getElementById('profile_status').value = '';
-
-        // Reset selected customer
-        selectedCustomer = null;
-
-        // Show all register buttons again
-        document.querySelectorAll('.register-btn').forEach(btn => {
-            btn.style.display = 'block';
-        });
-    }
-
-    // Click outside to clear selection
-    document.addEventListener('click', function(e){
-        const card = e.target.closest('.customer-card');
-        if (!card && selectedCard) {
-            clearProfile();
+    // Close overflow menus when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.overflow-menu-btn') && !e.target.closest('.overflow-menu')) {
+            document.querySelectorAll('.overflow-menu').forEach(menu => {
+                menu.classList.add('hidden');
+            });
         }
     });
+
 
     // Clear search
     function clearSearch() {
@@ -684,4 +809,21 @@
     });
 </script>
 @endsection
+
+<script>
+    // showToast helper uses the global toast container in the layout
+    function showToast(message, type = 'info', timeout = 4000) {
+        const container = document.getElementById('toast-container');
+        if (!container) return alert(message);
+        const toast = document.createElement('div');
+        const bg = type === 'error' ? 'bg-red-500' : (type === 'success' ? 'bg-green-500' : 'bg-blue-500');
+        toast.className = `${bg} text-white px-4 py-2 rounded shadow-md max-w-sm pointer-events-auto`;
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.add('opacity-0');
+            setTimeout(() => toast.remove(), 300);
+        }, timeout);
+    }
+</script>
 

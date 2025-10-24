@@ -12,6 +12,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PaymentController;
 
 
 Route::get('/', function () {
@@ -52,11 +53,15 @@ Route::post('/register', [RegisterController::class, 'store'])->name('register.s
 Route::get('/api/register/search', [RegisterController::class, 'search'])->name('register.search');
 Route::get('/customer', [CustomerController::class, 'index'])->name('customer.index');
 Route::post('/api/customer/delete-multiple', [CustomerController::class, 'deleteMultiple'])->name('customer.deleteMultiple');
-Route::get('/records/billing', [RecordController::class, 'billing'])->name('records.billing');
-Route::get('/records/payments', [RecordController::class, 'payments'])->name('records.payments');
-Route::get('/records/reports', [RecordController::class, 'reports'])->name('records.reports');
+Route::get('/billing', [RecordController::class, 'billingManagement'])->middleware('auth')->name('billing.management');
+Route::get('/records/billing', [RecordController::class, 'billing'])->middleware('auth')->name('records.billing');
+Route::get('/records/billing/{id}/generate', [RecordController::class, 'generateBill'])->middleware('auth')->name('records.billing.generate');
+Route::post('/records/billing/{id}/status', [RecordController::class, 'updateBillStatus'])->middleware('auth')->name('records.billing.status');
+Route::get('/records/billing/{id}/print', [RecordController::class, 'printBill'])->middleware('auth')->name('records.billing.print');
+Route::get('/records/payments', [RecordController::class, 'payments'])->middleware('auth')->name('records.payments');
+Route::get('/records/reports', [RecordController::class, 'reports'])->middleware('auth')->name('records.reports');
 Route::post('/reports', [ReportController::class, 'store'])->middleware('auth')->name('reports.store');
-Route::get('/records/history', [RecordController::class, 'history'])->name('records.history');
+Route::get('/records/history', [RecordController::class, 'history'])->middleware('auth')->name('records.history');
 Route::get('/api/records/history', [RecordController::class, 'historyApi'])->middleware('auth')->name('api.records.history');
 
 // Notifications
@@ -72,9 +77,19 @@ Route::get('/api/billing/payment-history', [BillingController::class, 'getPaymen
 
 // Register existing customer attach endpoint
 Route::post('/api/customer/attach', [CustomerController::class, 'attach'])->middleware('auth')->name('customer.attach');
+Route::post('/api/customer/transfer', [CustomerController::class, 'transferOwnership'])->middleware('auth')->name('customer.transfer');
+Route::post('/api/customer/reconnect', [CustomerController::class, 'reconnectService'])->middleware('auth')->name('customer.reconnect');
 Route::get('/api/customer/next-account', [CustomerController::class, 'nextAccount'])->name('customer.nextAccount');
 Route::get('/api/customer/find', [CustomerController::class, 'findByAccount'])->middleware('auth')->name('customer.findByAccount');
+Route::get('/api/customer/search', [CustomerController::class, 'searchAccounts'])->middleware('auth')->name('customer.searchAccounts');
 Route::post('/api/customer', [CustomerController::class, 'store'])->name('customer.store');
+
+// Payment routes
+Route::get('/payment', [PaymentController::class, 'index'])->middleware('auth')->name('payment.index');
+Route::post('/api/payment/search-customer', [PaymentController::class, 'searchCustomer'])->middleware('auth')->name('api.payment.search-customer');
+Route::post('/api/payment/process', [PaymentController::class, 'processPayment'])->middleware('auth')->name('api.payment.process');
+Route::get('/payment/receipt/{paymentRecordId}', [PaymentController::class, 'getPaymentReceipt'])->middleware('auth')->name('payment.receipt');
+Route::get('/payment/print/{paymentRecordId}', [PaymentController::class, 'printReceipt'])->middleware('auth')->name('payment.print');
 
 
 

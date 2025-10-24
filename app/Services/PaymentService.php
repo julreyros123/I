@@ -23,32 +23,13 @@ class PaymentService
 
             $billAmount = (float) $paymentData['total_amount'];
             $amountPaid = (float) $paymentData['amount_paid'] ?? $billAmount;
-            $creditApplied = 0;
             $overpayment = 0;
             $paymentStatus = 'paid';
-
-            // Check if customer has existing credit
-            $availableCredit = $customer->credit_balance;
-            
-            // If customer has credit and amount paid is less than bill amount
-            if ($availableCredit > 0 && $amountPaid < $billAmount) {
-                $creditToApply = min($availableCredit, $billAmount - $amountPaid);
-                $creditApplied = $creditToApply;
-                $amountPaid += $creditToApply;
-                
-                // Update customer's credit balance
-                $customer->credit_balance -= $creditToApply;
-                $customer->save();
-            }
 
             // Calculate overpayment
             if ($amountPaid > $billAmount) {
                 $overpayment = $amountPaid - $billAmount;
                 $paymentStatus = 'overpaid';
-                
-                // Add overpayment to customer's credit balance
-                $customer->credit_balance += $overpayment;
-                $customer->save();
             }
 
             // Create billing record (existing logic)
@@ -60,7 +41,6 @@ class PaymentService
                 'consumption_cu_m' => (float)($paymentData['consumption_cu_m'] ?? 0),
                 'base_rate' => (float)($paymentData['base_rate'] ?? 25),
                 'maintenance_charge' => 0.0,
-                'service_fee' => 0.0,
                 'vat' => 0.0,
                 'total_amount' => $billAmount,
                 'date_from' => $paymentData['date_from'] ?? null,
@@ -75,9 +55,9 @@ class PaymentService
                 'bill_amount' => $billAmount,
                 'amount_paid' => $amountPaid,
                 'overpayment' => $overpayment,
-                'credit_applied' => $creditApplied,
+                'credit_applied' => 0,
                 'payment_status' => $paymentStatus,
-                'notes' => $this->generatePaymentNotes($creditApplied, $overpayment),
+                'notes' => $overpayment > 0 ? "₱" . number_format($overpayment, 2) . " overpayment" : 'Standard payment',
             ]);
 
             // Update customer's previous reading
@@ -91,10 +71,10 @@ class PaymentService
                 'billing_record_id' => $billingRecord->id,
                 'payment_record_id' => $paymentRecord->id,
                 'payment_status' => $paymentStatus,
-                'credit_applied' => $creditApplied,
+                'credit_applied' => 0,
                 'overpayment' => $overpayment,
-                'remaining_credit' => $customer->credit_balance,
-                'message' => $this->generatePaymentMessage($paymentStatus, $creditApplied, $overpayment),
+                'remaining_credit' => 0,
+                'message' => $this->generatePaymentMessage($paymentStatus, 0, $overpayment),
             ];
         });
     }
@@ -132,29 +112,118 @@ class PaymentService
                 'account_no' => $customer->account_no,
                 'name' => $customer->name,
                 'address' => $customer->address,
-                'credit_balance' => $customer->credit_balance,
-                'formatted_credit_balance' => $customer->getFormattedCreditBalance(),
             ],
             'payments' => $payments,
         ];
     }
 
     /**
-     * Generate payment notes based on credit and overpayment
+     * Generate payment notes based on overpayment
      */
-    private function generatePaymentNotes(float $creditApplied, float $overpayment): string
+    private function generatePaymentNotes(float $overpayment): string
     {
-        $notes = [];
-        
-        if ($creditApplied > 0) {
-            $notes[] = "Applied ₱" . number_format($creditApplied, 2) . " credit from previous overpayment";
-        }
-        
         if ($overpayment > 0) {
-            $notes[] = "₱" . number_format($overpayment, 2) . " overpayment added to account credit";
+            return "₱" . number_format($overpayment, 2) . " overpayment";
         }
         
-        return implode('. ', $notes) ?: 'Standard payment';
+        return 'Standard payment';
+    }
+
+    /**
+     * Process customer payment for existing bills
+     */
+    public function processCustomerPayment(array $paymentData): array
+    {
+        return DB::transaction(function () use ($paymentData) {
+            $customer = Customer::where('account_no', $paymentData['account_no'])->first();
+            
+            if (!$customer) {
+                throw new \Exception('Customer not found');
+            }
+
+            // Get all unpaid bills for this customer
+            $unpaidBills = BillingRecord::where('account_no', $paymentData['account_no'])
+                ->whereDoesntHave('paymentRecords')
+                ->orderBy('created_at', 'asc')
+                ->get();
+
+            if ($unpaidBills->isEmpty()) {
+                throw new \Exception('No outstanding bills found for this customer');
+            }
+
+            // Check if any bills are already paid (prevent duplicate payments)
+            $paidBills = BillingRecord::where('account_no', $paymentData['account_no'])
+                ->whereHas('paymentRecords', function($query) {
+                    $query->where('payment_status', 'paid');
+                })
+                ->get();
+
+            if ($paidBills->isNotEmpty()) {
+                throw new \Exception('Some bills for this customer are already paid. Cannot process duplicate payment.');
+            }
+
+            $amountPaid = (float) $paymentData['amount_paid'];
+            $totalOutstanding = $unpaidBills->sum('total_amount');
+            $remainingAmount = $amountPaid;
+            $paymentRecords = [];
+            $overpayment = 0;
+
+            // Process payments for each bill
+            foreach ($unpaidBills as $bill) {
+                if ($remainingAmount <= 0) break;
+
+                $billAmount = $bill->total_amount;
+                $paymentForThisBill = min($remainingAmount, $billAmount);
+                $paymentStatus = 'paid';
+
+                // Check if this bill is fully paid
+                if ($paymentForThisBill < $billAmount) {
+                    $paymentStatus = 'partial';
+                }
+
+                // Create payment record for this bill
+                $paymentRecord = PaymentRecord::create([
+                    'customer_id' => $customer->id,
+                    'billing_record_id' => $bill->id,
+                    'account_no' => $paymentData['account_no'],
+                    'bill_amount' => $billAmount,
+                    'amount_paid' => $paymentForThisBill,
+                    'overpayment' => 0,
+                    'credit_applied' => 0,
+                    'payment_status' => $paymentStatus,
+                    'payment_method' => $paymentData['payment_method'] ?? 'cash',
+                    'reference_number' => $paymentData['reference_number'] ?? null,
+                    'notes' => $paymentData['notes'] ?? null,
+                ]);
+
+                // Update bill status to Paid if fully paid
+                if ($paymentForThisBill >= $billAmount) {
+                    $bill->update(['bill_status' => 'Paid']);
+                }
+
+                $paymentRecords[] = $paymentRecord;
+                $remainingAmount -= $paymentForThisBill;
+            }
+
+            // Handle overpayment
+            if ($remainingAmount > 0) {
+                $overpayment = $remainingAmount;
+            }
+
+            return [
+                'success' => true,
+                'payment_record_id' => $paymentRecords[0]->id, // Return first payment record ID
+                'message' => $this->generateCustomerPaymentMessage(0, $overpayment, count($paymentRecords)),
+                'payment_details' => [
+                    'total_outstanding' => $totalOutstanding,
+                    'amount_paid' => $amountPaid,
+                    'credit_applied' => 0,
+                    'overpayment' => $overpayment,
+                    'bills_paid' => count($paymentRecords),
+                    'remaining_credit' => 0,
+                ],
+            ];
+        });
     }
 
     /**
@@ -164,14 +233,25 @@ class PaymentService
     {
         $message = "Payment processed successfully!";
         
-        if ($creditApplied > 0) {
-            $message .= " Applied ₱" . number_format($creditApplied, 2) . " from your account credit.";
+        if ($overpayment > 0) {
+            $message .= " ₱" . number_format($overpayment, 2) . " overpayment.";
         }
         
+        return $message;
+    }
+
+    /**
+     * Generate customer payment message
+     */
+    private function generateCustomerPaymentMessage(float $creditApplied, float $overpayment, int $billsPaid): string
+    {
+        $message = "Payment processed successfully! Paid {$billsPaid} bill(s).";
+        
         if ($overpayment > 0) {
-            $message .= " ₱" . number_format($overpayment, 2) . " overpayment has been added to your account credit for future bills.";
+            $message .= " ₱" . number_format($overpayment, 2) . " overpayment.";
         }
         
         return $message;
     }
 }
+

@@ -12,15 +12,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-        }
-        h1, h2, h3, h4, h5, h6 {
-            font-family: 'Inter', sans-serif;
+        /* Use Inter as main font and keep font-family consistent */
+        body, input, textarea, button {
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
         }
     </style>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-300">
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
 
     {{-- Navbar --}}
     @include('components.navbar')
@@ -29,14 +27,14 @@
     @include('components.sidebar')
 
     {{-- Main Content --}}
-    <main class="ml-64 pt-16 min-h-screen transition-all duration-300"
-          :class="{ 'ml-0': window.innerWidth < 768 }">
-
-        {{-- Add a card wrapper here instead of forcing the whole main to be card-like --}}
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+    <main class="md:ml-64 pt-16 min-h-screen transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-6 py-10">
             @yield('content')
         </div>
     </main>
+
+    {{-- Global toast container so all pages can use showToast() --}}
+    <div id="toast-container" class="fixed top-6 right-6 z-50 space-y-2 pointer-events-none"></div>
 
     {{-- Mobile Overlay for Sidebar --}}
     <div class="fixed inset-0 bg-black bg-opacity-50 z-10 md:hidden" 

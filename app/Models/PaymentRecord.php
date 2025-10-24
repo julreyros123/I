@@ -18,6 +18,8 @@ class PaymentRecord extends Model
         'overpayment',
         'credit_applied',
         'payment_status',
+        'payment_method',
+        'reference_number',
         'notes',
     ];
 

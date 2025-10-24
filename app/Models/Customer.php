@@ -17,12 +17,10 @@ class Customer extends Model
         'meter_size',
         'status',
         'previous_reading',
-        'credit_balance',
     ];
 
     protected $casts = [
         'previous_reading' => 'float',
-        'credit_balance' => 'float',
     ];
 
     // Scope for active customers
@@ -53,15 +51,6 @@ class Customer extends Model
     }
 
     // Helper methods
-    public function hasCredit()
-    {
-        return $this->credit_balance > 0;
-    }
-
-    public function getFormattedCreditBalance()
-    {
-        return '₱' . number_format($this->credit_balance, 2);
-    }
 }
 
 
