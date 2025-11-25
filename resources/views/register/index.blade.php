@@ -18,349 +18,167 @@
         </div>
     @endif
 
-    <!-- Toggle Buttons -->
-    <div class="flex justify-end space-x-3">
-        <button id="existingBtn" onclick="showPanel('existing')"
-            class="px-5 h-[30px] rounded-[5px] text-sm font-medium 
-                   bg-blue-600 text-white shadow hover:bg-blue-700 transition">
-            Existing Customer
-        </button>
-        <button id="newBtn" onclick="showPanel('new')"
-            class="px-5 h-[30px] rounded-[5px] text-sm font-medium 
-                   bg-gray-200 text-gray-800 hover:bg-gray-300 shadow
-                   dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600 transition">
-            New Customer
-        </button>
+    <!-- New Connection Wizard -->
+    <div class="flex justify-between items-center">
+        <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">New Customer Registration</h2>
+        <div class="text-xs text-gray-500 dark:text-gray-400">Step <span id="wizStepNo">1</span> of <span id="wizStepTotal">2</span></div>
     </div>
 
-    <!-- Existing Customer Section -->
-    <div id="existingPanel" class="space-y-6">
-        <!-- Register Section -->
-        <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6">
-            <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100 tracking-wide">
-                Customer Register
-            </h2>
-            <style>
-                /* Overflow Menu Styles */
-                .overflow-menu-btn {
-                    transition: all 0.2s ease;
-                }
-                
-                .overflow-menu-btn:hover {
-                    transform: scale(1.05);
-                }
-                
-                .overflow-menu {
-                    animation: fadeIn 0.15s ease-out;
-                }
-                
-                @keyframes fadeIn {
-                    from {
-                        opacity: 0;
-                        transform: translateY(-5px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
-                }
-                
-                /* Responsive adjustments */
-                @media (max-width: 768px) {
-                    .overflow-menu {
-                        width: 44rem; /* w-44 equivalent */
-                        right: -1rem; /* Adjust positioning on mobile */
-                    }
-                }
-                
-                /* Ensure proper z-index stacking */
-                .customer-card {
-                    position: relative;
-                    z-index: 1;
-                }
-                
-                .overflow-menu {
-                    z-index: 50;
-                }
-            </style>
-            <form class="flex space-x-3 mb-6" id="searchForm">
-                <input type="text" name="search" placeholder="Search by name, address, or account no."
-                    id="searchInput"
-                    class="flex-1 border rounded-[5px] px-4 h-[50px] text-sm shadow-sm
-                           bg-white dark:bg-gray-700
-                           text-gray-800 dark:text-gray-100
-                           border-gray-300 dark:border-gray-600
-                           focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <button type="button" id="searchBtn"
-                    class="bg-blue-600 text-white px-5 h-[50px] rounded-[5px] text-sm font-medium 
-                           hover:bg-blue-700 transition shadow">
-                    Search
-                </button>
-                <button type="button" id="clearBtn" style="display: none;"
-                    class="bg-gray-500 text-white px-5 h-[50px] rounded-[5px] text-sm font-medium 
-                           hover:bg-gray-600 transition shadow flex items-center">
-                    Clear
-                </button>
-            </form>
+    <!-- Removed Existing Customer Section -->
 
-            <!-- Dynamic Results with Overflow Menu -->
-            <div id="customersContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                @forelse (($customers ?? []) as $c)
-                <div class="customer-card bg-gray-50 dark:bg-gray-700 border dark:border-gray-600 
-                            rounded-[5px] p-5 shadow-md hover:shadow-lg transition relative flex flex-col h-full"
-                     data-account-no="{{ $c->account_no }}"
-                     data-name="{{ $c->name }}"
-                     data-address="{{ $c->address }}"
-                     data-meter-no="{{ $c->meter_no }}"
-                     data-meter-size="{{ $c->meter_size }}"
-                     data-status="{{ $c->status }}">
-                    <!-- Card Header with Menu -->
-                    <div class="flex items-start justify-between mb-3">
-                        <div class="flex-1 min-w-0">
-                            <p class="font-semibold text-lg text-gray-800 dark:text-gray-100 truncate">{{ $c->name }}</p>
-                        <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                            Acct. {{ $c->account_no }} - 
-                            <span class="text-green-600 dark:text-green-400 font-medium">Active</span>
-                        </p>
-                        </div>
-                        
-                        <!-- Overflow Menu -->
-                        <div class="relative ml-3 flex-shrink-0">
-                            <button class="overflow-menu-btn p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                                    onclick="event.stopPropagation(); toggleOverflowMenu(this)"
-                                    data-account-no="{{ $c->account_no }}"
-                                    data-name="{{ $c->name }}"
-                                    data-address="{{ $c->address }}"
-                                    data-meter-no="{{ $c->meter_no }}"
-                                    data-meter-size="{{ $c->meter_size }}"
-                                    data-status="{{ $c->status }}">
-                                <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
-                                </svg>
-                            </button>
-                            
-                            <!-- Dropdown Menu -->
-                            <div class="overflow-menu absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg z-10 hidden">
-                                <div class="py-1">
-                                    <button class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                            onclick="handleTransferOwnership(this)">
-                                        <div class="flex items-center">
-                                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
-                                            </svg>
-                                            Transfer Ownership
-                                        </div>
-                                    </button>
-                                    <button class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                            onclick="handleReconnectService(this)">
-                                        <div class="flex items-center">
-                                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                                            </svg>
-                                            Reconnect Service
-                                        </div>
-                                    </button>
-                                    <button class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                            onclick="handleUpdateMeter(this)">
-                                        <div class="flex items-center">
-                                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                            </svg>
-                                            Update Meter
-                                        </div>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Card Content -->
-                    <div class="flex-1 flex flex-col">
-                        <p class="text-sm text-gray-500 dark:text-gray-400 flex-1">{{ $c->address }}</p>
-                    </div>
-                </div>
-                @empty
-                <div class="col-span-2 text-center py-8">
-                    <div class="text-gray-500 dark:text-gray-400">
-                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">No customers found</h3>
-                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                            @if($search ?? false)
-                                Try adjusting your search terms.
-                            @else
-                                No customers are currently registered.
-                            @endif
-                        </p>
-                    </div>
-                </div>
-                @endforelse
-            </div>
-        </div>
-
-    </div>
-
-    <!-- New Customer Section -->
-    <div id="newPanel" class="hidden">
+    <!-- Wizard Container -->
+    <div id="newPanel">
         <div class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-8">
-            <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100 tracking-wide flex items-center gap-2">
-                <!-- Heroicon: UserPlus -->
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                     stroke-width="1.5" stroke="currentColor" class="w-7 h-7 text-blue-600">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M18 9v6m3-3h-6m-2-4a4 4 0 11-8 0 4 4 0 018 0zm-6 8a6 6 0 0112 0H7z" />
-                </svg>
-                Register New Account
-            </h2>
+            <p class="text-xs text-gray-600 dark:text-gray-400 mb-4">Fill the steps below. ID verification is required before any meter can be installed.</p>
 
-            <form method="POST" action="{{ route('register.store') }}" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div id="ncAlert" class="hidden mb-4"></div>
+
+            <form id="newCustomerForm" method="POST" action="{{ route('register.store') }}" enctype="multipart/form-data" class="space-y-8">
                 @csrf
-                <!-- First Name -->
-                <div>
-                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">First Name</label>
-                    <input type="text" name="first_name" value="{{ old('first_name') }}"
-                           class="w-full border rounded-xl px-4 h-[45px] text-sm shadow-sm
-                                  bg-white dark:bg-gray-700
-                                  text-gray-800 dark:text-gray-100
-                                  border-gray-300 dark:border-gray-600
-                                  focus:outline-none focus:ring-2 focus:ring-blue-500 @error('first_name') border-red-500 @enderror"
-                           required>
-                    @error('first_name')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
+                <!-- Step 1: Personal Info + Address & Contact -->
+                <section data-step="1" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">First Name</label>
+                        <x-ui.input name="first_name" :value="old('first_name')" required />
+                        <p class="text-red-500 text-xs mt-1 hidden" data-err="first_name">First name is required</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Last Name</label>
+                        <x-ui.input name="last_name" :value="old('last_name')" required />
+                        <p class="text-red-500 text-xs mt-1 hidden" data-err="last_name">Last name is required</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Barangay</label>
+                        <x-ui.input name="barangay" :value="old('barangay')" required />
+                        <p class="text-red-500 text-xs mt-1 hidden" data-err="barangay">Barangay is required</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">City/Municipality</label>
+                        <x-ui.input name="city" :value="old('city')" required />
+                        <p class="text-red-500 text-xs mt-1 hidden" data-err="city">City is required</p>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Province</label>
+                        <x-ui.input name="province" :value="old('province')" required />
+                        <p class="text-red-500 text-xs mt-1 hidden" data-err="province">Province is required</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Contact Number</label>
+                        <x-ui.input name="contact_number" :value="old('contact_number')" />
+                    </div>
+                </section>
 
-                <!-- Last Name -->
-                <div>
-                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Last Name</label>
-                    <input type="text" name="last_name" value="{{ old('last_name') }}"
-                           class="w-full border rounded-xl px-4 h-[45px] text-sm shadow-sm
-                                  bg-white dark:bg-gray-700
-                                  text-gray-800 dark:text-gray-100
-                                  border-gray-300 dark:border-gray-600
-                                  focus:outline-none focus:ring-2 focus:ring-blue-500 @error('last_name') border-red-500 @enderror"
-                           required>
-                    @error('last_name')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
+                <!-- Step 3: ID Verification (KYC) -->
+                <section data-step="2" class="grid grid-cols-1 md:grid-cols-2 gap-6 hidden">
+                    <div>
+                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">ID Type</label>
+                        <select name="id_type" class="w-full border rounded px-3 h-[40px] bg-white dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600" required>
+                            <option value="">Select ID Type</option>
+                            <option>PhilSys</option>
+                            <option>Driver's License</option>
+                            <option>Passport</option>
+                            <option>SSS</option>
+                            <option>UMID</option>
+                            <option>PRC</option>
+                        </select>
+                        <p class="text-red-500 text-xs mt-1 hidden" data-err="id_type">ID Type is required</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">ID Number</label>
+                        <x-ui.input name="id_number" :value="old('id_number')" required />
+                        <p class="text-red-500 text-xs mt-1 hidden" data-err="id_number">ID Number is required</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">ID Front (jpg/png/webp, max 5MB)</label>
+                        <input type="file" name="id_front" accept="image/*" class="w-full text-sm" required />
+                        <img alt="Preview" data-preview="id_front" class="mt-2 w-40 h-28 object-cover rounded border hidden" />
+                        <p class="text-red-500 text-xs mt-1 hidden" data-err="id_front">ID Front is required</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">ID Back (jpg/png/webp, max 5MB)</label>
+                        <input type="file" name="id_back" accept="image/*" class="w-full text-sm" required />
+                        <img alt="Preview" data-preview="id_back" class="mt-2 w-40 h-28 object-cover rounded border hidden" />
+                        <p class="text-red-500 text-xs mt-1 hidden" data-err="id_back">ID Back is required</p>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Selfie holding ID (jpg/png/webp, max 5MB)</label>
+                        <input type="file" name="selfie" accept="image/*" class="w-full text-sm" required />
+                        <img alt="Preview" data-preview="selfie" class="mt-2 w-40 h-28 object-cover rounded border hidden" />
+                        <p class="text-red-500 text-xs mt-1 hidden" data-err="selfie">Selfie is required</p>
+                    </div>
+                    <div class="md:col-span-2 flex items-start gap-2">
+                        <input type="checkbox" name="consent" value="1" class="mt-1" required />
+                        <span class="text-xs text-gray-600 dark:text-gray-300">I confirm that provided information and documents are authentic.</span>
+                    </div>
+                </section>
 
-                <!-- Address -->
-                <div class="col-span-2">
-                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Address</label>
-                    <textarea name="address" rows="3" value="{{ old('address') }}"
-                              class="w-full border rounded-xl px-4 py-2 text-sm shadow-sm
-                                     bg-white dark:bg-gray-700
-                                     text-gray-800 dark:text-gray-100
-                                     border-gray-300 dark:border-gray-600
-                                     focus:outline-none focus:ring-2 focus:ring-blue-500 @error('address') border-red-500 @enderror">{{ old('address', 'Barangay Manambulan, Davao City') }}</textarea>
-                    @error('address')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <!-- Contact Number -->
-                <div>
-                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Contact Number</label>
-                    <input type="text" name="contact_number" value="{{ old('contact_number') }}"
-                           class="w-full border rounded-xl px-4 h-[45px] text-sm shadow-sm
-                                  bg-white dark:bg-gray-700
-                                  text-gray-800 dark:text-gray-100
-                                  border-gray-300 dark:border-gray-600
-                                  focus:outline-none focus:ring-2 focus:ring-blue-500 @error('contact_number') border-red-500 @enderror">
-                    @error('contact_number')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <!-- Start Date -->
-                <div>
-                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Start Date</label>
-                    <input type="date" name="start_date" value="{{ old('start_date') }}"
-                           class="w-full border rounded-xl px-4 h-[45px] text-sm shadow-sm
-                                  bg-white dark:bg-gray-700
-                                  text-gray-800 dark:text-gray-100
-                                  border-gray-300 dark:border-gray-600
-                                  focus:outline-none focus:ring-2 focus:ring-blue-500 @error('start_date') border-red-500 @enderror"
-                           required>
-                    @error('start_date')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <!-- Meter No. -->
-                <div>
-                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Meter No.</label>
-                    <input type="text" name="meter_no" value="{{ old('meter_no') }}"
-                           class="w-full border rounded-xl px-4 h-[45px] text-sm shadow-sm
-                                  bg-white dark:bg-gray-700
-                                  text-gray-800 dark:text-gray-100
-                                  border-gray-300 dark:border-gray-600
-                                  focus:outline-none focus:ring-2 focus:ring-blue-500 @error('meter_no') border-red-500 @enderror">
-                    @error('meter_no')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <!-- Meter Size -->
-                <div>
-                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Meter Size</label>
-                    <select name="meter_size"
-                            class="w-full border rounded-xl px-4 h-[45px] text-sm shadow-sm
-                                   bg-white dark:bg-gray-700
-                                   text-gray-800 dark:text-gray-100
-                                   border-gray-300 dark:border-gray-600
-                                   focus:outline-none focus:ring-2 focus:ring-blue-500 @error('meter_size') border-red-500 @enderror">
-                        <option value="">Select Size</option>
-                        <option value="1/2\"" {{ old('meter_size') == '1/2"' ? 'selected' : '' }}>1/2"</option>
-                        <option value="3/4\"" {{ old('meter_size') == '3/4"' ? 'selected' : '' }}>3/4"</option>
-                        <option value="1\"" {{ old('meter_size') == '1"' ? 'selected' : '' }}>1"</option>
-                        <option value="2\"" {{ old('meter_size') == '2"' ? 'selected' : '' }}>2"</option>
-                    </select>
-                    @error('meter_size')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <!-- Connection Classification -->
-                <div class="col-span-2">
-                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                        Connection Classification
-                    </label>
-                    <select name="classification"
-                            class="w-full border rounded-xl px-4 h-[45px] text-sm shadow-sm
-                                   bg-white dark:bg-gray-700
-                                   text-gray-800 dark:text-gray-100
-                                   border-gray-300 dark:border-gray-600
-                                   focus:outline-none focus:ring-2 focus:ring-blue-500 @error('classification') border-red-500 @enderror"
-                            required>
-                        <option value="">Select Classification</option>
-                        <option value="Residential" {{ old('classification') == 'Residential' ? 'selected' : '' }}>Residential</option>
-                        <option value="Commercial" {{ old('classification') == 'Commercial' ? 'selected' : '' }}>Commercial</option>
-                        <option value="Industrial" {{ old('classification') == 'Industrial' ? 'selected' : '' }}>Industrial</option>
-                        <option value="Agricultural" {{ old('classification') == 'Agricultural' ? 'selected' : '' }}>Agricultural</option>
-                    </select>
-                    @error('classification')
-                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <!-- Submit Button -->
-                <div class="col-span-2">
-                    <button type="submit" class="w-full bg-blue-600 text-white h-[50px] rounded-xl text-sm font-medium 
-                                   hover:bg-blue-700 shadow-md transition flex items-center justify-center space-x-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                             stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                  d="M18 9v6m3-3h-6m-2-4a4 4 0 11-8 0 4 4 0 018 0zm-6 8a6 6 0 0112 0H7z" />
-                        </svg>
-                        <span>Register Account</span>
-                    </button>
+                <!-- Wizard Controls -->
+                <div class="flex items-center justify-between pt-2">
+                    <button type="button" id="wizPrev" class="px-4 h-[40px] rounded-md text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 disabled:opacity-50">Back</button>
+                    <div class="flex items-center gap-2">
+                        <button type="button" id="wizNext" class="px-5 h-[40px] rounded-md text-sm bg-blue-600 text-white">Next</button>
+                        <x-primary-button id="wizSubmit" type="submit" class="h-[40px] hidden">Submit Application</x-primary-button>
+                    </div>
                 </div>
             </form>
         </div>
     </div>
+
+    <script>
+        (function(){
+            var form = document.getElementById('newCustomerForm');
+            if (!form) return;
+            form.addEventListener('submit', async function(e){
+                e.preventDefault();
+                var btn = form.querySelector('button[type="submit"], [type="submit"]');
+                var old = btn ? btn.innerHTML : '';
+                if (btn){ btn.disabled = true; btn.innerHTML = 'Submitting...'; }
+                try{
+                    var first = form.querySelector('[name="first_name"]')?.value?.trim() || '';
+                    var last = form.querySelector('[name="last_name"]')?.value?.trim() || '';
+                    var brgy = form.querySelector('[name="barangay"]')?.value?.trim() || '';
+                    var city = form.querySelector('[name="city"]')?.value?.trim() || '';
+                    var prov = form.querySelector('[name="province"]')?.value?.trim() || '';
+                    var address = [brgy, city, prov].filter(Boolean).join(', ');
+                    var contact = form.querySelector('[name="contact_number"]')?.value?.trim() || '';
+                    var applicant = (first + ' ' + last).trim() || first || last;
+                    var errName = document.getElementById('nc_err_name');
+                    var errAddr = document.getElementById('nc_err_address');
+                    if (errName) errName.classList.add('hidden');
+                    if (errAddr) errAddr.classList.add('hidden');
+                    var hasError = false;
+                    if (!applicant){ hasError = true; if (errName) errName.classList.remove('hidden'); }
+                    if (!(brgy && city && prov)){ hasError = true; if (errAddr) errAddr.classList.remove('hidden'); }
+                    if (hasError){ throw new Error('Please fix the highlighted fields.'); }
+                    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+                    const res = await fetch('/api/connections',{
+                        method:'POST',
+                        headers:{ 'Content-Type':'application/json', 'Accept':'application/json', 'X-CSRF-TOKEN': token },
+                        body: JSON.stringify({ applicant_name: applicant, address: address || null, contact_no: contact || null })
+                    });
+                    if (!res.ok) {
+                        const err = await res.json().catch(()=>({ message: 'Failed to submit application' }));
+                        throw new Error(err.message || 'Failed to submit application');
+                    }
+                    const data = await res.json().catch(()=>({}));
+                    var alertHost = document.getElementById('ncAlert');
+                    if (alertHost){
+                        var ref = data?.id || data?.application?.id || '';
+                        alertHost.innerHTML = `<div class="rounded-md border border-green-300 bg-green-50 text-green-800 px-4 py-3 text-sm">Application submitted successfully${ref?` (Ref #${ref})`:''}. Redirecting to dashboard...</div>`;
+                        alertHost.classList.remove('hidden');
+                    }
+                    showToast('New Connection application submitted', 'success');
+                    form.reset();
+                    setTimeout(function(){ window.location.href = "{{ route('dashboard') }}"; }, 1200);
+                } catch(err){
+                    console.error(err);
+                    showToast(err.message || 'Failed to submit application', 'error');
+                } finally {
+                    if (btn){ btn.disabled = false; btn.innerHTML = old; }
+                }
+            });
+        })();
+    </script>
 </div>
 
 <!-- Register Existing Modal -->
@@ -382,8 +200,8 @@
                 <input type="number" id="modal_prev_reading" name="previous_reading" class="w-full border rounded px-3 h-[40px]" min="0" step="0.01" value="0">
             </div>
             <div class="flex justify-end space-x-2 pt-2">
-                <button type="button" class="px-4 h-[40px] rounded bg-gray-300" onclick="window.dispatchEvent(new CustomEvent('close-modal',{detail:'register-existing'}))">Cancel</button>
-                <button type="submit" class="px-4 h-[40px] rounded bg-blue-600 text-white">Save</button>
+                <x-secondary-button type="button" onclick="window.dispatchEvent(new CustomEvent('close-modal',{detail:'register-existing'}))">Cancel</x-secondary-button>
+                <x-primary-button type="submit">Save</x-primary-button>
             </div>
         </form>
     </div>
@@ -439,8 +257,8 @@
                 <textarea id="transfer_notes" name="notes" rows="3" class="w-full border rounded px-3 py-2"></textarea>
             </div>
             <div class="flex justify-end space-x-2 pt-2">
-                <button type="button" class="px-4 h-[40px] rounded bg-gray-300" onclick="window.dispatchEvent(new CustomEvent('close-modal',{detail:'transfer-ownership'}))">Cancel</button>
-                <button type="submit" class="px-4 h-[40px] rounded bg-blue-600 text-white">Transfer</button>
+                <x-secondary-button type="button" onclick="window.dispatchEvent(new CustomEvent('close-modal',{detail:'transfer-ownership'}))">Cancel</x-secondary-button>
+                <x-primary-button type="submit">Transfer</x-primary-button>
             </div>
         </form>
     </div>
@@ -511,8 +329,8 @@
                 <textarea id="reconnect_notes" name="notes" rows="3" class="w-full border rounded px-3 py-2"></textarea>
             </div>
             <div class="flex justify-end space-x-2 pt-2">
-                <button type="button" class="px-4 h-[40px] rounded bg-gray-300" onclick="window.dispatchEvent(new CustomEvent('close-modal',{detail:'reconnect-service'}))">Cancel</button>
-                <button type="submit" class="px-4 h-[40px] rounded bg-blue-600 text-white">Reconnect</button>
+                <x-secondary-button type="button" onclick="window.dispatchEvent(new CustomEvent('close-modal',{detail:'reconnect-service'}))">Cancel</x-secondary-button>
+                <x-primary-button type="submit">Reconnect</x-primary-button>
             </div>
         </form>
     </div>
@@ -561,31 +379,127 @@
     </script>
 </x-modal>
 
+<!-- Wizard Script -->
+<script>
+    (function(){
+        const sections = Array.from(document.querySelectorAll('[data-step]'));
+        const stepNo = document.getElementById('wizStepNo');
+        const stepTotal = document.getElementById('wizStepTotal');
+        const prev = document.getElementById('wizPrev');
+        const next = document.getElementById('wizNext');
+        const submit = document.getElementById('wizSubmit');
+        const form = document.getElementById('newCustomerForm');
+        const alertHost = document.getElementById('ncAlert');
+        let step = 1;
+
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+        async function checkDuplicatesByNameAddress(){
+            const first = form.querySelector('[name="first_name"]')?.value?.trim() || '';
+            const last = form.querySelector('[name="last_name"]')?.value?.trim() || '';
+            const brgy = form.querySelector('[name="barangay"]')?.value?.trim() || '';
+            const city = form.querySelector('[name="city"]')?.value?.trim() || '';
+            const prov = form.querySelector('[name="province"]')?.value?.trim() || '';
+            const name = (first + ' ' + last).trim();
+            const address = [brgy, city, prov].filter(Boolean).join(', ');
+            if (!name || !address) return { customers: [], applications: [] };
+            const url = `/api/customer/duplicates?name=${encodeURIComponent(name)}&address=${encodeURIComponent(address)}`;
+            const res = await fetch(url, { headers:{ 'Accept':'application/json' } });
+            if (!res.ok) return { customers: [], applications: [] };
+            return await res.json();
+        }
+
+        async function checkDuplicatesByIdNumber(){
+            const idno = form.querySelector('[name="id_number"]')?.value?.trim() || '';
+            if (!idno) return { customers: [], applications: [] };
+            const url = `/api/customer/duplicates?id_number=${encodeURIComponent(idno)}`;
+            const res = await fetch(url, { headers:{ 'Accept':'application/json' } });
+            if (!res.ok) return { customers: [], applications: [] };
+            return await res.json();
+        }
+
+        function showWarn(html){
+            if (!alertHost) return;
+            alertHost.innerHTML = `<div class="rounded-md border border-yellow-300 bg-yellow-50 text-yellow-800 px-4 py-3 text-sm">${html}</div>`;
+            alertHost.classList.remove('hidden');
+        }
+
+        function clearWarn(){ if (alertHost){ alertHost.innerHTML=''; alertHost.classList.add('hidden'); } }
+
+        function showStep(n){
+            sections.forEach(s => s.classList.toggle('hidden', Number(s.getAttribute('data-step')) !== n));
+            if (stepNo) stepNo.textContent = String(n);
+            if (stepTotal) stepTotal.textContent = String(sections.length);
+            if (prev) prev.disabled = (n === 1);
+            if (next) next.classList.toggle('hidden', n === sections.length);
+            if (submit) submit.classList.toggle('hidden', n !== sections.length);
+        }
+
+        function validateStep(n){
+            const current = sections.find(s => Number(s.getAttribute('data-step')) === n);
+            if (!current) return true;
+            let ok = true;
+            const required = current.querySelectorAll('[name][required]');
+            required.forEach(el => {
+                const name = el.getAttribute('name');
+                const err = current.querySelector(`[data-err="${name}"]`);
+                let valid = true;
+                if (el.type === 'file') { valid = el.files && el.files.length > 0; }
+                else if (el.type === 'checkbox') { valid = el.checked; }
+                else { valid = !!(el.value && el.value.trim()); }
+                if (err) err.classList.toggle('hidden', valid);
+                if (!valid) ok = false;
+            });
+            return ok;
+        }
+
+        if (prev) prev.addEventListener('click', () => { if (step > 1) { clearWarn(); step--; showStep(step); } });
+        if (next) next.addEventListener('click', async () => {
+            if (!validateStep(step)) return;
+            if (step === 1){
+                try{
+                    const d = await checkDuplicatesByNameAddress();
+                    if ((d.customers && d.customers.length) || (d.applications && d.applications.length)){
+                        const c = d.customers?.length||0; const a = d.applications?.length||0;
+                        showWarn(`Potential duplicates found: ${c} customer(s), ${a} application(s). Proceed if you are sure. <a href=\"/applications\" class=\"underline\">View Applications</a>`);
+                    } else { clearWarn(); }
+                } catch(_){ /* ignore */ }
+            }
+            step = Math.min(sections.length, step+1);
+            showStep(step);
+        });
+        if (form) form.addEventListener('submit', async (e) => {
+            if (!validateStep(step)) { e.preventDefault(); return; }
+            try{
+                const d = await checkDuplicatesByIdNumber();
+                if (d.applications && d.applications.length){
+                    const go = confirm('Another application with the same ID number exists. Do you still want to submit?');
+                    if (!go){ e.preventDefault(); return; }
+                }
+            } catch(_){ /* ignore */ }
+        });
+
+        // Image previews
+        function bindPreview(name){
+            const input = form.querySelector(`[name="${name}"]`);
+            const img = form.querySelector(`[data-preview="${name}"]`);
+            if (!input || !img) return;
+            input.addEventListener('change', () => {
+                const f = input.files?.[0];
+                if (!f){ img.classList.add('hidden'); img.src=''; return; }
+                const url = URL.createObjectURL(f);
+                img.src = url; img.classList.remove('hidden');
+            });
+        }
+        bindPreview('id_front');
+        bindPreview('id_back');
+        bindPreview('selfie');
+        showStep(step);
+    })();
+</script>
+
 <!-- Toggle Script -->
 <script>
-    let searchTimeout = null;
-
-    function showPanel(panel) {
-        const existingPanel = document.getElementById('existingPanel');
-        const newPanel = document.getElementById('newPanel');
-        const existingBtn = document.getElementById('existingBtn');
-        const newBtn = document.getElementById('newBtn');
-
-        if (panel === 'existing') {
-            existingPanel.classList.remove('hidden');
-            newPanel.classList.add('hidden');
-            existingBtn.classList.add('bg-blue-600','text-white');
-            newBtn.classList.remove('bg-green-600','text-white');
-            newBtn.classList.add('bg-gray-200','dark:bg-gray-700');
-        } else {
-            newPanel.classList.remove('hidden');
-            existingPanel.classList.add('hidden');
-            newBtn.classList.add('bg-green-600','text-white');
-            existingBtn.classList.remove('bg-blue-600','text-white');
-            existingBtn.classList.add('bg-gray-200','dark:bg-gray-700');
-        }
-    }
-
     // Dynamic search functionality
     function performSearch() {
         const searchTerm = document.getElementById('searchInput').value.trim();
@@ -825,5 +739,44 @@
             setTimeout(() => toast.remove(), 300);
         }, timeout);
     }
+
+    // Auto-capitalize first letter of each word for name/address-like fields
+    function titleCase(input){
+        if (!input) return; 
+        input.addEventListener('input', () => {
+            const val = input.value;
+            // Only transform casing, keep cursor position stable where possible
+            const tc = val.replace(/\b(\p{L})(\p{L}*)/gu, (m, a, b) => a.toUpperCase() + (b || '').toLowerCase());
+            if (tc !== val) input.value = tc;
+        });
+    }
+    // Attach to relevant fields
+    document.addEventListener('DOMContentLoaded', () => {
+        ['first_name','last_name','contact_number'].forEach(n => {
+            const el = document.querySelector(`[name="${n}"]`);
+            if (el && (n !== 'contact_number')) titleCase(el);
+        });
+        const addr = document.querySelector('[name="address"]');
+        if (addr) titleCase(addr);
+        const form = document.getElementById('newCustomerForm');
+        if (form) {
+            form.addEventListener('submit', (e) => {
+                const req = {
+                    first_name: form.querySelector('[name="first_name"]').value.trim(),
+                    last_name: form.querySelector('[name="last_name"]').value.trim(),
+                    address: form.querySelector('[name="address"]').value.trim(),
+                    start_date: form.querySelector('[name="start_date"]').value.trim(),
+                    meter_no: form.querySelector('[name="meter_no"]').value.trim(),
+                    meter_size: form.querySelector('[name="meter_size"]').value.trim(),
+                    classification: form.querySelector('[name="classification"]').value.trim(),
+                };
+                const missing = Object.entries(req).filter(([,v]) => !v).map(([k]) => k.replace('_',' '));
+                if (missing.length) {
+                    e.preventDefault();
+                    alert('Please complete all required fields before registering. Missing: ' + missing.join(', '));
+                }
+            });
+        }
+    });
 </script>
 

@@ -3,7 +3,7 @@
 @section('title', 'Bill Details - ' . $billingRecord->customer->name)
 
 @section('content')
-<div class="max-w-4xl mx-auto px-6 py-8 font-[Inter]">
+<div class="max-w-4xl mx-auto px-6 py-8">
     <div class="mb-8">
         <h1 class="text-2xl font-extrabold text-gray-800 dark:text-gray-100">Bill Details</h1>
         <p class="text-gray-500 dark:text-gray-400 text-sm">Complete bill information for {{ $billingRecord->customer->name }}</p>
@@ -116,18 +116,18 @@
         @endif
 
         <!-- Action Buttons -->
-        <div class="flex justify-center space-x-4 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <button onclick="printBill()" 
-                    class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition">
-                🖨️ Print Bill
+        <div class="flex justify-center space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <button onclick="printBill()" title="Generate & Print Bill"
+                    class="inline-flex items-center justify-center w-10 h-10 rounded-md bg-blue-600 hover:bg-blue-700 text-white transition">
+                <x-heroicon-o-printer class="w-5 h-5" />
             </button>
-            <button onclick="updateStatus()" 
-                    class="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition">
-                📝 Update Status
+            <button onclick="updateStatus()" title="Update Status"
+                    class="inline-flex items-center justify-center w-10 h-10 rounded-md bg-gray-700 hover:bg-gray-800 text-white transition">
+                <x-heroicon-o-pencil-square class="w-5 h-5" />
             </button>
-            <button onclick="window.close()" 
-                    class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition">
-                ❌ Close
+            <button onclick="window.close()" title="Close"
+                    class="inline-flex items-center justify-center w-10 h-10 rounded-md bg-red-600 hover:bg-red-700 text-white transition">
+                <x-heroicon-o-x-mark class="w-5 h-5" />
             </button>
         </div>
     </div>
@@ -135,7 +135,7 @@
 
 <script>
 function printBill() {
-    window.print();
+    window.open(`/records/billing/{{ $billingRecord->id }}/print`, '_blank');
 }
 
 function updateStatus() {

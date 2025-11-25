@@ -1,9 +1,9 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
 @section('title', 'Issue Complaints')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-6 py-8 font-[Inter]">
+<div class="max-w-7xl mx-auto px-6 py-8 font-[Poppins]">
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6">
         <h1 class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Issue Complaints</h1>
         <div class="overflow-x-auto">
@@ -32,7 +32,7 @@
                 </tbody>
             </table>
         </div>
-        <div class="mt-4">{{ $reports->links() }}</div>
+        
     </div>
 </div>
 @endsection

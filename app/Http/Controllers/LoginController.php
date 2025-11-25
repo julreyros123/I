@@ -33,12 +33,8 @@ class LoginController extends Controller
         }
         
 
-        if ($user->role === 'admin') {
-            return redirect()->route('admin.dashboard');
-        } elseif ($user->role === 'staff') {
-            return redirect()->route('staff-portal');
-        }
-        return redirect()->route('dashboard');
+        // After successful login, always go to the admin dashboard
+        return redirect()->route('admin.dashboard');
     }
 
     return back()->withErrors(['email' => 'Invalid credentials'])->withInput();

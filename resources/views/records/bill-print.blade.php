@@ -17,33 +17,38 @@
             margin: 0 auto;
             border: 2px solid #333;
             padding: 30px;
+            position: relative;
+        }
+        .bill-container::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url('{{ asset('images/mawasa-logo.png') }}') center/60% no-repeat;
+            opacity: 0.06;
+            pointer-events: none;
         }
         .header {
-            text-align: center;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            align-items: center;
+            gap: 16px;
             border-bottom: 2px solid #333;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
+            padding-bottom: 14px;
+            margin-bottom: 24px;
         }
-        .company-name {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
+        .company-name { font-size: 22px; font-weight: bold; margin-bottom: 2px; }
         .company-address {
             font-size: 14px;
             color: #666;
-            margin-bottom: 15px;
+            margin-bottom: 4px;
         }
-        .bill-title {
-            font-size: 20px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
+        .bill-title { font-size: 22px; font-weight: bold; text-transform: uppercase; text-align: right; }
+        .logo { height: 70px; width: auto; }
         .customer-info {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            margin-bottom: 30px;
+            gap: 20px;
+            margin-bottom: 20px;
         }
         .info-section h3 {
             font-size: 16px;
@@ -57,7 +62,7 @@
             font-size: 14px;
         }
         .readings {
-            margin-bottom: 30px;
+            margin-bottom: 18px;
         }
         .readings h3 {
             font-size: 16px;
@@ -86,57 +91,10 @@
             font-size: 18px;
             font-weight: bold;
         }
-        .charges {
-            margin-bottom: 30px;
-        }
-        .charges h3 {
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            border-bottom: 1px solid #ccc;
-            padding-bottom: 5px;
-        }
-        .charges-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .charges-table td {
-            padding: 8px 12px;
-            border-bottom: 1px solid #eee;
-        }
-        .charges-table .label {
-            text-align: left;
-        }
-        .charges-table .amount {
-            text-align: right;
-            font-weight: bold;
-        }
-        .total-row {
-            border-top: 2px solid #333;
-            font-size: 16px;
-            font-weight: bold;
-            background: #f0f0f0;
-        }
-        .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        .status-pending {
-            background: #fef3cd;
-            color: #856404;
-        }
-        .status-paid {
-            background: #d4edda;
-            color: #155724;
-        }
-        .status-overdue {
-            background: #f8d7da;
-            color: #721c24;
-        }
+        .totals-wrap { display: grid; grid-template-columns: 1fr 280px; gap: 20px; align-items: start; }
+        .totals-box { border: 1px solid #ccc; background: #fafafa; border-radius: 6px; padding: 10px 14px; }
+        .totals-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; }
+        .totals-row.total { border-top: 2px solid #333; margin-top: 8px; padding-top: 10px; font-weight: bold; font-size: 16px; }
         .footer {
             margin-top: 40px;
             text-align: center;
@@ -145,6 +103,12 @@
             border-top: 1px solid #ccc;
             padding-top: 20px;
         }
+        .usage-chart { margin-top: 16px; }
+        .usage-chart h3 { font-size: 16px; font-weight: bold; margin: 0 0 8px; }
+        .bars { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; align-items: end; height: 140px; }
+        .bar { background: #3b82f6; position: relative; border-radius: 4px 4px 0 0; }
+        .bar span { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); font-size: 11px; color: #333; margin-bottom: 4px; }
+        .bar .label { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); font-size: 11px; color: #555; white-space: nowrap; }
         @media print {
             body { margin: 0; }
             .bill-container { border: none; }
@@ -155,12 +119,30 @@
     <div class="bill-container">
         <!-- Header -->
         <div class="header">
-            <div style="text-align: center; margin-bottom: 20px;">
-                <img src="{{ asset('images/mawasa-logo.png') }}" alt="MAWASA Logo" style="height: 80px; width: auto; margin-bottom: 10px;">
+            <img src="{{ asset('images/mawasa-logo.png') }}" alt="MAWASA Logo" class="logo">
+            <div>
+                <div class="company-name">MANAMBULAN WATERWORKS &amp; SANITATION ASSOCIATION, INC.</div>
+                <div class="company-address">Brgy. Manambulan, Tugbok District, Davao City</div>
+                <div class="company-address">E-mail: — | Phone: —</div>
             </div>
-            <div class="company-name">MANAMBULAN WATERWORKS AND SANITATION INC.</div>
-            <div class="company-address">Brgy. Manambulan Tugbok District, Davao City</div>
-            <div class="bill-title">Water Bill</div>
+
+        <!-- Usage Chart: Last 5 Months -->
+        @if(!empty($usageSeries ?? []))
+            @php $maxVal = max(array_map(fn($i) => $i['value'], $usageSeries)); $maxVal = $maxVal > 0 ? $maxVal : 1; @endphp
+            <div class="usage-chart">
+                <h3>Usage (Last 5 Months)</h3>
+                <div class="bars">
+                    @foreach($usageSeries as $pt)
+                        @php $h = (int) round(($pt['value'] / $maxVal) * 120); @endphp
+                        <div class="bar" style="height: {{ $h }}px">
+                            <span>{{ number_format($pt['value'], 1) }}</span>
+                            <div class="label">{{ $pt['label'] }}</div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+            <div class="bill-title">WATER BILL INVOICE</div>
         </div>
 
         <!-- Customer Information -->
@@ -178,64 +160,52 @@
                 <h3>Billing Information</h3>
                 <p><strong>Billing Period:</strong> {{ $billingRecord->getBillingPeriod() }}</p>
                 <p><strong>Bill Date:</strong> {{ $billingRecord->created_at->format('M d, Y') }}</p>
-                <p><strong>Due Date:</strong> {{ $billingRecord->date_to ? $billingRecord->date_to->format('M d, Y') : 'N/A' }}</p>
-                <p><strong>Status:</strong> 
-                    <span class="status-badge status-{{ strtolower(str_replace(' ', '-', $billingRecord->bill_status)) }}">
-                        {{ $billingRecord->bill_status }}
-                    </span>
-                </p>
+                <p><strong>Invoice #:</strong> {{ $billingRecord->id }}</p>
+                <p><strong>Due Date:</strong> {{ $billingRecord->due_date ? $billingRecord->due_date->format('M d, Y') : 'N/A' }}</p>
             </div>
         </div>
 
-        <!-- Reading Information -->
-        <div class="readings">
-            <h3>Reading Information</h3>
-            <div class="reading-grid">
-                <div class="reading-item">
-                    <div class="reading-label">Previous Reading</div>
-                    <div class="reading-value">{{ number_format($billingRecord->previous_reading, 2) }}</div>
+        <!-- Reading Information and Totals -->
+        @php
+            $consumptionCost = $billingRecord->consumption_cu_m * $billingRecord->base_rate;
+            $chargesPlusPenalty = $consumptionCost + ($billingRecord->maintenance_charge ?? 0) + ($billingRecord->overdue_penalty ?? 0);
+            $discount = $billingRecord->advance_payment ?? 0; // treat advance payment as discount/credit
+            $subtotal = $chargesPlusPenalty; // no VAT; subtotal before discount/tax
+            $tax = 0.00;
+            $total = $billingRecord->total_amount;
+        @endphp
+        <div class="totals-wrap">
+            <div>
+                <div class="readings">
+                    <h3>Reading Information</h3>
+                    <div class="reading-grid">
+                        <div class="reading-item">
+                            <div class="reading-label">Previous Reading</div>
+                            <div class="reading-value">{{ number_format($billingRecord->previous_reading, 2) }}</div>
+                        </div>
+                        <div class="reading-item">
+                            <div class="reading-label">Current Reading</div>
+                            <div class="reading-value">{{ number_format($billingRecord->current_reading, 2) }}</div>
+                        </div>
+                        <div class="reading-item">
+                            <div class="reading-label">Consumption (m³)</div>
+                            <div class="reading-value">{{ number_format($billingRecord->consumption_cu_m, 2) }}</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="reading-item">
-                    <div class="reading-label">Current Reading</div>
-                    <div class="reading-value">{{ number_format($billingRecord->current_reading, 2) }}</div>
+                <div style="font-size:12px;color:#666;margin-top:6px;">
+                    Rate: ₱{{ number_format($billingRecord->base_rate, 2) }}/m³ • Maintenance: ₱{{ number_format($billingRecord->maintenance_charge, 2) }}
                 </div>
-                <div class="reading-item">
-                    <div class="reading-label">Consumption (m³)</div>
-                    <div class="reading-value">{{ number_format($billingRecord->consumption_cu_m, 2) }}</div>
-                </div>
+            </div>
+            <div class="totals-box">
+                <div class="totals-row"><span>SUBTOTAL</span><span>₱{{ number_format($subtotal, 2) }}</span></div>
+                <div class="totals-row"><span>DISCOUNT (Advance)</span><span>-₱{{ number_format($discount, 2) }}</span></div>
+                <div class="totals-row"><span>TAX</span><span>₱{{ number_format($tax, 2) }}</span></div>
+                <div class="totals-row total"><span>TOTAL</span><span>₱{{ number_format($total, 2) }}</span></div>
             </div>
         </div>
 
-        <!-- Charges Breakdown -->
-        <div class="charges">
-            <h3>Charges Breakdown</h3>
-            <table class="charges-table">
-                <tr>
-                    <td class="label">Water Consumption ({{ number_format($billingRecord->consumption_cu_m, 2) }} m³ × ₱{{ number_format($billingRecord->base_rate, 2) }})</td>
-                    <td class="amount">₱{{ number_format($billingRecord->consumption_cu_m * $billingRecord->base_rate, 2) }}</td>
-                </tr>
-                <tr>
-                    <td class="label">Maintenance Charge</td>
-                    <td class="amount">₱{{ number_format($billingRecord->maintenance_charge, 2) }}</td>
-                </tr>
-                @if($billingRecord->advance_payment > 0)
-                <tr style="color: green;">
-                    <td class="label">Advance Payment (Credit)</td>
-                    <td class="amount">-₱{{ number_format($billingRecord->advance_payment, 2) }}</td>
-                </tr>
-                @endif
-                @if($billingRecord->overdue_penalty > 0)
-                <tr style="color: red;">
-                    <td class="label">Overdue Penalty</td>
-                    <td class="amount">₱{{ number_format($billingRecord->overdue_penalty, 2) }}</td>
-                </tr>
-                @endif
-                <tr class="total-row">
-                    <td class="label">TOTAL AMOUNT</td>
-                    <td class="amount">₱{{ number_format($billingRecord->total_amount, 2) }}</td>
-                </tr>
-            </table>
-        </div>
+        <!-- Removed description table as requested; totals box covers summary -->
 
         <!-- Notes -->
         @if($billingRecord->notes)
@@ -249,8 +219,8 @@
 
         <!-- Footer -->
         <div class="footer">
-            <p>Thank you for your payment!</p>
-            <p>For inquiries, please contact us at our office.</p>
+            <p>Thank you for your business!</p>
+            <p>Payment is due within ____ days. For inquiries, please contact our office.</p>
             <p>Printed on: {{ now()->format('M d, Y g:i A') }}</p>
         </div>
     </div>

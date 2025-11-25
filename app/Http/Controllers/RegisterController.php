@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Customer;
 use App\Models\Register;
+use App\Services\AccountNumberGenerator;
+use App\Services\ScoringService;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -64,20 +66,30 @@ class RegisterController extends Controller
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'address' => 'required|string',
+            'barangay' => 'required|string|max:255',
+            'city' => 'required|string|max:255',
+            'province' => 'required|string|max:255',
             'contact_number' => 'nullable|string|max:50',
-            'start_date' => 'required|date|before_or_equal:today',
-            'meter_no' => 'nullable|string|max:255',
-            'meter_size' => 'nullable|string|max:50',
-            'classification' => 'required|string|in:Residential,Commercial,Industrial,Agricultural',
+            // KYC
+            'id_type' => 'required|string|max:50',
+            'id_number' => 'required|string|max:100',
+            // Require actual image files with sane dimensions to reduce chance of random/invalid uploads
+            'id_front' => 'required|image|mimes:jpg,jpeg,png,webp|max:5120|dimensions:min_width=400,min_height=250',
+            'id_back' => 'required|image|mimes:jpg,jpeg,png,webp|max:5120|dimensions:min_width=400,min_height=250',
+            'selfie' => 'required|image|mimes:jpg,jpeg,png,webp|max:5120|dimensions:min_width=400,min_height=250',
+            'consent' => 'accepted',
         ], [
             'first_name.required' => 'First name is required.',
             'last_name.required' => 'Last name is required.',
-            'address.required' => 'Address is required.',
-            'start_date.required' => 'Start date is required.',
-            'start_date.before_or_equal' => 'Start date cannot be in the future.',
-            'classification.required' => 'Connection classification is required.',
-            'classification.in' => 'Please select a valid connection classification.',
+            'barangay.required' => 'Barangay is required.',
+            'city.required' => 'City is required.',
+            'province.required' => 'Province is required.',
+            'id_type.required' => 'ID type is required.',
+            'id_number.required' => 'ID number is required.',
+            'id_front.required' => 'ID front image is required.',
+            'id_back.required' => 'ID back image is required.',
+            'selfie.required' => 'Selfie is required.',
+            'consent.accepted' => 'Please confirm consent to proceed.',
         ]);
 
         if ($validator->fails()) {
@@ -87,17 +99,23 @@ class RegisterController extends Controller
         try {
             DB::beginTransaction();
 
-            // Generate account number
-            $accountNo = $this->generateAccountNumber();
+            // Generate account number (AA-XXXXXX-R)
+            $generator = new AccountNumberGenerator();
+            $accountNo = $generator->next();
 
-            // Create customer record
+            // Compose full address from components
+            $address = trim(implode(', ', array_filter([
+                trim((string)$request->barangay),
+                trim((string)$request->city),
+                trim((string)$request->province),
+            ])));
+
+            // Create customer record (meter fields deferred until after verification)
             $customer = Customer::create([
                 'account_no' => $accountNo,
                 'name' => trim($request->first_name . ' ' . $request->last_name),
-                'address' => trim($request->address),
-                'meter_no' => $request->meter_no ? trim($request->meter_no) : null,
-                'meter_size' => $request->meter_size ?: null,
-                'status' => 'Active',
+                'address' => $address,
+                'status' => 'Pending',
                 'previous_reading' => 0,
             ]);
 
@@ -105,11 +123,55 @@ class RegisterController extends Controller
             Register::create([
                 'account_no' => $accountNo,
                 'name' => trim($request->first_name . ' ' . $request->last_name),
-                'address' => trim($request->address),
+                'address' => $address,
                 'contact_no' => $request->contact_number ? trim($request->contact_number) : null,
-                'connection_classification' => $request->classification,
-                'status' => 'Active',
+                'connection_classification' => 'Residential',
+                'status' => 'Pending',
             ]);
+
+            // Store KYC documents
+            $disk = 'public';
+            $base = 'kyc';
+            $frontPath = $request->file('id_front')->store($base, $disk);
+            $backPath = $request->file('id_back')->store($base, $disk);
+            $selfiePath = $request->file('selfie')->store($base, $disk);
+
+            // Create Customer Application record (workflow starts at registered)
+            $application = \App\Models\CustomerApplication::create([
+                'customer_id' => $customer->id,
+                'applicant_name' => trim($request->first_name . ' ' . $request->last_name),
+                'address' => $address,
+                'contact_no' => $request->contact_number ? trim($request->contact_number) : null,
+                'status' => 'registered',
+                'documents' => [
+                    'id_type' => $request->string('id_type'),
+                    'id_number' => $request->string('id_number'),
+                    'id_front' => $frontPath,
+                    'id_back' => $backPath,
+                    'selfie' => $selfiePath,
+                    'consent' => (bool) $request->boolean('consent'),
+                ],
+                'created_by' => optional($request->user())->id,
+            ]);
+
+            // Auto-score the application
+            try {
+                $scorer = new ScoringService();
+                $res = $scorer->score($application);
+                $application->score = $res['score'] ?? null;
+                $application->score_breakdown = $res['breakdown'] ?? null;
+                $application->risk_level = $res['risk_level'] ?? null;
+                if (($res['score'] ?? 0) >= 80) {
+                    $application->decision = 'approve';
+                } elseif (($res['score'] ?? 0) >= 60) {
+                    $application->decision = 'review';
+                } else {
+                    $application->decision = 'reject';
+                }
+                $application->save();
+            } catch (\Throwable $t) {
+                Log::warning('Auto-score failed: '.$t->getMessage());
+            }
 
             DB::commit();
 
@@ -126,21 +188,5 @@ class RegisterController extends Controller
         }
     }
 
-    private function generateAccountNumber()
-    {
-        // Generate a unique account number
-        // Format: YYMMDD + random 4 digits
-        $prefix = date('ymd');
-        $random = str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
-        $accountNo = $prefix . $random;
-
-        // Ensure uniqueness in both customers and register tables
-        while (Customer::where('account_no', $accountNo)->exists() || 
-               Register::where('account_no', $accountNo)->exists()) {
-            $random = str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
-            $accountNo = $prefix . $random;
-        }
-
-        return $accountNo;
-    }
+    // Account numbers now generated via AccountNumberGenerator service
 }

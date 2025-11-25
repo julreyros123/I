@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use App\Models\BillingRecord;
 use App\Models\Customer;
 use App\Services\PaymentService;
+use Illuminate\Support\Carbon;
 
 class BillingController extends Controller
 {
@@ -85,6 +86,12 @@ class BillingController extends Controller
             }
 
             // Create billing record
+            $dueDate = null;
+            if (!empty($data['date_to'])) {
+                $dueDate = Carbon::parse($data['date_to']);
+            } else {
+                $dueDate = Carbon::now()->endOfMonth();
+            }
             $billingRecord = BillingRecord::create([
                 'customer_id' => $customer->id,
                 'account_no' => $data['account_no'],
@@ -97,10 +104,11 @@ class BillingController extends Controller
                 'overdue_penalty' => $data['overdue_penalty'] ?? 0,
                 'vat' => $data['vat'] ?? 0,
                 'total_amount' => $data['total_amount'],
-                'bill_status' => 'Pending', // Default status for new bills
+                'bill_status' => 'Outstanding Payment', // Default status for new bills
                 'notes' => null,
                 'date_from' => $data['date_from'],
                 'date_to' => $data['date_to'],
+                'due_date' => $dueDate,
             ]);
 
             // Update customer's previous reading

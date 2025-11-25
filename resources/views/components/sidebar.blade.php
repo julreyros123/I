@@ -38,38 +38,7 @@
                 </a>
             </li>
 
-            {{-- Admin (visible to admins only) --}}
-            @auth
-                @if(optional(auth()->user())->role === 'admin')
-                <li>
-                    <a href="{{ route('admin.dashboard') }}"
-                       class="flex items-center gap-3 px-3 py-2 rounded-lg 
-                              hover:bg-blue-700/60 dark:hover:bg-gray-800 
-                              transition-all duration-200 ease-in-out font-medium">
-                        <x-heroicon-o-cog-6-tooth class="w-5 h-5 text-blue-300 dark:text-gray-400" />
-                        <span>Admin</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('admin.notices') }}"
-                       class="flex items-center gap-3 px-3 py-2 rounded-lg 
-                              hover:bg-blue-700/60 dark:hover:bg-gray-800 
-                              transition-all duration-200 ease-in-out font-medium">
-                        <x-heroicon-o-bell class="w-5 h-5 text-blue-300 dark:text-gray-400" />
-                        <span>Notice to Staff</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('admin.reports') }}"
-                       class="flex items-center gap-3 px-3 py-2 rounded-lg 
-                              hover:bg-blue-700/60 dark:hover:bg-gray-800 
-                              transition-all duration-200 ease-in-out font-medium">
-                        <x-heroicon-o-exclamation-triangle class="w-5 h-5 text-yellow-400" />
-                        <span>Issue Complaints</span>
-                    </a>
-                </li>
-                @endif
-            @endauth
+            {{-- Admin links removed from staff sidebar (admin has its own interface) --}}
 
             {{-- Register --}}
             <li>
@@ -143,6 +112,13 @@
                            class="block px-3 py-2 hover:bg-blue-700/70 dark:hover:bg-gray-800 
                                   transition-all duration-200 ease-in-out rounded-md">
                            Billing Records
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('records.billing.archived') }}"
+                           class="block px-3 py-2 hover:bg-blue-700/70 dark:hover:bg-gray-800 
+                                  transition-all duration-200 ease-in-out rounded-md">
+                           Archived Billing
                         </a>
                     </li>
                     <li>

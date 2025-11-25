@@ -68,6 +68,13 @@
             </div>
         </div>
 
+        <!-- Policy Notice -->
+        <div class="mt-6 p-4 border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg">
+            <p class="text-sm text-yellow-800 dark:text-yellow-200">
+                Settle your outstanding balance to avoid disconnection.
+            </p>
+        </div>
+
         <!-- Action Buttons -->
         <div class="mt-8 flex justify-center space-x-4">
             <button onclick="window.print()" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md transition">

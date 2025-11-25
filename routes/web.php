@@ -11,8 +11,12 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\Admin\MeterController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\StaffProgressController;
+use App\Http\Controllers\BillEventController;
+use App\Http\Controllers\ConnectionsController;
 
 
 Route::get('/', function () {
@@ -26,6 +30,28 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::get('/admin', [AdminController::class, 'index'])->middleware('auth')->name('admin.dashboard');
 Route::get('/admin/notices', [AdminController::class, 'notices'])->middleware('auth')->name('admin.notices');
 Route::get('/admin/reports', [AdminController::class, 'reports'])->middleware('auth')->name('admin.reports');
+Route::get('/admin/reports/revenue', [AdminController::class, 'revenue'])->middleware('auth')->name('admin.reports.revenue');
+Route::get('/admin/customers', [AdminController::class, 'customers'])->middleware('auth')->name('admin.customers');
+Route::get('/admin/meters', [MeterController::class, 'index'])->middleware('auth')->name('admin.meters');
+Route::get('/admin/activity-log', [AdminController::class, 'activityLog'])->middleware('auth')->name('admin.activity-log');
+Route::post('/admin/billing/{id}/archive', [RecordController::class, 'archive'])->middleware('auth')->name('admin.billing.archive');
+Route::get('/admin/billing/archived', [AdminController::class, 'archivedBilling'])->middleware('auth')->name('admin.billing.archived');
+Route::middleware(['auth'])->group(function () {
+    Route::post('/admin/meters', [MeterController::class, 'store'])->name('admin.meters.store');
+    Route::patch('/admin/meters/{meter}', [MeterController::class, 'update'])->name('admin.meters.update');
+    Route::delete('/admin/meters/{meter}', [MeterController::class, 'destroy'])->name('admin.meters.destroy');
+    Route::post('/admin/meters/{meter}/assign', [MeterController::class, 'assign'])->name('admin.meters.assign');
+    Route::post('/admin/meters/{meter}/unassign', [MeterController::class, 'unassign'])->name('admin.meters.unassign');
+    Route::get('/admin/meters/api', [MeterController::class, 'apiIndex'])->name('admin.meters.api');
+    Route::get('/admin/meters/current', [MeterController::class, 'apiCurrentByAccount'])->name('admin.meters.current');
+    Route::get('/admin/meters/export', [MeterController::class, 'export'])->name('admin.meters.export');
+    Route::post('/admin/meters/bulk-status', [MeterController::class, 'bulkStatus'])->name('admin.meters.bulk-status');
+    Route::post('/admin/meters/import', [MeterController::class, 'import'])->name('admin.meters.import');
+    Route::get('/admin/meters/template', [MeterController::class, 'template'])->name('admin.meters.template');
+});
+
+// Billing Management Routes
+Route::get('/admin/billing', [AdminController::class, 'billing'])->middleware('auth')->name('admin.billing');
 
 // Use StaffPortalController for the dashboard (staff portal)
 Route::get('/dashboard', [StaffPortalController::class, 'index'])->name('dashboard')->middleware(['auth', 'verified']);
@@ -35,7 +61,7 @@ Route::get('/staff-portal', function () {
     return redirect()->route('dashboard');
 })->name('staff-portal')->middleware('auth');
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware('auth')->group(function () {
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
 });
 
@@ -43,6 +69,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    // Staff Bill Generation
+    Route::view('/bill-generation', 'billing-generation.index')->name('billing.generation');
 });
 
 // Routes for sidebar links with folder structure
@@ -55,14 +83,21 @@ Route::get('/customer', [CustomerController::class, 'index'])->name('customer.in
 Route::post('/api/customer/delete-multiple', [CustomerController::class, 'deleteMultiple'])->name('customer.deleteMultiple');
 Route::get('/billing', [RecordController::class, 'billingManagement'])->middleware('auth')->name('billing.management');
 Route::get('/records/billing', [RecordController::class, 'billing'])->middleware('auth')->name('records.billing');
+Route::get('/records/billing/archived', [RecordController::class, 'archivedBilling'])->middleware('auth')->name('records.billing.archived');
+Route::post('/records/billing/{id}/archive', [RecordController::class, 'archive'])->middleware('auth')->name('records.billing.archive');
+Route::post('/records/billing/{id}/restore', [RecordController::class, 'restore'])->middleware('auth')->name('records.billing.restore');
+Route::delete('/records/billing/{id}/force', [RecordController::class, 'forceDelete'])->middleware('auth')->name('records.billing.force');
 Route::get('/records/billing/{id}/generate', [RecordController::class, 'generateBill'])->middleware('auth')->name('records.billing.generate');
 Route::post('/records/billing/{id}/status', [RecordController::class, 'updateBillStatus'])->middleware('auth')->name('records.billing.status');
 Route::get('/records/billing/{id}/print', [RecordController::class, 'printBill'])->middleware('auth')->name('records.billing.print');
+Route::post('/records/billing/bulk-generate', [RecordController::class, 'bulkGenerate'])->middleware('auth')->name('records.billing.bulk-generate');
+Route::get('/records/billing/print-batch', [RecordController::class, 'printBatch'])->middleware('auth')->name('records.billing.print-batch');
 Route::get('/records/payments', [RecordController::class, 'payments'])->middleware('auth')->name('records.payments');
 Route::get('/records/reports', [RecordController::class, 'reports'])->middleware('auth')->name('records.reports');
 Route::post('/reports', [ReportController::class, 'store'])->middleware('auth')->name('reports.store');
 Route::get('/records/history', [RecordController::class, 'history'])->middleware('auth')->name('records.history');
 Route::get('/api/records/history', [RecordController::class, 'historyApi'])->middleware('auth')->name('api.records.history');
+Route::get('/api/records/billing-stats', [RecordController::class, 'billingStats'])->middleware('auth')->name('api.records.billing-stats');
 
 // Notifications
 Route::get('/api/notifications', [NotificationController::class, 'index'])->middleware('auth')->name('api.notifications.index');
@@ -74,6 +109,17 @@ Route::get('/api/notifications/recent', [NotificationController::class, 'recent'
 Route::post('/api/billing/compute', [BillingController::class, 'compute'])->middleware('auth')->name('api.billing.compute');
 Route::post('/api/billing/store', [BillingController::class, 'store'])->middleware('auth')->name('api.billing.store');
 Route::get('/api/billing/payment-history', [BillingController::class, 'getPaymentHistory'])->middleware('auth')->name('api.billing.payment-history');
+// Billing events (generate, deliver)
+Route::post('/api/billing/generate', [BillEventController::class, 'generate'])->middleware('auth')->name('api.billing.generate');
+Route::post('/api/billing/deliver', [BillEventController::class, 'deliver'])->middleware('auth')->name('api.billing.deliver');
+
+// Staff progress API
+Route::middleware('auth')->group(function () {
+    Route::get('/api/staff/progress/today', [StaffProgressController::class, 'today'])->name('api.staff.progress.today');
+    Route::put('/api/staff/progress/today', [StaffProgressController::class, 'updateToday'])->name('api.staff.progress.update');
+    Route::get('/api/staff/progress/breakdown', [StaffProgressController::class, 'breakdown'])->name('api.staff.progress.breakdown');
+    Route::post('/api/staff/progress/reset', [StaffProgressController::class, 'resetToday'])->name('api.staff.progress.reset');
+});
 
 // Register existing customer attach endpoint
 Route::post('/api/customer/attach', [CustomerController::class, 'attach'])->middleware('auth')->name('customer.attach');
@@ -82,10 +128,40 @@ Route::post('/api/customer/reconnect', [CustomerController::class, 'reconnectSer
 Route::get('/api/customer/next-account', [CustomerController::class, 'nextAccount'])->name('customer.nextAccount');
 Route::get('/api/customer/find', [CustomerController::class, 'findByAccount'])->middleware('auth')->name('customer.findByAccount');
 Route::get('/api/customer/search', [CustomerController::class, 'searchAccounts'])->middleware('auth')->name('customer.searchAccounts');
-Route::post('/api/customer', [CustomerController::class, 'store'])->name('customer.store');
+Route::post('/api/customer', [CustomerController::class, 'store'])->middleware('auth')->name('customer.store');
+Route::get('/api/customer/{id}', [CustomerController::class, 'show'])->middleware('auth')->name('customer.show');
+Route::patch('/api/customer/{id}', [CustomerController::class, 'update'])->middleware('auth')->name('customer.update');
+Route::put('/api/customer/{id}/verify', [CustomerController::class, 'verify'])->middleware('auth')->name('customer.verify');
+Route::get('/api/customer/duplicates', [CustomerController::class, 'duplicates'])->middleware('auth')->name('customer.duplicates');
 
+// Applications scoring and decisions
+Route::middleware('auth')->group(function(){
+    Route::get('/applications', [ApplicationsController::class, 'index'])->name('applications.index');
+    Route::get('/applications/{id}', [ApplicationsController::class, 'show'])->name('applications.show');
+    Route::get('/api/applications/latest', [ApplicationsController::class, 'latest'])->name('api.applications.latest');
+    Route::post('/api/applications/{id}/score', [ApplicationsController::class, 'score'])->name('api.applications.score');
+    Route::put('/api/applications/{id}/approve', [ApplicationsController::class, 'approve'])->name('api.applications.approve');
+    Route::put('/api/applications/{id}/reject', [ApplicationsController::class, 'reject'])->name('api.applications.reject');
+    Route::put('/api/applications/{id}/inspect', [ApplicationsController::class, 'inspect'])->name('api.applications.inspect');
+    Route::put('/api/applications/{id}/schedule', [ApplicationsController::class, 'schedule'])->name('api.applications.schedule');
+    Route::put('/api/applications/{id}/installed', [ApplicationsController::class, 'installed'])->name('api.applications.installed');
+});
+
+// New Connection workflow
+Route::middleware('auth')->group(function(){
+    Route::get('/api/connections', [ConnectionsController::class, 'index'])->name('connections.index');
+    Route::get('/api/connections/{id}', [ConnectionsController::class, 'show'])->name('connections.show');
+    Route::post('/api/connections', [ConnectionsController::class, 'store'])->name('connections.store');
+    Route::put('/api/connections/{id}/inspection', [ConnectionsController::class, 'inspection'])->name('connections.inspection');
+    Route::put('/api/connections/{id}/approve', [ConnectionsController::class, 'approve'])->name('connections.approve');
+    Route::put('/api/connections/{id}/assess', [ConnectionsController::class, 'assess'])->name('connections.assess');
+    Route::put('/api/connections/{id}/pay', [ConnectionsController::class, 'pay'])->name('connections.pay');
+    Route::put('/api/connections/{id}/schedule', [ConnectionsController::class, 'schedule'])->name('connections.schedule');
+    Route::put('/api/connections/{id}/install', [ConnectionsController::class, 'install'])->name('connections.install');
+});
 // Payment routes
 Route::get('/payment', [PaymentController::class, 'index'])->middleware('auth')->name('payment.index');
+Route::get('/api/payment/quick-search', [PaymentController::class, 'quickSearch'])->middleware('auth')->name('api.payment.quick-search');
 Route::post('/api/payment/search-customer', [PaymentController::class, 'searchCustomer'])->middleware('auth')->name('api.payment.search-customer');
 Route::post('/api/payment/process', [PaymentController::class, 'processPayment'])->middleware('auth')->name('api.payment.process');
 Route::get('/payment/receipt/{paymentRecordId}', [PaymentController::class, 'getPaymentReceipt'])->middleware('auth')->name('payment.receipt');

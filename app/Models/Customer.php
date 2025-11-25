@@ -13,9 +13,11 @@ class Customer extends Model
         'account_no',
         'name',
         'address',
+        'contact_no',
         'meter_no',
         'meter_size',
         'status',
+        'created_by',
         'previous_reading',
     ];
 

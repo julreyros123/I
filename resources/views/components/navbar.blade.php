@@ -61,9 +61,7 @@
                  class="hidden absolute right-0 mt-2 w-72 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
                 <div class="px-4 py-2 text-sm font-semibold">Notifications</div>
                 <ul id="topbarNotifList" class="max-h-80 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800"></ul>
-                <div class="px-4 py-2 text-xs text-right">
-                    <a href="{{ route('admin.notices') }}" class="text-blue-600 hover:text-blue-700">Manage notices</a>
-                </div>
+                
             </div>
         </div>
 

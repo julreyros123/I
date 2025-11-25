@@ -8,9 +8,32 @@
     @vite('resources/css/app.css')
     <style>
         body {
-            background: linear-gradient(135deg, #e0f2fe, #f9fafb, #dbeafe);
+            min-height: 100vh;
+            position: relative; /* create stacking context so ::before sits under content */
+            background-color: #0b1220; /* fallback */
             transition: background-color 0.3s ease, color 0.3s ease;
+            overflow: hidden;
         }
+        /* Blurred, darkened background using the provided image */
+        body::before,
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+        body::before {
+            background: url("{{ asset('images/ChatGPT Image Nov 11, 2025, 05_58_23 PM.png') }}") center/cover no-repeat, #0b1220;
+            filter: blur(6px) brightness(0.6) saturate(1.05);
+            transform: scale(1.02);
+        }
+        body::after {
+            background: rgba(2, 6, 23, 0.35);
+            z-index: 0;
+        }
+        /* Ensure page content is above background layers */
+        body > * { position: relative; z-index: 1; }
 
         .login-panel {
             width: 400px !important;
@@ -50,19 +73,24 @@
             accent-color: #2563eb;
             cursor: pointer;
         }
+        /* Custom logo size for fine control */
+        .logo-custom { width: 80px; height: 80px; }
+        @media (min-width: 768px){ .logo-custom { width: 160px; height: 160px; } }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen">
+<body class="min-h-screen">
+    <div class="w-full min-h-screen flex flex-col items-center justify-center px-4">
+        <!-- Header: Logo and Title -->
+        <header class="text-center mb-6" role="banner" aria-label="MAWASA">
+            <img src="{{ asset('images/ChatGPT Image Nov 11, 2025, 04_40_23 PM.png') }}" alt="MAWASA Logo" class="logo-custom rounded-full mx-auto mb-2 shadow-lg" />
+            <h1 class="text-3xl md:text-4xl font-extrabold tracking-wide text-blue-600 drop-shadow">MAWASA</h1>
+            <p class="text-xs text-gray-200">Manambulan Water and Sanitation</p>
+        </header>
 
-    <div class="login-panel shadow-lg rounded-lg p-6 mx-auto border">
-        <!-- Logo -->
-        <div class="text-center mb-6">
-            <img src="{{ asset('images/mawasa-logo.png') }}" alt="MAWASA Logo" class="w-16 h-16 rounded-full mx-auto mb-2 shadow" />
-            <h1 class="text-xl font-bold text-blue-700">MAWASA</h1>
-            <p class="text-xs text-gray-500">Manambulan Water and Sanitation</p>
-        </div>
-
+        <div class="login-panel shadow-lg rounded-lg p-6 mx-auto border">
         <!-- Login Form -->
+        <h2 class="text-xl font-semibold text-gray-900 mb-1 text-center">Sign in to your account</h2>
+        <p class="text-sm text-gray-500 mb-4 text-center">Use your MAWASA credentials</p>
         @php($loginAction = \Illuminate\Support\Facades\Route::has('login.custom') ? route('login.custom') : url('/login'))
         <form method="POST" action="{{ $loginAction }}" class="space-y-4" id="loginForm">
             @csrf
@@ -78,10 +106,10 @@
                 </div>
             @endif
 
-            <!-- Username -->
+            <!-- Email -->
             <div>
-                <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
-                <input type="text" id="username" name="email"
+                <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                <input type="email" id="email" name="email" autocomplete="email" required
                     class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
                     value="{{ old('email') }}">
             </div>
@@ -89,7 +117,7 @@
             <!-- Password with Eye Icon -->
             <div class="relative">
                 <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                <input type="password" id="password" name="password"
+                <input type="password" id="password" name="password" autocomplete="current-password" required
                     class="w-full px-3 pr-10 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
                 <div class="eye-icon" id="togglePassword">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -105,36 +133,45 @@
                 </div>
             </div>
 
-            <!-- Remember me -->
-            <div class="flex items-center space-x-2 mb-4">
-                <input 
-                    type="checkbox" 
-                    name="remember" 
-                    id="remember"
-                    class="h-4 w-4 rounded border border-gray-300 bg-white 
-                           checked:bg-blue-600 checked:border-blue-600 
-                           focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 
-                           transition-all duration-200 accent-blue-600"
-                >
-                <label for="remember" class="text-sm text-gray-600">Remember me</label>
+            <!-- Remember + Forgot Password -->
+            <div class="flex items-center justify-between mb-1 mt-1">
+                <div class="flex items-center space-x-2">
+                    <input 
+                        type="checkbox" 
+                        name="remember" 
+                        id="remember"
+                        class="h-4 w-4 rounded border border-gray-300 bg-white 
+                               checked:bg-blue-600 checked:border-blue-600 
+                               focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 
+                               transition-all duration-200 accent-blue-600"
+                    >
+                    <label for="remember" class="text-sm text-gray-600">Remember me</label>
+                </div>
+                @if (Route::has('password.request'))
+                    <a href="{{ route('password.request') }}" class="text-sm text-blue-600 hover:text-blue-700">Forgot password?</a>
+                @endif
             </div>
 
-            <!-- Sample Staff Autofill -->
-            <div class="mb-2 text-center">
-                <button type="button" id="sampleStaffBtn" class="text-xs text-blue-700 underline">Use sample staff account</button>
-                <p class="text-[11px] text-gray-500">Email: staff@mawasa.com · Password: password123</p>
-            </div>
-
-            <!-- Login Button -->
+            <!-- Login Button with icon and spinner -->
             <div class="text-center">
-                <button type="submit"
-                    class="w-[350px] h-[40px] bg-blue-500 hover:bg-blue-600 text-white rounded-md text-base transition">
-                    Login
+                <button type="submit" id="loginBtn"
+                    class="w-full h-[40px] bg-blue-500 hover:bg-blue-600 text-white rounded-md text-base transition inline-flex items-center justify-center gap-2">
+                    <!-- Lock Icon (outline) -->
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="w-5 h-5">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V7.5a4.5 4.5 0 10-9 0v3M5.25 10.5H18.75A2.25 2.25 0 0121 12.75v6A2.25 2.25 0 0118.75 21H5.25A2.25 2.25 0 013 18.75v-6A2.25 2.25 0 015.25 10.5z" />
+                    </svg>
+                    <span id="loginBtnLabel">Login</span>
+                    <!-- Spinner (Flowbite-style) -->
+                    <svg id="loginBtnSpinner" aria-hidden="true" class="hidden w-5 h-5 text-white animate-spin" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
+                      <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 26.026C84.9175 29.3625 86.7997 32.9973 88.1811 36.841C89.083 39.1687 91.5421 40.6781 93.9676 39.0409Z" fill="#93c5fd"/>
+                    </svg>
                 </button>
             </div>
 
-            <p class="text-xs text-center text-gray-500">Staff and administrator login</p>
+            <p class="text-xs text-center text-gray-500">Authorized personnel only</p>
         </form>
+        </div>
     </div>
 
     <script>
@@ -145,37 +182,38 @@
             passwordField.type = isPassword ? 'text' : 'password';
             this.querySelector('svg').style.color = isPassword ? '#2563eb' : '#9ca3af';
         });
-
-        // ======= REMEMBER ME =======
+        // ======= REMEMBER ME (minimal) =======
         window.addEventListener('DOMContentLoaded', () => {
             const email = localStorage.getItem('savedEmail');
-            const password = localStorage.getItem('savedPassword');
             const remember = localStorage.getItem('rememberMe') === 'true';
 
-            if (remember && email && password) {
-                document.getElementById('username').value = email;
-                document.getElementById('password').value = password;
-                document.getElementById('remember').checked = true;
+            if (remember && email) {
+                const e = document.getElementById('email');
+                if (e) e.value = email;
+                const r = document.getElementById('remember');
+                if (r) r.checked = true;
             }
 
-            document.getElementById('loginForm').addEventListener('submit', () => {
-                const remember = document.getElementById('remember').checked;
-                if (remember) {
-                    localStorage.setItem('savedEmail', document.getElementById('username').value);
-                    localStorage.setItem('savedPassword', document.getElementById('password').value);
-                    localStorage.setItem('rememberMe', 'true');
-                } else {
-                    localStorage.removeItem('savedEmail');
-                    localStorage.removeItem('savedPassword');
-                    localStorage.removeItem('rememberMe');
-                }
-            });
-        });
-
-        // ======= SAMPLE STAFF AUTOFILL =======
-        document.getElementById('sampleStaffBtn').addEventListener('click', () => {
-            document.getElementById('username').value = 'staff@mawasa.com';
-            document.getElementById('password').value = 'password123';
+            const form = document.getElementById('loginForm');
+            if (form) {
+                form.addEventListener('submit', () => {
+                    const r = document.getElementById('remember');
+                    if (r && r.checked) {
+                        localStorage.setItem('savedEmail', document.getElementById('email').value);
+                        localStorage.setItem('rememberMe', 'true');
+                    } else {
+                        localStorage.removeItem('savedEmail');
+                        localStorage.removeItem('rememberMe');
+                    }
+                    // Show spinner and disable button
+                    const btn = document.getElementById('loginBtn');
+                    const spn = document.getElementById('loginBtnSpinner');
+                    const lbl = document.getElementById('loginBtnLabel');
+                    if (btn){ btn.disabled = true; btn.classList.add('opacity-70','cursor-not-allowed'); }
+                    if (spn){ spn.classList.remove('hidden'); }
+                    if (lbl){ lbl.textContent = 'Logging in…'; }
+                });
+            }
         });
     </script>
 </body>

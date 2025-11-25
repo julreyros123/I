@@ -3,10 +3,9 @@
 @section('title', 'Payment Records')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-6 py-8 font-[Inter]">
-    <div class="mb-8">
-        <h1 class="text-2xl font-extrabold text-gray-800 dark:text-gray-100">Payment Records</h1>
-        <p class="text-gray-500 dark:text-gray-400 text-sm">All saved water bill payments</p>
+<div class="max-w-7xl mx-auto px-6 py-8">
+    <div class="mb-4">
+        <p class="text-gray-600 dark:text-gray-400 text-xs">Guide: Search by account no. or name to find a receipt. Use "View History" to review billed months and amounts.</p>
     </div>
 
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6">
@@ -19,11 +18,11 @@
                        focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white dark:bg-gray-900 
                        text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500"
                 placeholder="Search by account no. or name">
-            <button class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm">Search</button>
+            <x-secondary-button type="submit">Search</x-secondary-button>
         </form>
 
-        <div class="overflow-x-auto">
-            <table class="min-w-full text-sm text-left text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-lg">
+        <div class="overflow-x-auto table-responsive-wrapper">
+            <table class="w-full min-w-full text-sm text-left text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-lg">
                 <thead class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold">
                     <tr>
                         <th class="px-6 py-3 border-b dark:border-gray-600">Date</th>
@@ -59,7 +58,7 @@
                 </tbody>
             </table>
         </div>
-        <div class="mt-4">{{ $payments->links() }}</div>
+        
     </div>
 </div>
 
@@ -94,11 +93,7 @@
         </div>
 
         <div class="text-right mt-6">
-            <button id="closeHistory"
-                class="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 
-                       text-gray-700 dark:text-gray-200 rounded-lg text-sm">
-                Close
-            </button>
+            <x-secondary-button type="button" id="closeHistory">Close</x-secondary-button>
         </div>
     </div>
 </div>

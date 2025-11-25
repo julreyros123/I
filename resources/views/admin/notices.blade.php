@@ -1,9 +1,9 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
 @section('title', 'Notice to Staff')
 
 @section('content')
-<div class="max-w-4xl mx-auto px-6 py-8 font-[Inter]">
+<div class="max-w-4xl mx-auto px-6 py-8 font-[Poppins]">
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6">
         <h1 class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Send Notice to Staff</h1>
         <form id="broadcastForm" class="space-y-4">

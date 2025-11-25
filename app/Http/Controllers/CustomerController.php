@@ -12,8 +12,85 @@ class CustomerController extends Controller
 {
     public function index()
     {
-        $customers = Customer::orderBy('created_at', 'desc')->paginate(20);
-        return view('customer.index', compact('customers'));
+        $q = trim((string) request()->get('q', ''));
+        $status = request()->get('status');
+
+        $customers = Customer::query()
+            ->when($q, function($query) use ($q) {
+                $query->where(function($sub) use ($q) {
+                    $sub->where('account_no', 'like', "%{$q}%")
+                        ->orWhere('name', 'like', "%{$q}%")
+                        ->orWhere('address', 'like', "%{$q}%");
+                });
+            })
+            ->when($status, function($query) use ($status) {
+                $query->where('status', $status);
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(20)
+            ->withQueryString();
+
+        return view('customer.index', compact('customers', 'q', 'status'));
+    }
+
+    /**
+     * Show a single customer as JSON (for admin views).
+     */
+    public function show(Request $request, $id): JsonResponse
+    {
+        abort_unless($request->user(), 403);
+        $customer = Customer::findOrFail($id);
+        return response()->json(['ok' => true, 'customer' => $customer]);
+    }
+
+    /**
+     * Verify a customer: set status to Active.
+     */
+    public function verify(Request $request, $id): JsonResponse
+    {
+        abort_unless($request->user(), 403);
+        $customer = Customer::findOrFail($id);
+        $customer->status = 'Active';
+        $customer->save();
+        return response()->json(['ok' => true, 'customer' => $customer, 'message' => 'Customer verified (Active).']);
+    }
+
+    /**
+     * Duplicate detection by name+address in customers and id_number in customer_applications documents.
+     */
+    public function duplicates(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'name' => ['nullable','string','max:255'],
+            'address' => ['nullable','string','max:255'],
+            'id_number' => ['nullable','string','max:100'],
+        ]);
+        $name = trim((string)($validated['name'] ?? ''));
+        $address = trim((string)($validated['address'] ?? ''));
+        $idno = trim((string)($validated['id_number'] ?? ''));
+
+        $custMatches = collect();
+        if ($name && $address) {
+            $custMatches = Customer::query()
+                ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
+                ->whereRaw('LOWER(address) = ?', [mb_strtolower($address)])
+                ->limit(5)
+                ->get(['id','account_no','name','address','status']);
+        }
+
+        $appMatches = collect();
+        if ($idno) {
+            $appMatches = \App\Models\CustomerApplication::query()
+                ->where('documents->id_number', $idno)
+                ->limit(5)
+                ->get(['id','customer_id','applicant_name','address','status','documents']);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'customers' => $custMatches,
+            'applications' => $appMatches,
+        ]);
     }
 
     public function attach(Request $request): JsonResponse
@@ -58,6 +135,25 @@ class CustomerController extends Controller
         return response()->json(['ok' => true, 'customer' => $customer]);
     }
 
+    public function update(Request $request, $id): JsonResponse
+    {
+        abort_unless($request->user() && $request->user()->role === 'admin', 403);
+        $validated = $request->validate([
+            'name' => ['nullable','string','max:255'],
+            'address' => ['nullable','string','max:255'],
+            'contact_no' => ['nullable','string','max:50'],
+        ]);
+
+        $customer = Customer::findOrFail($id);
+        $customer->update(array_filter([
+            'name' => $validated['name'] ?? null,
+            'address' => $validated['address'] ?? null,
+            'contact_no' => $validated['contact_no'] ?? null,
+        ], function($v) { return !is_null($v); }));
+
+        return response()->json(['ok' => true, 'customer' => $customer, 'message' => 'Customer updated']);
+    }
+
     public function searchAccounts(Request $request): JsonResponse
     {
         $request->validate(['q' => ['required','string','max:50']]);
@@ -97,10 +193,12 @@ class CustomerController extends Controller
             'account_no' => $validated['account_no'],
             'name' => $validated['name'],
             'address' => $validated['address'] ?? null,
+            'contact_no' => $validated['contact_no'] ?? null,
             'meter_no' => $validated['meter_no'] ?? null,
             'meter_size' => $validated['meter_size'] ?? null,
             'status' => $validated['status'] ?? 'Active',
             'previous_reading' => (float)($validated['previous_reading'] ?? 0),
+            'created_by' => optional($request->user())->id,
         ]);
 
         return response()->json(['ok' => true, 'customer' => $customer]);
