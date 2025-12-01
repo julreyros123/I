@@ -69,6 +69,11 @@ class CustomerApplication extends Model
         'fee_total' => 'decimal:2',
     ];
 
+    public function customer()
+    {
+        return $this->belongsTo(\App\Models\Customer::class);
+    }
+
     /**
      * Human-friendly application code (e.g. APP-000123).
      */

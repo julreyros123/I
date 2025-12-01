@@ -321,12 +321,10 @@
                                                 <form method="post" action="{{ route('admin.meters.assign', $m) }}" class="grid grid-cols-2 gap-3 relative">
                                                     @csrf
                                                     <div class="col-span-2">
-                                                        <label class="text-xs">Customer</label>
-                                                        <div class="relative">
-                                                            <input type="text" id="search-{{ $m->id }}" placeholder="Search name or account no" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900 pr-2" oninput="customerSearch{{ $m->id }}(this.value)" autocomplete="off" />
-                                                            <input type="hidden" name="account_id" id="account-{{ $m->id }}" required />
-                                                            <div id="results-{{ $m->id }}" class="absolute z-20 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow max-h-56 overflow-auto hidden"></div>
-                                                        </div>
+                    				<label class="text-xs">Customer (installed  waiting for meter assignment)</label>
+                                                        <select name="account_id" id="installedCustomerForMeter-{{ $m->id }}" required class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900">
+                                                            <option value="">Select installed customer...</option>
+                                                        </select>
                                                     </div>
                                                     <div>
                                                         <label class="text-xs">Assigned At</label>
@@ -344,31 +342,6 @@
                                                         <button class="h-9 px-4 rounded-md bg-blue-600 hover:bg-blue-700 text-white">Assign</button>
                                                     </div>
                                                 </form>
-                                                <script>
-                                                window._custTimers = window._custTimers || {};
-                                                function customerSearch{{ $m->id }}(q){
-                                                  const box = document.getElementById('results-{{ $m->id }}');
-                                                  const hidden = document.getElementById('account-{{ $m->id }}');
-                                                  hidden.value = '';
-                                                  if(!q || q.length < 2){ box.classList.add('hidden'); box.innerHTML=''; return; }
-                                                  if(window._custTimers['{{ $m->id }}']) clearTimeout(window._custTimers['{{ $m->id }}']);
-                                                  window._custTimers['{{ $m->id }}'] = setTimeout(async ()=>{
-                                                    try{
-                                                      const res = await fetch("{{ route('customer.searchAccounts') }}?q="+encodeURIComponent(q), { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-                                                      const data = await res.json();
-                                                      box.innerHTML = '';
-                                                      (data || []).slice(0,10).forEach(item=>{
-                                                        const opt = document.createElement('div');
-                                                        opt.className = 'px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer';
-                                                        opt.textContent = `${item.account_no || item.id} — ${item.name || ''}`;
-                                                        opt.onclick = ()=>{ document.getElementById('search-{{ $m->id }}').value = `${item.account_no} — ${item.name}`; hidden.value = item.id; box.classList.add('hidden'); };
-                                                        box.appendChild(opt);
-                                                      });
-                                                      box.classList.toggle('hidden', box.children.length===0);
-                                                    }catch(e){ box.classList.add('hidden'); }
-                                                  }, 250);
-                                                }
-                                                </script>
                                             </div>
                                         </details>
 
@@ -436,3 +409,70 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+(function(){
+    let __installedAppsCache = null;
+
+    async function fetchInstalledApps(){
+        if (__installedAppsCache) return __installedAppsCache;
+        try {
+            const url = new URL('/api/connections', window.location.origin);
+            url.searchParams.set('status', 'installed');
+            const res = await fetch(url.toString(), { headers:{ 'Accept':'application/json' } });
+            if (!res.ok) throw new Error('Failed to load installed applications');
+            const data = await res.json();
+            const list = (data && data.items && (data.items.data || data.items)) || [];
+            __installedAppsCache = Array.isArray(list) ? list : [];
+        } catch(_){
+            __installedAppsCache = [];
+        }
+        return __installedAppsCache;
+    }
+
+    async function populateInstalledCustomerSelects(){
+        const selects = document.querySelectorAll('select[id^="installedCustomerForMeter-"]');
+        if (!selects.length) return;
+        const apps = await fetchInstalledApps();
+        if (!apps.length) return;
+
+        // Optionally fetch basic customer meter info so we skip already-metered customers
+        const customersById = {};
+        try {
+            // Build a unique set of customer IDs
+            const ids = Array.from(new Set(apps.map(a => a.customer_id).filter(Boolean)));
+            // We don't have a bulk customer API, so we skip this step to keep it simple.
+            // Meter assignment guard in MeterController will prevent invalid assignment anyway.
+        } catch(_){ }
+
+        selects.forEach(sel => {
+            // Reset to placeholder
+            const first = sel.querySelector('option[value=""]');
+            sel.innerHTML = '';
+            if (first){ sel.appendChild(first); } else {
+                const opt = document.createElement('option');
+                opt.value = '';
+                opt.textContent = 'Select installed customer...';
+                sel.appendChild(opt);
+            }
+
+            apps.forEach(app => {
+                if (!app.customer_id) return;
+                const label = `${app.applicant_name || 'Customer'} (APP-${app.id})`;
+                const opt = document.createElement('option');
+                opt.value = app.customer_id;
+                opt.textContent = label;
+                sel.appendChild(opt);
+            });
+        });
+    }
+
+    if (document.readyState === 'loading'){
+        document.addEventListener('DOMContentLoaded', populateInstalledCustomerSelects);
+    } else {
+        populateInstalledCustomerSelects();
+    }
+})();
+</script>
+@endpush

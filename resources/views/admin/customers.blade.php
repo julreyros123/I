@@ -356,6 +356,7 @@
         const body = document.getElementById('ncBody');
         const filter = document.getElementById('ncFilter');
         const search = document.getElementById('ncSearch');
+        const installedSelect = document.getElementById('installedCustomerSelect');
         const reloadBtn = document.getElementById('ncReload');
         const exportBtn = document.getElementById('ncExport');
         const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
@@ -440,14 +441,37 @@
             return await res.json();
         }
         function rowActions(app){
-            const s = app.status;
+            const s = String(app.status || '').toLowerCase();
             const id = app.id;
             const actions = [];
-            if (s==='registered' || s==='inspected'){ actions.push(`<button data-act="approve" data-id="${id}" class="text-blue-600">Approve</button>`); }
-            if (s==='approved' || s==='assessed'){ actions.push(`<button data-act="assess" data-id="${id}" class="text-emerald-600">Assess</button>`); }
-            if (s==='assessed'){ actions.push(`<button data-act="pay" data-id="${id}" class="text-amber-600">Pay</button>`); }
-            if (s==='paid' || s==='scheduled'){ actions.push(`<button data-act="schedule" data-id="${id}" class="text-purple-600">Schedule</button>`); }
-            if (s==='scheduled' || s==='installed'){ actions.push(`<button data-act="install" data-id="${id}" class="text-indigo-600">Install</button>`); }
+
+            // When application is approved/assessed but not yet paid, disable actions and show waiting label
+            const isApprovedOrAssessed = s === 'approved' || s === 'assessed';
+            const isPaid = !!app.paid_at || s === 'paid' || s === 'scheduled' || s === 'installed';
+            if (isApprovedOrAssessed && !isPaid){
+                return '<span class="text-xs font-medium text-amber-600">Waiting for payment</span>';
+            }
+
+            if (s === 'registered' || s === 'inspected'){
+                actions.push(`<button data-act="approve" data-id="${id}" class="text-blue-600">Approve</button>`);
+            }
+            if (s === 'approved' || s === 'assessed'){
+                actions.push(`<button data-act="assess" data-id="${id}" class="text-emerald-600">Assess</button>`);
+            }
+            // Payment is handled via the Payment module; do not render an inline Pay action here
+            if (s === 'paid' || s === 'scheduled'){
+                actions.push(`<button data-act="schedule" data-id="${id}" class="text-purple-600">Schedule</button>`);
+            }
+            // Only scheduled applications can be marked as installed; once installed, we wait for meter assignment
+            if (s === 'scheduled'){
+                actions.push(`<button data-act="install" data-id="${id}" class="text-indigo-600">Install</button>`);
+            }
+            if (s === 'installed'){
+                return '<span class="text-xs font-medium text-emerald-600">Waiting for meter assignment</span>';
+            }
+            if (!actions.length){
+                return '<span class="text-xs text-gray-400">No actions</span>';
+            }
             return actions.join(' \u2022 ');
         }
         function toNumber(v){ var n = parseFloat(v); return isFinite(n)? n : 0; }
@@ -639,7 +663,17 @@
                     } catch(_){ /* keep disabled */ }
                     setTimeout(()=>{ try{ receiptNo.focus(); }catch(_){} }, 50);
                 } else if (act==='schedule'){
-                    schedId.value = id; schedDate.value=''; show(schedModal);
+                    schedId.value = id;
+                    if (schedDate){
+                        const today = new Date();
+                        const y = today.getFullYear();
+                        const m = String(today.getMonth()+1).padStart(2,'0');
+                        const d = String(today.getDate()).padStart(2,'0');
+                        const todayStr = `${y}-${m}-${d}`;
+                        schedDate.min = todayStr;
+                        schedDate.value = todayStr;
+                    }
+                    show(schedModal);
                 } else if (act==='install'){
                     installId.value = id; show(installModal);
                 }
@@ -911,6 +945,41 @@
             });
         }
         load();
+
+        // Populate dropdown with customers whose applications are installed
+        async function loadInstalledCustomersForDropdown(){
+            if (!installedSelect) return;
+            try{
+                installedSelect.innerHTML = '<option value="">Select customer with installed application…</option>';
+                const url = new URL('/api/connections', window.location.origin);
+                url.searchParams.set('status', 'installed');
+                const res = await fetch(url.toString(), { headers:{ 'Accept':'application/json' } });
+                if (!res.ok) throw 0;
+                const data = await res.json();
+                const list = (data && data.items && (data.items.data || data.items)) || [];
+                if (!Array.isArray(list) || list.length === 0) return;
+                list.forEach(app => {
+                    if (!app.customer_id) return;
+                    const label = `${app.applicant_name || 'Customer'} (APP-${app.id})`;
+                    installedSelect.insertAdjacentHTML('beforeend', `<option value="${app.customer_id}">${label}</option>`);
+                });
+            } catch(_){ /* silent */ }
+        }
+        if (installedSelect){
+            loadInstalledCustomersForDropdown();
+            installedSelect.addEventListener('change', function(){
+                const id = this.value;
+                if (!id) return;
+                const row = document.querySelector(`tr[data-cust-id="${id}"]`);
+                if (row){
+                    row.scrollIntoView({ behavior:'smooth', block:'center' });
+                    row.classList.add('bg-yellow-50');
+                    setTimeout(()=>row.classList.remove('bg-yellow-50'), 2000);
+                } else {
+                    toast('Customer not on this page. Use pagination to locate them.', 'info');
+                }
+            });
+        }
     })();
     </script>
     <!-- Edit Customer Modal -->
@@ -1068,8 +1137,10 @@
         <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-3 w-full">
                 <div>
-                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Search</label>
-                    <input type="text" placeholder="Name, Account No., Address" class="w-full border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 bg-white dark:bg-gray-900 text-sm" />
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Select Installed Customer</label>
+                    <select id="installedCustomerSelect" class="w-full border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 bg-white dark:bg-gray-900 text-sm">
+                        <option value="">Select customer with installed application…</option>
+                    </select>
                 </div>
                 <div>
                     <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Status</label>

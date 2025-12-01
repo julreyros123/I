@@ -14,7 +14,18 @@ class ConnectionsController extends Controller
     public function index(Request $request): JsonResponse
     {
         $q = CustomerApplication::query()
-            ->when($request->filled('status'), function($qq) use ($request){ $qq->where('status', $request->string('status')); })
+            ->when($request->filled('status'), function($qq) use ($request){
+                $qq->where('status', $request->string('status'));
+            })
+            ->when(!$request->filled('status'), function($qq){
+                // By default, hide installed applications whose customer already has a meter assigned
+                $qq->where(function($q){
+                    $q->where('status', '!=', 'installed')
+                      ->orWhereDoesntHave('customer', function($c){
+                          $c->whereNotNull('meter_no');
+                      });
+                });
+            })
             ->orderByDesc('created_at')
             ->paginate(20);
         return response()->json(['ok' => true, 'items' => $q]);
@@ -144,10 +155,10 @@ class ConnectionsController extends Controller
         return response()->json(['ok' => true, 'application' => $app]);
     }
 
-    // Admin/Cashier: mark payment
+    // Admin/Cashier/Staff: mark payment
     public function pay(Request $request, $id): JsonResponse
     {
-        abort_unless(in_array($request->user()?->role, ['admin','cashier'], true), 403);
+        abort_unless(in_array($request->user()?->role, ['admin','cashier','staff'], true), 403);
         $request->validate([
             'payment_receipt_no' => ['required','string','max:100']
         ]);
@@ -192,6 +203,35 @@ class ConnectionsController extends Controller
         $app->installed_at = now();
         $app->installed_by = $request->user()->id;
         $app->status = 'installed';
+
+        // Ensure application is linked to a Customer so installed applicants can be assigned meters
+        if (!$app->customer_id) {
+            // Try to find an existing customer by name + address
+            $customer = Customer::query()
+                ->where('name', $app->applicant_name)
+                ->where('address', $app->address)
+                ->first();
+
+            if (!$customer) {
+                // Generate an account number and create a new customer record
+                $generator = new \App\Services\AccountNumberGenerator();
+                $accountNo = $generator->next();
+
+                $customer = Customer::create([
+                    'account_no' => $accountNo,
+                    'name' => $app->applicant_name,
+                    'address' => $app->address,
+                    'contact_no' => $app->contact_no,
+                    'status' => 'Pending',
+                    'previous_reading' => 0,
+                ]);
+            }
+
+            if ($customer) {
+                $app->customer_id = $customer->id;
+            }
+        }
+
         $app->save();
         return response()->json(['ok' => true, 'application' => $app]);
     }

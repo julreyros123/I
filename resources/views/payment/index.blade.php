@@ -832,13 +832,22 @@ document.getElementById('feesProcessBtn').addEventListener('click', async functi
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             },
             body: JSON.stringify({ payment_receipt_no: receipt })
         });
-        const data = await res.json();
+        let data;
+        try {
+            data = await res.json();
+        } catch(_) {
+            const text = await res.text();
+            throw new Error(`HTTP ${res.status} - ${text.slice(0,200)}`);
+        }
         if (!res.ok || !data.ok){
-            throw new Error(data.message || 'Failed to process applicant fees payment');
+            const serverMsg = data.message || data.error || (data.errors ? JSON.stringify(data.errors) : '');
+            throw new Error(serverMsg || `Failed to process applicant fees payment (HTTP ${res.status})`);
         }
         alert('Applicant fees paid successfully.');
         // Reload details for the same application so status and fees update

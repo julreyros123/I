@@ -91,16 +91,17 @@ class MeterController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        // Guard: only allow meter assignment when latest application fees are paid
+        // Guard: only allow meter assignment when latest application has been paid and reached paid/scheduled/installed stage
         $customer = Customer::find($data['account_id']);
+        $latestApp = null;
         if ($customer) {
-            $app = CustomerApplication::where('customer_id', $customer->id)
+            $latestApp = CustomerApplication::where('customer_id', $customer->id)
                 ->orderByDesc('created_at')
                 ->first();
 
-            $feeTotal = $app?->fee_total ?? 0;
-            $hasPaid = $app && $feeTotal > 0 && !is_null($app->paid_at);
-            $stageOk = $app && in_array($app->status, ['paid', 'scheduled', 'installed'], true);
+            // Consider the application paid if paid_at is set, regardless of stored fee_total
+            $hasPaid = $latestApp && !is_null($latestApp->paid_at);
+            $stageOk = $latestApp && in_array($latestApp->status, ['paid', 'scheduled', 'installed'], true);
 
             if (!($hasPaid && $stageOk)) {
                 return back()->withErrors([
@@ -109,7 +110,7 @@ class MeterController extends Controller
             }
         }
 
-        DB::transaction(function() use ($meter, $data) {
+        DB::transaction(function() use ($meter, $data, $latestApp) {
             MeterAssignment::where('meter_id',$meter->id)->whereNull('unassigned_at')->update([
                 'unassigned_at' => now(),
                 'unassigned_by' => optional(auth()->user())->id,
@@ -132,6 +133,16 @@ class MeterController extends Controller
                 'to_json' => $meter->fresh()->toArray(),
                 'reason' => $data['reason'] ?? null,
             ]);
+
+            // Also update the linked customer with meter details and activate them
+            $customer = Customer::find($data['account_id']);
+            if ($customer) {
+                $customer->meter_no = $meter->serial;
+                $customer->meter_size = $meter->size;
+                $customer->status = 'Active';
+                $customer->save();
+            }
+
         });
 
         return redirect()->back()->with('success','Meter assigned.');
