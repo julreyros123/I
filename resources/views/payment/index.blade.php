@@ -19,7 +19,7 @@
         <div class="grid md:grid-cols-3 gap-4">
             <div>
                 <label class="block text-sm text-gray-600 dark:text-gray-400">Application No.</label>
-                <x-ui.input id="app_no" readonly />
+                <x-ui.input id="app_no" />
             </div>
             <div>
                 <label class="block text-sm text-gray-600 dark:text-gray-400">Applicant Name</label>
@@ -548,7 +548,7 @@ function updateManualSelectionTotal() {
     }
 }
 
-// Submit payment to API and open receipt
+// Submit payment to API and open receipt, then refresh unpaid bills
 document.getElementById('processPayment').addEventListener('click', async () => {
     const accountNo = (document.getElementById('account_no').value || '').trim();
     const totalRaw = document.getElementById('total').value || '0';
@@ -581,6 +581,19 @@ document.getElementById('processPayment').addEventListener('click', async () => 
         const id = data.payment_record_id;
         window.open(`/payment/receipt/${id}`, '_blank');
         showAlert('Payment processed successfully!');
+
+        // Reset payment inputs
+        const amountInput = document.getElementById('amount_paid');
+        const changeInput = document.getElementById('change');
+        if (amountInput) amountInput.value = '';
+        if (changeInput) changeInput.value = '₱0.00';
+
+        // Refresh customer data so unpaid bills table updates (paid bills removed)
+        if (accountNo) {
+            try {
+                await searchByAccount(accountNo);
+            } catch(_) {}
+        }
     } catch (err) {
         showAlert(String(err.message || err), 'error');
     }
@@ -699,20 +712,62 @@ function hookFeeHandlers(){
 function loadApplicantFeesForAccount(accountNo, applicantName){
     // Backward-compatible placeholder when no backend data is available yet
     applicantHeader.classList.remove('hidden');
-    document.getElementById('app_no').value = (accountNo ? ('APP-'+ String(accountNo).replace(/\W+/g,'') ) : 'APP-—');
+    const appNoInput = document.getElementById('app_no');
+    if (appNoInput && !appNoInput.value) {
+        appNoInput.value = (accountNo ? ('APP-'+ String(accountNo).replace(/\W+/g,'') ) : '');
+    }
     document.getElementById('applicant_name').value = applicantName || '—';
     document.getElementById('app_status').value = 'Pending Fees';
     const rows = [
         { code:'APP', name:'Application Fee', amount:300, partial:false, status:'unpaid' },
         { code:'INSP', name:'Inspection Fee', amount:200, partial:true, status:'unpaid' },
-        { code:'INST', name:'Installation Fee', amount:500, partial:true, status:'unpaid' },
-        { code:'SECD', name:'Security Deposit', amount:1000, partial:false, status:'unpaid' }
     ];
     renderFees(rows);
     feesCard.classList.remove('hidden');
     feesPanel.classList.remove('hidden');
     hookFeeHandlers();
     calcFeesSubtotal();
+}
+
+async function loadApplicantFeesById(id){
+    if (!id) return;
+    try {
+        const res = await fetch(`/api/connections/${id}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        const data = await res.json();
+        if (!res.ok || !data.ok || !data.application) throw new Error('Application not found');
+        const app = data.application;
+        __currentApplication = app;
+        applicantHeader.classList.remove('hidden');
+        document.getElementById('app_no').value = 'APP-' + String(app.id);
+        document.getElementById('applicant_name').value = app.applicant_name || '—';
+        document.getElementById('app_status').value = (app.status || '').toString();
+
+        const rows = [];
+        const pushFee = (code, name, amount, partial=false) => {
+            const amt = Number(amount||0);
+            if (isNaN(amt) || amt <= 0) return;
+            rows.push({ code, name, amount: amt, partial, status: (app.status === 'paid') ? 'paid' : 'unpaid' });
+        };
+        pushFee('APP', 'Application Fee', app.fee_application, false);
+        pushFee('INSP', 'Inspection Fee', app.fee_inspection, true);
+
+        // If no assessed fees are stored yet, fall back to defaults for required payments
+        if (rows.length === 0){
+            const fallbackRows = [
+                { code:'APP', name:'Application Fee', amount:300, partial:false, status:'unpaid' },
+                { code:'INSP', name:'Inspection Fee', amount:200, partial:true, status:'unpaid' },
+            ];
+            renderFees(fallbackRows);
+        } else {
+            renderFees(rows);
+        }
+        hookFeeHandlers();
+        calcFeesSubtotal();
+        feesCard.classList.remove('hidden');
+        feesPanel.classList.remove('hidden');
+    } catch (e) {
+        alert('Unable to load applicant fees for that application number.');
+    }
 }
 
 async function loadApplicantFeesFromApi(){
@@ -742,9 +797,6 @@ async function loadApplicantFeesFromApi(){
         };
         pushFee('APP', 'Application Fee', app.fee_application, false);
         pushFee('INSP', 'Inspection Fee', app.fee_inspection, true);
-        pushFee('MAT', 'Materials Fee', app.fee_materials, true);
-        pushFee('LAB', 'Labor Fee', app.fee_labor, true);
-        pushFee('SECD', 'Security Deposit', app.meter_deposit, false);
         if (rows.length === 0){
             feesTbody.innerHTML = `<tr><td class="px-4 py-6 text-center text-gray-500 dark:text-gray-400" colspan="5">No fees assessed for this application.</td></tr>`;
         } else {
@@ -772,8 +824,10 @@ document.getElementById('feesProcessBtn').addEventListener('click', async functi
             alert('Please select at least one fee to pay.');
             return;
         }
-        const receipt = prompt('Enter OR/Receipt No.');
-        if (!receipt) return;
+        // Auto-generate receipt number: OR-YYYYMMDDHHMMSS
+        const now = new Date();
+        const pad = n => String(n).padStart(2, '0');
+        const receipt = `OR-${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
         const res = await fetch(`/api/connections/${__currentApplication.id}/pay`, {
             method: 'PUT',
             headers: {
@@ -787,12 +841,35 @@ document.getElementById('feesProcessBtn').addEventListener('click', async functi
             throw new Error(data.message || 'Failed to process applicant fees payment');
         }
         alert('Applicant fees paid successfully.');
-        // Reload details
-        loadApplicantFeesFromApi();
+        // Reload details for the same application so status and fees update
+        if (__currentApplication && __currentApplication.id){
+            loadApplicantFeesById(__currentApplication.id);
+        } else {
+            loadApplicantFeesFromApi();
+        }
     } catch (err){
         alert(String(err.message || err));
     }
 });
+
+// Applicant search by Application No. (press Enter)
+const appNoInputEl = document.getElementById('app_no');
+if (appNoInputEl){
+    appNoInputEl.addEventListener('keydown', function(e){
+        if (e.key === 'Enter'){
+            e.preventDefault();
+            const raw = (appNoInputEl.value || '').trim();
+            if (!raw) return;
+            const match = raw.match(/(\d+)/);
+            const id = match ? Number(match[1]) : NaN;
+            if (!id || isNaN(id)){
+                alert('Please enter a valid application number (e.g. APP-5).');
+                return;
+            }
+            loadApplicantFeesById(id);
+        }
+    });
+}
 </script>
 @endsection
 

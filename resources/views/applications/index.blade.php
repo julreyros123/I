@@ -50,7 +50,7 @@
                             <td class="py-3 pr-3">
                                 <a href="{{ route('applications.show', $app->id) }}" class="text-blue-600 dark:text-blue-400 hover:underline">{{ $app->applicant_name }}</a>
                             </td>
-                            <td class="py-3 pr-3 text-gray-600 dark:text-gray-300">{{ $app->address }}</td>
+                            <td class="py-3 pr-3 text-gray-600 dark:text-gray-300 max-w-xs truncate">{{ $app->address }}</td>
                             <td class="py-3 pr-3">
                                 @if(!is_null($app->score))
                                     <span class="px-2 py-0.5 rounded text-xs {{ $app->score>=80 ? 'bg-green-100 text-green-700' : ($app->score>=60 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700') }}">{{ $app->score }}</span>

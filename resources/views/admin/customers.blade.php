@@ -176,9 +176,6 @@
                     <div id="payFeesList" class="text-sm text-gray-700 dark:text-gray-200 space-y-1">
                         <div class="flex items-center justify-between"><span>Application</span><span id="pFeeApp">—</span></div>
                         <div class="flex items-center justify-between"><span>Inspection</span><span id="pFeeInsp">—</span></div>
-                        <div class="flex items-center justify-between"><span>Materials</span><span id="pFeeMat">—</span></div>
-                        <div class="flex items-center justify-between"><span>Labor</span><span id="pFeeLab">—</span></div>
-                        <div class="flex items-center justify-between"><span>Meter Deposit</span><span id="pFeeDep">—</span></div>
                         <div class="flex items-center justify-between border-t pt-2 mt-1"><span class="font-medium">Total</span><span id="pFeeTotal" class="font-semibold">—</span></div>
                     </div>
                 </div>
@@ -230,6 +227,22 @@
             </div>
             <div class="px-5 py-4 border-t border-gray-200 dark:border-gray-700 text-right">
                 <button id="installSave" class="px-3 py-2 rounded-md bg-blue-600 text-white text-sm">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Full Address Modal for New Connection Applications -->
+    <div id="ncAddressModal" class="hidden fixed inset-0 bg-black/50 z-50 items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md">
+            <div class="flex items-center justify-between px-5 py-3 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-base md:text-lg font-semibold text-gray-800 dark:text-gray-100">Full Address</h3>
+                <button id="ncAddressClose" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">Close</button>
+            </div>
+            <div class="px-5 py-4">
+                <p id="ncAddressText" class="text-sm text-gray-800 dark:text-gray-100 break-words"></p>
+            </div>
+            <div class="px-5 py-3 border-t border-gray-200 dark:border-gray-700 text-right">
+                <button id="ncAddressCloseBtn" class="px-3 py-2 rounded-md bg-blue-600 text-white text-sm">Close</button>
             </div>
         </div>
     </div>
@@ -322,7 +335,7 @@
                     <tr>
                         <th class="px-4 py-2 text-left">ID</th>
                         <th class="px-4 py-2 text-left">Applicant</th>
-                        <th class="px-4 py-2 text-left">Address</th>
+                        <th class="px-4 py-2 text-left">Barangay</th>
                         <th class="px-4 py-2 text-left">Fee Total</th>
                         <th class="px-4 py-2 text-left">Paid At</th>
                         <th class="px-4 py-2 text-left">Schedule Date</th>
@@ -381,9 +394,6 @@
         const assessId = document.getElementById('assessId');
         const feeApp = document.getElementById('fee_application');
         const feeInsp = document.getElementById('fee_inspection');
-        const feeMat = document.getElementById('fee_materials');
-        const feeLab = document.getElementById('fee_labor');
-        const feeDep = document.getElementById('meter_deposit');
         const feeTotalDisp = document.getElementById('fee_total_display');
         const assessSave = document.getElementById('assessSave');
         const assessClose = document.getElementById('assessClose');
@@ -405,6 +415,12 @@
         const installSave = document.getElementById('installSave');
         const installClose = document.getElementById('installClose');
 
+        // New Connection full address modal
+        const ncAddressModal = document.getElementById('ncAddressModal');
+        const ncAddressText = document.getElementById('ncAddressText');
+        const ncAddressClose = document.getElementById('ncAddressClose');
+        const ncAddressCloseBtn = document.getElementById('ncAddressCloseBtn');
+
         function show(el){ if (el){ el.classList.remove('hidden'); el.classList.add('flex'); } }
         function hide(el){ if (el){ el.classList.add('hidden'); el.classList.remove('flex'); } }
 
@@ -413,9 +429,6 @@
         function updateFeeTotal(){
             var total = parseAmt(feeApp?.value)||0;
             total += parseAmt(feeInsp?.value)||0;
-            total += parseAmt(feeMat?.value)||0;
-            total += parseAmt(feeLab?.value)||0;
-            total += parseAmt(feeDep?.value)||0;
             if (feeTotalDisp) feeTotalDisp.textContent = formatPhp(total);
         }
 
@@ -440,6 +453,8 @@
         function toNumber(v){ var n = parseFloat(v); return isFinite(n)? n : 0; }
         function fmtDate(d){ if (!d) return ''; try { return String(d).slice(0,10); } catch(_){ return ''; } }
         function fmtPhp(n){ try { return new Intl.NumberFormat('en-PH',{ style:'currency', currency:'PHP' }).format(n); } catch(_){ return '₱'+(n?.toFixed?n.toFixed(2):n); } }
+        let __ncLastItems = null;
+
         function render(items){
             const list = Array.isArray(items?.data) ? items.data : [];
             const q = (search?.value||'').toLowerCase().trim();
@@ -449,6 +464,9 @@
                 const addr = (app.address||'').toLowerCase();
                 return a.includes(q) || addr.includes(q);
             });
+
+        // Initial load on page ready
+        load();
 
         // Latest application badges and actions per customer row
         async function fetchLatestApp(custId){
@@ -494,7 +512,14 @@
             const rescore = e.target?.closest?.('.app-rescore-btn');
             const approve = e.target?.closest?.('.app-approve-btn');
             const reject = e.target?.closest?.('.app-reject-btn');
+            const addrBtn = e.target?.closest?.('.nc-address-btn');
             try{
+                if (addrBtn){
+                    const full = addrBtn.getAttribute('data-full-address') || '';
+                    if (ncAddressText) ncAddressText.textContent = full || '—';
+                    show(ncAddressModal);
+                    return;
+                }
                 if (rescore){
                     const id = rescore.getAttribute('data-app-id');
                     if (!id) return; await fetch(`/api/applications/${id}/score`, { method:'POST', headers:{ 'Accept':'application/json', 'X-CSRF-TOKEN': token||'' } });
@@ -513,14 +538,26 @@
                 }
             } catch(_){ toast('Action failed','error'); }
         });
+
+        // Close handlers for full address modal
+        if (ncAddressClose){ ncAddressClose.addEventListener('click', () => hide(ncAddressModal)); }
+        if (ncAddressCloseBtn){ ncAddressCloseBtn.addEventListener('click', () => hide(ncAddressModal)); }
             if (filtered.length===0){ body.innerHTML = '<tr><td colspan="8" class="px-4 py-4 text-center text-gray-500">No applications.</td></tr>'; return; }
             body.innerHTML = filtered.map(app => {
-                const total = (toNumber(app.fee_application)+toNumber(app.fee_inspection)+toNumber(app.fee_materials)+toNumber(app.fee_labor)+toNumber(app.meter_deposit));
+                const total = (toNumber(app.fee_application)+toNumber(app.fee_inspection));
+                const fullAddr = (app.address || '').toString();
+                const beforeComma = fullAddr.split(',')[0]?.trim() || '';
+                const barangay = beforeComma || (app.barangay || '').toString().trim() || fullAddr;
+                const safeFullAddr = fullAddr.replace(/"/g,'&quot;');
                 return `
                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer" data-app-id="${app.id}">
                     <td class="px-4 py-2">${app.application_code || app.id}</td>
                     <td class="px-4 py-2">${app.applicant_name||''}</td>
-                    <td class="px-4 py-2">${app.address||''}</td>
+                    <td class="px-4 py-2 max-w-xs truncate">
+                        <button type="button" class="nc-address-btn text-blue-600 hover:underline" data-full-address="${safeFullAddr}">
+                            ${barangay}
+                        </button>
+                    </td>
                     <td class="px-4 py-2">${total>0? fmtPhp(total): '—'}</td>
                     <td class="px-4 py-2">${fmtDate(app.paid_at)}</td>
                     <td class="px-4 py-2">${fmtDate(app.schedule_date)}</td>
@@ -542,13 +579,23 @@
             }
         }
         async function load(){
-            try{ const data = await fetchApps(); render(data.items); } catch(e){ body.innerHTML = '<tr><td colspan="5" class="px-4 py-4 text-center text-red-500">Failed to load.</td></tr>'; }
+            try{
+                const data = await fetchApps();
+                __ncLastItems = data.items;
+                render(__ncLastItems);
+            } catch(e){
+                body.innerHTML = '<tr><td colspan="8" class="px-4 py-4 text-center text-red-500">Failed to load.</td></tr>';
+            }
         }
+
         if (reloadBtn) reloadBtn.addEventListener('click', load);
         if (filter) filter.addEventListener('change', load);
         if (search) search.addEventListener('input', function(){
-            // Re-render using last fetched data by calling load() then filtering; simple approach: call load then render will apply search.
-            // To avoid extra network on each input, we can cache the last payload.
+            if (__ncLastItems){
+                render(__ncLastItems);
+            } else {
+                load();
+            }
         });
 
         document.addEventListener('click', async function(ev){
@@ -559,12 +606,12 @@
                     const res = await fetch(`/api/connections/${id}/approve`, { method:'PUT', headers:{ 'X-CSRF-TOKEN': token||'', 'Accept':'application/json' } });
                     if (!res.ok) throw 0; toast('Approved','success'); load();
                 } else if (act==='assess'){
-                    assessId.value = id; feeApp.value='0'; feeInsp.value='0'; feeMat.value='0'; feeLab.value='0'; feeDep.value='0'; updateFeeTotal(); show(assessModal);
+                    assessId.value = id; feeApp.value='0'; feeInsp.value='0'; updateFeeTotal(); show(assessModal);
                 } else if (act==='pay'){
                     payId.value = id; receiptNo.value='';
                     const appEl = document.getElementById('payApplicant');
                     const stEl = document.getElementById('payStatus');
-                    const fee = { app:document.getElementById('pFeeApp'), insp:document.getElementById('pFeeInsp'), mat:document.getElementById('pFeeMat'), lab:document.getElementById('pFeeLab'), dep:document.getElementById('pFeeDep'), total:document.getElementById('pFeeTotal') };
+                    const fee = { app:document.getElementById('pFeeApp'), insp:document.getElementById('pFeeInsp'), total:document.getElementById('pFeeTotal') };
                     const hint = document.getElementById('payHint');
                     const link = document.getElementById('payModuleLink');
                     const saveBtn = document.getElementById('paySave');
@@ -582,10 +629,7 @@
                         function fmt(n){ try { return new Intl.NumberFormat('en-PH',{ style:'currency', currency:'PHP' }).format(parseFloat(n||0)); } catch(_){ return '₱'+(parseFloat(n||0).toFixed(2)); } }
                         if (fee.app) fee.app.textContent = fmt(app.fee_application);
                         if (fee.insp) fee.insp.textContent = fmt(app.fee_inspection);
-                        if (fee.mat) fee.mat.textContent = fmt(app.fee_materials);
-                        if (fee.lab) fee.lab.textContent = fmt(app.fee_labor);
-                        if (fee.dep) fee.dep.textContent = fmt(app.meter_deposit);
-                        const total = (parseFloat(app.fee_application||0)+parseFloat(app.fee_inspection||0)+parseFloat(app.fee_materials||0)+parseFloat(app.fee_labor||0)+parseFloat(app.meter_deposit||0));
+                        const total = (parseFloat(app.fee_application||0)+parseFloat(app.fee_inspection||0));
                         if (fee.total) fee.total.textContent = fmt(total);
                         if (link) link.href = `/payment?application_id=${encodeURIComponent(id)}`;
                         const roleOK = ['admin','cashier'].includes(String(currentRole||'').toLowerCase());
@@ -764,20 +808,20 @@
             });
         }
         if (assessClose){ assessClose.addEventListener('click', ()=>hide(assessModal)); }
-        [feeApp, feeInsp, feeMat, feeLab, feeDep].forEach(function(el){ if (el){ el.addEventListener('input', updateFeeTotal); }});
+        [feeApp, feeInsp].forEach(function(el){ if (el){ el.addEventListener('input', updateFeeTotal); }});
         if (assessSave){ assessSave.addEventListener('click', async function(){
             const id = assessId.value; assessSave.disabled = true; const old = assessSave.textContent; assessSave.textContent='Saving...';
             try {
                 const payload = {
                     fee_application: parseFloat(feeApp.value||'0')||0,
                     fee_inspection: parseFloat(feeInsp.value||'0')||0,
-                    fee_materials: parseFloat(feeMat.value||'0')||0,
-                    fee_labor: parseFloat(feeLab.value||'0')||0,
-                    meter_deposit: parseFloat(feeDep.value||'0')||0,
                 };
                 const res = await fetch(`/api/connections/${id}/assess`, { method:'PUT', headers:{ 'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN': token||'' }, body: JSON.stringify(payload) });
-                if (!res.ok) throw 0; toast('Assessed','success'); hide(assessModal); load();
-            } catch(_) { toast('Save failed','error'); } finally { assessSave.disabled=false; assessSave.textContent=old; }
+                if (!res.ok) throw 0;
+                toast('Assessment saved','success');
+                hide(assessModal);
+                load();
+            } catch(_){ toast('Save failed','error'); } finally { assessSave.disabled=false; assessSave.textContent=old; }
         }); }
 
         if (payClose){ payClose.addEventListener('click', ()=>hide(payModal)); }

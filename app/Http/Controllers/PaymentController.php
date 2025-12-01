@@ -103,7 +103,7 @@ class PaymentController extends Controller
                     'date_from' => $latestBill->date_from,
                     'date_to' => $latestBill->date_to,
                     'base_rate' => $latestBill->base_rate,
-                    'delivery_date' => $latestBill->date_to,
+                    'delivery_date' => $latestBill->date_to ? $latestBill->date_to->format('Y-m-d') : null,
                 ] : null,
                 'overdue_bills' => $overdueBills->map(function ($bill) {
                     return [

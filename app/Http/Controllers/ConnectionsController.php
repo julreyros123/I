@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use App\Models\CustomerApplication;
+use App\Models\Customer;
+use App\Models\BillingRecord;
 
 class ConnectionsController extends Controller
 {
@@ -64,18 +66,55 @@ class ConnectionsController extends Controller
         return response()->json(['ok' => true, 'application' => $app]);
     }
 
-    // Admin: approve application
+    // Admin: approve application (validation & eligibility for payment)
     public function approve(Request $request, $id): JsonResponse
     {
         abort_unless($request->user()?->role === 'admin', 403);
+
         $app = CustomerApplication::findOrFail($id);
-        if (!in_array($app->status, ['inspected','approved'])) {
+
+        // Allow approval from registered, inspected, or already-approved states
+        if (!in_array($app->status, ['registered', 'inspected', 'approved'], true)) {
             return response()->json(['ok' => false, 'message' => 'Invalid status for approval'], 422);
         }
+
+        // Duplicate application check: same name + address on another active application
+        $hasDuplicate = CustomerApplication::query()
+            ->where('id', '!=', $app->id)
+            ->where('applicant_name', $app->applicant_name)
+            ->where('address', $app->address)
+            ->whereIn('status', ['registered', 'inspected', 'approved', 'assessed', 'paid', 'scheduled', 'installed'])
+            ->exists();
+
+        if ($hasDuplicate) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Duplicate application detected for this applicant and address.',
+            ], 422);
+        }
+
+        // Unpaid billing history check: any customer with same name & address having problematic bill status
+        $hasUnpaidHistory = BillingRecord::query()
+            ->whereHas('customer', function ($q) use ($app) {
+                $q->where('name', $app->applicant_name)
+                  ->where('address', $app->address);
+            })
+            ->whereIn('bill_status', ['Outstanding Payment', 'Overdue', 'Notice of Disconnection', 'Disconnected'])
+            ->exists();
+
+        if ($hasUnpaidHistory) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Applicant has a history of unpaid or disconnected bills.',
+            ], 422);
+        }
+
+        // Passed validation: mark as approved (eligible for assessment & payment)
         $app->approved_by = $request->user()->id;
         $app->approved_at = now();
         $app->status = 'approved';
         $app->save();
+
         return response()->json(['ok' => true, 'application' => $app]);
     }
 
@@ -113,7 +152,7 @@ class ConnectionsController extends Controller
             'payment_receipt_no' => ['required','string','max:100']
         ]);
         $app = CustomerApplication::findOrFail($id);
-        if ($app->status !== 'assessed') {
+        if (!in_array($app->status, ['approved', 'assessed'], true)) {
             return response()->json(['ok' => false, 'message' => 'Invalid status for payment'], 422);
         }
         $app->payment_receipt_no = $request->string('payment_receipt_no');
