@@ -23,54 +23,58 @@
 
     <div class="bg-white dark:bg-gray-900 rounded-xl shadow border border-gray-200 dark:border-gray-800">
         <div class="p-3 md:p-4 grid grid-cols-2 md:grid-cols-6 gap-2 md:gap-3">
-            <div class="col-span-2 flex items-center p-2 rounded-lg bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-900/10">
+            <div class="col-span-2 flex items-center p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20">
                 <div>
                     <div class="text-[11px] text-gray-500">Total</div>
                     <div class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ ($kpis['inventory'] ?? 0)+($kpis['installed'] ?? 0)+($kpis['active'] ?? 0)+($kpis['maintenance'] ?? 0)+($kpis['inactive'] ?? 0)+($kpis['retired'] ?? 0) }}</div>
                 </div>
             </div>
-            <div class="p-2 rounded-lg bg-gray-50 dark:bg-gray-800/60">
+            <div class="p-2 rounded-lg bg-blue-50/60 dark:bg-blue-900/10">
                 <div class="text-[11px] text-gray-500">Inventory</div>
-                <div class="text-base font-semibold text-gray-800 dark:text-gray-100">{{ $kpis['inventory'] ?? 0 }}</div>
+                <div class="text-base font-semibold text-blue-800 dark:text-blue-200">{{ $kpis['inventory'] ?? 0 }}</div>
             </div>
-            <div class="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20">
+            <div class="p-2 rounded-lg bg-blue-50/60 dark:bg-blue-900/10">
                 <div class="text-[11px] text-gray-500">Active</div>
-                <div class="text-base font-semibold text-emerald-700 dark:text-emerald-300">{{ $kpis['active'] ?? 0 }}</div>
+                <div class="text-base font-semibold text-blue-800 dark:text-blue-200">{{ $kpis['active'] ?? 0 }}</div>
             </div>
-            <div class="p-2 rounded-lg bg-amber-50 dark:bg-amber-900/20">
+            <div class="p-2 rounded-lg bg-blue-50/60 dark:bg-blue-900/10">
                 <div class="text-[11px] text-gray-500">Maintenance</div>
-                <div class="text-base font-semibold text-amber-700 dark:text-amber-300">{{ $kpis['maintenance'] ?? 0 }}</div>
+                <div class="text-base font-semibold text-blue-800 dark:text-blue-200">{{ $kpis['maintenance'] ?? 0 }}</div>
             </div>
-            <div class="p-2 rounded-lg bg-rose-50 dark:bg-rose-900/20">
+            <div class="p-2 rounded-lg bg-blue-50/60 dark:bg-blue-900/10">
                 <div class="text-[11px] text-gray-500">Retired</div>
-                <div class="text-base font-semibold text-rose-700 dark:text-rose-300">{{ $kpis['retired'] ?? 0 }}</div>
+                <div class="text-base font-semibold text-blue-800 dark:text-blue-200">{{ $kpis['retired'] ?? 0 }}</div>
             </div>
         </div>
         <div class="px-3 md:px-4 pb-3">
             <form method="get" class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-2 md:flex-1">
-                    <input type="text" name="q" value="{{ request('q') }}" placeholder="Search serial, address, or barangay" class="w-full h-9 text-sm rounded-md border border-gray-300 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 dark:border-gray-600 dark:bg-gray-900" />
-                    <select name="status" class="w-full h-9 text-sm rounded-md border border-gray-300 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 dark:border-gray-600 dark:bg-gray-900">
+                    <input type="text" name="q" value="{{ request('q') }}" placeholder="Search serial, address, or barangay" class="w-full h-10 px-3 text-sm rounded-md border border-gray-300 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 dark:border-gray-600 dark:bg-gray-900" />
+                    <select name="status" class="w-full h-10 px-3 text-sm rounded-md border border-gray-300 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 dark:border-gray-600 dark:bg-gray-900">
                         <option value="">All Statuses</option>
                         @foreach($statuses as $s)
                             <option value="{{ $s }}" @selected(request('status')===$s)>{{ ucfirst($s) }}</option>
                         @endforeach
                     </select>
-                    <input type="text" name="type" value="{{ request('type') }}" placeholder="Type" class="w-full h-9 text-sm rounded-md border border-gray-300 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 dark:border-gray-600 dark:bg-gray-900" />
-                    <input type="text" name="barangay" value="{{ request('barangay') }}" placeholder="Barangay" class="w-full h-9 text-sm rounded-md border border-gray-300 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 dark:border-gray-600 dark:bg-gray-900" />
+                    <input type="text" name="type" value="{{ request('type') }}" placeholder="Type" class="w-full h-10 px-3 text-sm rounded-md border border-gray-300 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 dark:border-gray-600 dark:bg-gray-900" />
+                    <input type="text" name="barangay" value="{{ request('barangay') }}" placeholder="Barangay" class="w-full h-10 px-3 text-sm rounded-md border border-gray-300 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 dark:border-gray-600 dark:bg-gray-900" />
                 </div>
                 <div class="flex flex-wrap md:flex-nowrap gap-2 items-center md:justify-end md:self-end md:mt-1">
-                    <button title="Apply filters" class="h-9 w-9 inline-flex items-center justify-center rounded-md bg-blue-600 hover:bg-blue-700 text-white">
-                        <x-heroicon-o-magnifying-glass class="w-5 h-5" />
+                    <button title="Apply filters" class="h-10 inline-flex items-center justify-center gap-1.5 px-3 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm">
+                        <x-heroicon-o-magnifying-glass class="w-4 h-4" />
+                        <span>Filter</span>
                     </button>
-                    <a href="{{ route('admin.meters') }}" title="Reset filters" class="h-9 w-9 inline-flex items-center justify-center rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200">
-                        <x-heroicon-o-arrow-path class="w-5 h-5" />
+                    <a href="{{ route('admin.meters') }}" title="Reset filters" class="h-10 inline-flex items-center justify-center gap-1.5 px-3 rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm">
+                        <x-heroicon-o-arrow-path class="w-4 h-4" />
+                        <span>Reset</span>
                     </a>
-                    <a href="{{ route('admin.meters.export', request()->all()) }}" title="Export" class="h-9 w-9 inline-flex items-center justify-center rounded-md bg-blue-600 hover:bg-blue-700 text-white">
-                        <x-heroicon-o-arrow-down-tray class="w-5 h-5" />
+                    <a href="{{ route('admin.meters.export', request()->all()) }}" title="Export" class="h-10 inline-flex items-center justify-center gap-1.5 px-3 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm">
+                        <x-heroicon-o-arrow-down-tray class="w-4 h-4" />
+                        <span>Export</span>
                     </a>
-                    <a href="{{ route('admin.meters.template') }}" title="Download template" class="h-9 w-9 inline-flex items-center justify-center rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200">
-                        <x-heroicon-o-document-arrow-down class="w-5 h-5" />
+                    <a href="{{ route('admin.meters.template') }}" title="Download template" class="h-10 inline-flex items-center justify-center gap-1.5 px-3 rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm">
+                        <x-heroicon-o-document-arrow-down class="w-4 h-4" />
+                        <span>Template</span>
                     </a>
                 </div>
             </form>
@@ -158,7 +162,7 @@
                             <th class="px-2.5 py-1.5 text-left">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-gray-800 text-gray-800 dark:text-gray-100 text-[13px]">
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-800 text-gray-800 dark:text-gray-100 text-sm">
                         <tr>
                             <td colspan="7" class="px-2.5 py-2">
                                 <form id="bulkForm" method="post" action="{{ route('admin.meters.bulk-status') }}" class="flex flex-wrap gap-2 items-center text-sm">
@@ -218,12 +222,8 @@
                                 <td class="px-2.5 py-1.5">
                                     @php
                                         $status = $m->status;
-                                        $badge = 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200';
-                                        if ($status==='active') $badge = 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300';
-                                        elseif ($status==='maintenance') $badge = 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300';
-                                        elseif ($status==='installed') $badge = 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300';
-                                        elseif ($status==='inactive') $badge = 'bg-slate-100 text-slate-700 dark:bg-slate-900/40 dark:text-slate-300';
-                                        elseif ($status==='retired') $badge = 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300';
+                                        $badge = 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200';
+                                        if ($status==='inactive') $badge = 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200';
                                     @endphp
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $badge }}">{{ ucfirst($m->status) }}</span>
                                 </td>

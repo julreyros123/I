@@ -73,10 +73,10 @@ class RegisterController extends Controller
             // KYC
             'id_type' => 'required|string|max:50',
             'id_number' => 'required|string|max:100',
-            // Require actual image files with sane dimensions to reduce chance of random/invalid uploads
-            'id_front' => 'required|image|mimes:jpg,jpeg,png,webp|max:5120|dimensions:min_width=400,min_height=250',
-            'id_back' => 'required|image|mimes:jpg,jpeg,png,webp|max:5120|dimensions:min_width=400,min_height=250',
-            'selfie' => 'required|image|mimes:jpg,jpeg,png,webp|max:5120|dimensions:min_width=400,min_height=250',
+            // Optional KYC images; if provided, enforce sane dimensions and types
+            'id_front' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120|dimensions:min_width=400,min_height=250',
+            'id_back' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120|dimensions:min_width=400,min_height=250',
+            'selfie' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120|dimensions:min_width=400,min_height=250',
             'consent' => 'accepted',
         ], [
             'first_name.required' => 'First name is required.',
@@ -129,12 +129,12 @@ class RegisterController extends Controller
                 'status' => 'Pending',
             ]);
 
-            // Store KYC documents
+            // Store KYC documents when provided (optional uploads)
             $disk = 'public';
             $base = 'kyc';
-            $frontPath = $request->file('id_front')->store($base, $disk);
-            $backPath = $request->file('id_back')->store($base, $disk);
-            $selfiePath = $request->file('selfie')->store($base, $disk);
+            $frontPath = $request->file('id_front') ? $request->file('id_front')->store($base, $disk) : null;
+            $backPath = $request->file('id_back') ? $request->file('id_back')->store($base, $disk) : null;
+            $selfiePath = $request->file('selfie') ? $request->file('selfie')->store($base, $disk) : null;
 
             // Create Customer Application record (workflow starts at registered)
             $application = \App\Models\CustomerApplication::create([

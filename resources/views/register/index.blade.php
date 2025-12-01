@@ -89,20 +89,20 @@
                         <p class="text-red-500 text-xs mt-1 hidden" data-err="id_number">ID Number is required</p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">ID Front (jpg/png/webp, max 5MB)</label>
-                        <input type="file" name="id_front" accept="image/*" class="w-full text-sm" required />
+                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">ID Front (optional, jpg/png/webp, max 5MB)</label>
+                        <input type="file" name="id_front" accept="image/*" class="w-full text-sm" />
                         <img alt="Preview" data-preview="id_front" class="mt-2 w-40 h-28 object-cover rounded border hidden" />
                         <p class="text-red-500 text-xs mt-1 hidden" data-err="id_front">ID Front is required</p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">ID Back (jpg/png/webp, max 5MB)</label>
-                        <input type="file" name="id_back" accept="image/*" class="w-full text-sm" required />
+                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">ID Back (optional, jpg/png/webp, max 5MB)</label>
+                        <input type="file" name="id_back" accept="image/*" class="w-full text-sm" />
                         <img alt="Preview" data-preview="id_back" class="mt-2 w-40 h-28 object-cover rounded border hidden" />
                         <p class="text-red-500 text-xs mt-1 hidden" data-err="id_back">ID Back is required</p>
                     </div>
                     <div class="md:col-span-2">
-                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Selfie holding ID (jpg/png/webp, max 5MB)</label>
-                        <input type="file" name="selfie" accept="image/*" class="w-full text-sm" required />
+                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Selfie holding ID (optional, jpg/png/webp, max 5MB)</label>
+                        <input type="file" name="selfie" accept="image/*" class="w-full text-sm" />
                         <img alt="Preview" data-preview="selfie" class="mt-2 w-40 h-28 object-cover rounded border hidden" />
                         <p class="text-red-500 text-xs mt-1 hidden" data-err="selfie">Selfie is required</p>
                     </div>
