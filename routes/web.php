@@ -30,6 +30,8 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::get('/admin', [AdminController::class, 'index'])->middleware('auth')->name('admin.dashboard');
 Route::get('/admin/notices', [AdminController::class, 'notices'])->middleware('auth')->name('admin.notices');
 Route::get('/admin/reports', [AdminController::class, 'reports'])->middleware('auth')->name('admin.reports');
+Route::post('/admin/reports/{report}/priority', [AdminController::class, 'updateReportPriority'])->middleware('auth')->name('admin.reports.priority');
+Route::post('/admin/reports/{report}/status', [AdminController::class, 'updateReportStatus'])->middleware('auth')->name('admin.reports.status');
 Route::get('/admin/reports/revenue', [AdminController::class, 'revenue'])->middleware('auth')->name('admin.reports.revenue');
 Route::get('/admin/customers', [AdminController::class, 'customers'])->middleware('auth')->name('admin.customers');
 Route::get('/admin/meters', [MeterController::class, 'index'])->middleware('auth')->name('admin.meters');

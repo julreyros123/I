@@ -109,8 +109,42 @@ class AdminController extends Controller
     public function reports()
     {
         abort_unless(auth()->check() && auth()->user()->role === 'admin', 403);
-        $reports = Report::with('user')->orderByDesc('created_at')->paginate(20);
-        return view('admin.reports', compact('reports'));
+        $priorityReports = Report::with('user')
+            ->where('status', '!=', 'completed')
+            ->where('is_priority', true)
+            ->orderByDesc('created_at')
+            ->get();
+        $openReports = Report::with('user')
+            ->where('status', '!=', 'completed')
+            ->where('is_priority', false)
+            ->orderByDesc('created_at')
+            ->get();
+        $completedReports = Report::with('user')
+            ->where('status', 'completed')
+            ->orderByDesc('created_at')
+            ->get();
+        return view('admin.reports', compact('priorityReports', 'openReports', 'completedReports'));
+    }
+
+    public function updateReportPriority(Report $report, Request $request)
+    {
+        abort_unless(auth()->check() && auth()->user()->role === 'admin', 403);
+        $report->is_priority = (bool) $request->input('is_priority');
+        $report->save();
+        return redirect()->route('admin.reports')->with('status', 'Report updated.');
+    }
+
+    public function updateReportStatus(Report $report, Request $request)
+    {
+        abort_unless(auth()->check() && auth()->user()->role === 'admin', 403);
+        $status = $request->input('status', 'open');
+        $report->status = $status;
+        // If completed, also clear priority
+        if ($status === 'completed') {
+            $report->is_priority = false;
+        }
+        $report->save();
+        return redirect()->route('admin.reports')->with('status', 'Report status updated.');
     }
 
     public function customers()

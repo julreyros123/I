@@ -233,6 +233,59 @@
                         @endforeach
                     </div>
                 </div>
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-5">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Upcoming Activities</h3>
+                        <button type="button" id="staffAddActivityToggle" class="text-[11px] px-2 py-1 rounded border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Add Activity</button>
+                    </div>
+                    <div class="space-y-2 text-xs text-gray-700 dark:text-gray-200">
+                        <div class="flex items-center justify-between">
+                            <div class="flex flex-col">
+                                <span class="font-medium">Meter Reading</span>
+                                <span class="text-[11px] text-gray-500 dark:text-gray-400">Scheduled every 4th week of the month</span>
+                            </div>
+                            <span class="text-[11px] text-gray-500 dark:text-gray-400">
+                                {{ \Carbon\Carbon::now()->copy()->startOfMonth()->addWeeks(3)->format('M d') }}
+                                –
+                                {{ \Carbon\Carbon::now()->copy()->startOfMonth()->addWeeks(3)->addDays(6)->format('M d') }}
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex flex-col">
+                                <span class="font-medium">Billing Generation</span>
+                                <span class="text-[11px] text-gray-500 dark:text-gray-400">Prepare and review bills (monthly)</span>
+                            </div>
+                            <span class="text-[11px] text-gray-500 dark:text-gray-400">
+                                {{ \Carbon\Carbon::now()->copy()->startOfMonth()->format('M d') }}
+                                –
+                                {{ \Carbon\Carbon::now()->copy()->startOfMonth()->addDays(6)->format('M d') }}
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex flex-col">
+                                <span class="font-medium">Delivery of Billing Statements</span>
+                                <span class="text-[11px] text-gray-500 dark:text-gray-400">Distribution to customers (aligned with billing generation)</span>
+                            </div>
+                            <span class="text-[11px] text-gray-500 dark:text-gray-400">
+                                {{ \Carbon\Carbon::now()->copy()->startOfMonth()->format('M d') }}
+                                –
+                                {{ \Carbon\Carbon::now()->copy()->startOfMonth()->addDays(6)->format('M d') }}
+                            </span>
+                        </div>
+                        <div class="pt-3 mt-3 border-t border-gray-200 dark:border-gray-700 space-y-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <h4 class="text-[11px] font-semibold text-gray-700 dark:text-gray-200">My Activities</h4>
+                            </div>
+                            <form id="staffActivityForm" class="flex flex-col gap-2 sm:flex-row sm:items-center">
+                                <input type="date" id="staffActivityDate" class="flex-none w-full sm:w-auto border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-[11px] bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">
+                                <input type="text" id="staffActivityDesc" placeholder="Description" class="flex-1 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-[11px] bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">
+                                <button type="submit" class="flex-none px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white text-[11px]">Save</button>
+                            </form>
+                            <div id="staffActivityEmpty" class="text-[11px] text-gray-400">No personal activities yet.</div>
+                            <div id="staffActivityList" class="space-y-1"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Recent Activity: Staff login/logout -->
@@ -1266,6 +1319,78 @@ document.addEventListener('DOMContentLoaded', function() {
             paymentStatusContent.innerHTML = '<div class="text-center py-4 text-red-600">Failed to load payment status.</div>';
         }
         });
+
+    // Personal "My Activities" handling (client-side only)
+    (function(){
+        var toggleBtn = document.getElementById('staffAddActivityToggle');
+        var form = document.getElementById('staffActivityForm');
+        var dateInput = document.getElementById('staffActivityDate');
+        var descInput = document.getElementById('staffActivityDesc');
+        var list = document.getElementById('staffActivityList');
+        var empty = document.getElementById('staffActivityEmpty');
+        if (!form || !dateInput || !descInput || !list) return;
+
+        var STORAGE_KEY = 'staff.portal.myActivities';
+        function loadActivities(){
+            try{
+                var raw = localStorage.getItem(STORAGE_KEY);
+                var arr = raw ? JSON.parse(raw) : [];
+                if (!Array.isArray(arr)) return [];
+                return arr;
+            }catch(_){ return []; }
+        }
+        function saveActivities(arr){
+            try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(arr||[])); }catch(_){ }
+        }
+        function renderActivities(){
+            var items = loadActivities();
+            if (!items.length){
+                list.innerHTML = '';
+                if (empty) empty.classList.remove('hidden');
+                return;
+            }
+            items.sort(function(a,b){ return String(a.date||'').localeCompare(String(b.date||'')); });
+            var html = items.map(function(it){
+                var d = it.date ? new Date(it.date) : null;
+                var label = it.date;
+                if (d && !isNaN(d.getTime())){
+                    label = d.toLocaleDateString(undefined,{ month:'short', day:'2-digit' });
+                }
+                return '<div class="flex items-center justify-between gap-2">'
+                    + '<span class="text-[11px] text-gray-500">'+ (label||'—') +'</span>'
+                    + '<span class="flex-1 text-[11px] text-gray-700 dark:text-gray-200 truncate">'+ (it.desc||'') +'</span>'
+                    + '</div>';
+            }).join('');
+            list.innerHTML = html;
+            if (empty) empty.classList.add('hidden');
+        }
+
+        if (toggleBtn){
+            toggleBtn.addEventListener('click', function(){
+                var hidden = form.classList.contains('hidden');
+                if (hidden){
+                    form.classList.remove('hidden');
+                    dateInput.focus();
+                } else {
+                    form.classList.add('hidden');
+                }
+            });
+        }
+
+        form.addEventListener('submit', function(e){
+            e.preventDefault();
+            var d = (dateInput.value||'').trim();
+            var desc = (descInput.value||'').trim();
+            if (!d || !desc) return;
+            var items = loadActivities();
+            items.push({ date:d, desc:desc });
+            saveActivities(items);
+            renderActivities();
+            descInput.value = '';
+        });
+
+        renderActivities();
+    })();
 
     // Initial refresh
     if (typeof refreshPortalStats === 'function') refreshPortalStats();

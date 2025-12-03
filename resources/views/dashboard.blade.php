@@ -66,6 +66,34 @@
                 </div>
             </div>
         </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-4">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Upcoming Activities</h3>
+            </div>
+            <div class="space-y-2 text-xs text-gray-700 dark:text-gray-200">
+                <div class="flex items-center justify-between">
+                    <div class="flex flex-col">
+                        <span class="font-medium">Meter Reading - Zone 1</span>
+                        <span class="text-[11px] text-gray-500 dark:text-gray-400">Morning field activity</span>
+                    </div>
+                    <span class="text-[11px] text-gray-500 dark:text-gray-400">Dec 05</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <div class="flex flex-col">
+                        <span class="font-medium">Billing Generation</span>
+                        <span class="text-[11px] text-gray-500 dark:text-gray-400">Prepare and review bills</span>
+                    </div>
+                    <span class="text-[11px] text-gray-500 dark:text-gray-400">Dec 08</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <div class="flex flex-col">
+                        <span class="font-medium">Notice of Disconnection</span>
+                        <span class="text-[11px] text-gray-500 dark:text-gray-400">Serve pending notices</span>
+                    </div>
+                    <span class="text-[11px] text-gray-500 dark:text-gray-400">Dec 10</span>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 

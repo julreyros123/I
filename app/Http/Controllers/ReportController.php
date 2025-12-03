@@ -14,7 +14,7 @@ class ReportController extends Controller
     {
         $request->validate([
             'message' => 'required|string|max:2000',
-            'category' => 'nullable|string|in:UI bug,Delay issue,Billing problem,Other',
+            'category' => 'nullable|string|in:UI bug,Delay issue,Billing problem,Water leakage,No water,Other',
             'other_problem' => 'nullable|string|max:255',
         ]);
 

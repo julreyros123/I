@@ -182,6 +182,18 @@
                         </label>
                     </div>
                 </div>
+                <div class="mt-2">
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="flex items-center gap-2 text-gray-800 dark:text-gray-200">
+                            <input type="radio" name="category" value="Water leakage" x-model="category" class="text-blue-600 focus:ring-blue-500">
+                            <span>Water leakage</span>
+                        </label>
+                        <label class="flex items-center gap-2 text-gray-800 dark:text-gray-200">
+                            <input type="radio" name="category" value="No water" x-model="category" class="text-blue-600 focus:ring-blue-500">
+                            <span>No water</span>
+                        </label>
+                    </div>
+                </div>
 
                 <div x-show="category === 'Other'" x-cloak>
                     <label for="other_problem" class="block text-xs font-medium text-gray-800 dark:text-gray-300 mb-1">Other problem</label>

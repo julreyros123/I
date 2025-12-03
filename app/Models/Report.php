@@ -14,6 +14,8 @@ class Report extends Model
         'message',
         'category',
         'other_problem',
+        'status',
+        'is_priority',
     ];
 
     public function user()
