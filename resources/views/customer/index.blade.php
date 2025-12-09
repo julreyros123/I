@@ -46,26 +46,6 @@
                 </div>
             </div>
 
-            <!-- Show only pills (mirror status options) -->
-            <div class="flex flex-wrap items-center gap-3 text-xs text-gray-600 dark:text-gray-300">
-                <span class="font-medium">Show only:</span>
-                <label class="inline-flex items-center gap-1 cursor-pointer">
-                    <input type="radio" name="statusPill" value="" class="w-3 h-3 text-blue-600 border-gray-300 focus:ring-blue-500" {{ empty($status) ? 'checked' : '' }}>
-                    <span>All</span>
-                </label>
-                <label class="inline-flex items-center gap-1 cursor-pointer">
-                    <input type="radio" name="statusPill" value="Active" class="w-3 h-3 text-blue-600 border-gray-300 focus:ring-blue-500" {{ ($status ?? '') === 'Active' ? 'checked' : '' }}>
-                    <span>Active</span>
-                </label>
-                <label class="inline-flex items-center gap-1 cursor-pointer">
-                    <input type="radio" name="statusPill" value="Inactive" class="w-3 h-3 text-blue-600 border-gray-300 focus:ring-blue-500" {{ ($status ?? '') === 'Inactive' ? 'checked' : '' }}>
-                    <span>Inactive</span>
-                </label>
-                <label class="inline-flex items-center gap-1 cursor-pointer">
-                    <input type="radio" name="statusPill" value="Disconnected" class="w-3 h-3 text-blue-600 border-gray-300 focus:ring-blue-500" {{ ($status ?? '') === 'Disconnected' ? 'checked' : '' }}>
-                    <span>Disconnected</span>
-                </label>
-            </div>
         </form>
 
         <!-- Table -->

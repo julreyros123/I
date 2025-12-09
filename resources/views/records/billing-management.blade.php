@@ -76,7 +76,7 @@
                                 <x-ui.input id="current_reading" type="number" min="0" step="0.01" />
                             </div>
                         </div>
-                        <div class="grid sm:grid-cols-3 gap-4">
+                        <div class="grid sm:grid-cols-2 gap-4">
                             <div class="space-y-2">
                                 <label class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Base Rate (₱/m³)</label>
                                 <x-ui.input id="base_rate" type="number" min="0" step="0.01" value="25" />
@@ -84,10 +84,6 @@
                             <div class="space-y-2">
                                 <label class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Maintenance Charge (₱)</label>
                                 <x-ui.input id="maintenance_charge" type="number" min="0" step="0.01" value="0" />
-                            </div>
-                            <div class="space-y-2">
-                                <label class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Overdue Penalty (₱)</label>
-                                <x-ui.input id="overdue_penalty" type="number" min="0" step="0.01" value="0" />
                             </div>
                         </div>
                     </section>
@@ -109,6 +105,10 @@
                                 <label class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Auto Due Date</label>
                                 <div class="h-11 flex items-center px-3 rounded-lg border border-gray-200 dark:border-gray-700 text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-800/60" id="dueDatePreview">—</div>
                             </div>
+                            <div class="space-y-2">
+                                <label class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Disconnection Date</label>
+                                <div class="h-11 flex items-center px-3 rounded-lg border border-gray-200 dark:border-gray-700 text-sm text-rose-600 dark:text-rose-300 bg-rose-50/60 dark:bg-rose-900/40" id="disconnectDatePreview">—</div>
+                            </div>
                         </div>
                     </section>
 
@@ -116,6 +116,8 @@
                         <input type="hidden" id="consumption" />
                         <input type="hidden" id="subtotal_value" />
                         <input type="hidden" id="total_value" />
+                        <input type="hidden" id="due_date_value" />
+                        <input type="hidden" id="disconnect_date_value" />
                     </div>
 
                     <div class="pt-2 border-t border-gray-100 dark:border-gray-800">
@@ -148,8 +150,12 @@
                             <dd id="maintenanceDisplay" class="text-slate-900 dark:text-slate-100">₱0.00</dd>
                         </div>
                         <div class="flex items-center justify-between">
-                            <dt class="text-gray-500 dark:text-gray-400">Penalty</dt>
-                            <dd id="penaltyDisplay" class="text-red-600 dark:text-red-300">₱0.00</dd>
+                            <dt class="text-gray-500 dark:text-gray-400">Due Date</dt>
+                            <dd id="dueDateSummary" class="text-slate-900 dark:text-slate-100">—</dd>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <dt class="text-gray-500 dark:text-gray-400">Disconnection</dt>
+                            <dd id="disconnectDateSummary" class="text-rose-600 dark:text-rose-300">—</dd>
                         </div>
                     </dl>
                     <div class="mt-5 rounded-xl bg-slate-900 text-white dark:bg-slate-800 px-4 py-3 flex items-center justify-between gap-4">
@@ -580,21 +586,25 @@ bulkBtn.addEventListener('click', () => {
   const $ = id => document.getElementById(id);
   const alertBox = $('alertBox');
 
-  const fields = ['previous_reading','current_reading','base_rate','maintenance_charge','overdue_penalty','account_no','date_from','date_to','prepared_by','issued_at'];
+  const fields = ['previous_reading','current_reading','base_rate','maintenance_charge','account_no','date_from','date_to','prepared_by','issued_at'];
 
   const state = {
     accountPreview: $('accountPreview'),
     issuedAtPreview: null,
     preparedByPreview: null,
     dueDatePreview: $('dueDatePreview'),
+    disconnectDatePreview: $('disconnectDatePreview'),
     consumptionInput: $('consumption'),
     subtotalInput: $('subtotal_value'),
     totalInput: $('total_value'),
+    dueDateValue: $('due_date_value'),
+    disconnectDateValue: $('disconnect_date_value'),
     consumptionDisplay: $('consumptionDisplay'),
     subtotalDisplay: $('subtotalDisplay'),
     maintenanceDisplay: $('maintenanceDisplay'),
-    penaltyDisplay: $('penaltyDisplay'),
     totalDisplay: $('totalDisplay'),
+    dueDateSummary: $('dueDateSummary'),
+    disconnectDateSummary: $('disconnectDateSummary'),
   };
 
   function showAlert(message, type = 'success') {
@@ -635,21 +645,37 @@ bulkBtn.addEventListener('click', () => {
     return `${base}-${random}`;
   }
 
+  function formatDisplayDate(date) {
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
   function updateDueDate() {
     if (!state.dueDatePreview) return;
     const dateToEl = $('date_to');
-    const dateTo = dateToEl ? dateToEl.value : '';
-    if (!dateTo) {
-      state.dueDatePreview.textContent = 'End of month';
-      return;
+    const raw = dateToEl ? (dateToEl.value || '').trim() : '';
+
+    let due = null;
+    if (raw) {
+      const parsed = new Date(`${raw}T00:00:00`);
+      if (!Number.isNaN(parsed.getTime())) {
+        due = parsed;
+      }
     }
-    try {
-      const due = new Date(dateTo);
-      if (Number.isNaN(due.getTime())) throw new Error('Invalid date');
-      state.dueDatePreview.textContent = due.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-    } catch (_) {
-      state.dueDatePreview.textContent = '—';
+
+    const dueText = due ? formatDisplayDate(due) : '—';
+    state.dueDatePreview.textContent = dueText;
+    if (state.dueDateSummary) state.dueDateSummary.textContent = dueText;
+    if (state.dueDateValue) state.dueDateValue.value = due ? raw : '';
+
+    let disconnect = null;
+    if (due) {
+      disconnect = new Date(due.getTime());
+      disconnect.setDate(disconnect.getDate() + 1);
     }
+    const disconnectText = disconnect ? formatDisplayDate(disconnect) : '—';
+    if (state.disconnectDatePreview) state.disconnectDatePreview.textContent = disconnectText;
+    if (state.disconnectDateSummary) state.disconnectDateSummary.textContent = disconnectText;
+    if (state.disconnectDateValue) state.disconnectDateValue.value = disconnect ? disconnect.toISOString().slice(0, 10) : '';
   }
 
   function calculate() {
@@ -657,17 +683,14 @@ bulkBtn.addEventListener('click', () => {
     const currentEl = $('current_reading');
     const baseRateEl = $('base_rate');
     const maintenanceEl = $('maintenance_charge');
-    const penaltyEl = $('overdue_penalty');
-
     const previous = sanitizeNumber(previousEl ? previousEl.value : 0);
     const current = sanitizeNumber(currentEl ? currentEl.value : 0);
     const baseRate = sanitizeNumber(baseRateEl ? baseRateEl.value : 25, 25);
     const maintenance = sanitizeNumber(maintenanceEl ? maintenanceEl.value : 0);
-    const penalty = sanitizeNumber(penaltyEl ? penaltyEl.value : 0);
 
     const consumption = Math.max(0, current - previous);
     const subtotal = consumption * baseRate;
-    const total = subtotal + maintenance + penalty;
+    const total = subtotal + maintenance;
 
     if (state.consumptionInput) state.consumptionInput.value = consumption.toFixed(2);
     if (state.subtotalInput) state.subtotalInput.value = subtotal.toFixed(2);
@@ -676,7 +699,6 @@ bulkBtn.addEventListener('click', () => {
     if (state.consumptionDisplay) state.consumptionDisplay.textContent = `${consumption.toFixed(2)} m³`;
     if (state.subtotalDisplay) state.subtotalDisplay.textContent = formatCurrency(subtotal);
     if (state.maintenanceDisplay) state.maintenanceDisplay.textContent = formatCurrency(maintenance);
-    if (state.penaltyDisplay) state.penaltyDisplay.textContent = formatCurrency(penalty);
     if (state.totalDisplay) state.totalDisplay.textContent = formatCurrency(total);
 
     const accountEl = $('account_no');
@@ -746,11 +768,12 @@ bulkBtn.addEventListener('click', () => {
         consumption_cu_m: sanitizeNumber(state.consumptionInput ? state.consumptionInput.value : 0),
         base_rate: sanitizeNumber(($('base_rate') || {}).value, 25),
         maintenance_charge: sanitizeNumber(($('maintenance_charge') || {}).value),
-        overdue_penalty: sanitizeNumber(($('overdue_penalty') || {}).value),
         vat: 0,
         total_amount: sanitizeNumber(state.totalInput ? state.totalInput.value : 0),
         date_from: ($('date_from') || {}).value || null,
         date_to: ($('date_to') || {}).value || null,
+        due_date: state.dueDateValue ? state.dueDateValue.value || null : null,
+        disconnection_date: state.disconnectDateValue ? state.disconnectDateValue.value || null : null,
       };
 
       const btn = saveBtn;
