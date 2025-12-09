@@ -62,7 +62,7 @@
                         <span class="inline-flex items-center justify-center text-[11px] rounded-full px-2 py-0.5 bg-white/40 dark:bg-black/20">{{ $incomingReports->count() }}</span>
                     </button>
                     <button @click="tab = 'priority'" :class="tab === 'priority' ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'" class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition">
-                        <x-heroicon-o-fire class="w-4 h-4" /> Priority lane
+                        <x-heroicon-o-fire class="w-4 h-4" /> Priority
                         <span class="inline-flex items-center justify-center text-[11px] rounded-full px-2 py-0.5 bg-white/40 dark:bg-black/20">{{ $priorityCount }}</span>
                     </button>
                     <button @click="tab = 'completed'" :class="tab === 'completed' ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'" class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition">
@@ -115,7 +115,7 @@
                                             @csrf
                                             <input type="hidden" name="is_priority" value="1">
                                             <button type="submit" class="inline-flex items-center gap-2 rounded-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 text-sm font-semibold transition">
-                                                <x-heroicon-o-fire class="w-4 h-4" /> Escalate
+                                                <x-heroicon-o-fire class="w-4 h-4" /> Mark as priority
                                             </button>
                                         </form>
                                     @else

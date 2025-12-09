@@ -19,21 +19,6 @@
         </div>
     </div>
 
-    <div class="hidden md:flex items-center flex-1 justify-center">
-        <div class="relative w-72">
-            <input type="text" placeholder="Search"
-                class="w-full pl-4 pr-10 py-2 rounded-full 
-                       bg-gray-100 dark:bg-gray-800 
-                       text-gray-700 dark:text-gray-200 
-                       placeholder-gray-400 dark:placeholder-gray-500
-                       focus:outline-none focus:ring-2 focus:ring-indigo-500 
-                       text-sm shadow-sm">
-            <x-heroicon-o-magnifying-glass 
-                class="w-5 h-5 absolute right-3 top-1/2 -translate-y-1/2 
-                       text-gray-400 dark:text-gray-500" />
-        </div>
-    </div>
-
     <div class="flex items-center gap-4">
         <button @click="toggleTheme && toggleTheme()" 
             class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">

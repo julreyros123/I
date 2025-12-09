@@ -652,7 +652,7 @@ class AdminController extends Controller
             $recentIssues = (clone $issueBase)
                 ->orderByDesc('created_at')
                 ->limit(15)
-                ->get(['id', 'category', 'status', 'created_at', 'other_problem', 'message']);
+                ->get(['id', 'category', 'status', 'created_at', 'other_problem', 'message', 'is_priority']);
 
             $issueTimeline = (clone $issueBase)
                 ->selectRaw('DATE(created_at) as period, COUNT(*) as total')

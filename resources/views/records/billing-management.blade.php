@@ -442,6 +442,86 @@
 <script>
 let currentBillId = null;
 
+// Lightweight, no-API counter helpers
+function getCount(elId){ const el = document.getElementById(elId); return el ? (parseInt(el.textContent.replace(/[^0-9]/g,'')||'0',10)||0) : 0; }
+function setCount(elId, val){ const el = document.getElementById(elId); if (el) el.textContent = String(val); }
+function bumpCounts(deltaPending, deltaGenerated){
+  setCount('pendingCount', Math.max(0, getCount('pendingCount') + deltaPending));
+  setCount('generatedCount', Math.max(0, getCount('generatedCount') + deltaGenerated));
+}
+
+function initBulkControls(){
+  const bulkBtn = document.getElementById('bulkGenerateBtn');
+  if (!bulkBtn) return;
+
+  const selectAll = document.getElementById('selectAll');
+  const rowChecks = Array.from(document.querySelectorAll('.row-check'));
+  const eligible = () => rowChecks.filter(ch => !ch.disabled);
+
+  function refreshBulkState() {
+    const selectable = eligible();
+    const anyChecked = selectable.some(ch => ch.checked);
+    bulkBtn.disabled = !anyChecked;
+
+    if (selectAll) {
+      if (selectable.length) {
+        selectAll.checked = selectable.every(ch => ch.checked);
+        selectAll.indeterminate = !selectAll.checked && anyChecked;
+      } else {
+        selectAll.checked = false;
+        selectAll.indeterminate = false;
+      }
+    }
+  }
+
+  if (selectAll) {
+    selectAll.addEventListener('change', () => {
+      eligible().forEach(ch => { ch.checked = selectAll.checked; });
+      refreshBulkState();
+    });
+  }
+
+  rowChecks.forEach(ch => ch.addEventListener('change', refreshBulkState));
+  refreshBulkState();
+
+  bulkBtn.addEventListener('click', () => {
+    const ids = eligible().filter(ch => ch.checked).map(ch => ch.value);
+    if (!ids.length) return;
+
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{{ route('records.billing.bulk-generate') }}';
+    form.target = '_blank';
+
+    const csrf = document.createElement('input');
+    csrf.type = 'hidden';
+    csrf.name = '_token';
+    csrf.value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    form.appendChild(csrf);
+
+    ids.forEach(id => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'ids[]';
+      input.value = id;
+      form.appendChild(input);
+    });
+
+    document.body.appendChild(form);
+    form.submit();
+    form.remove();
+
+    ids.forEach(id => {
+      const tr = document.querySelector(`tr[data-id="${id}"]`);
+      if (tr) tr.classList.add('locked-row');
+    });
+    bumpCounts(-ids.length, +ids.length);
+    refreshBulkState();
+  });
+}
+
+initBulkControls();
+
 function generateBill(id) {
     // Reuse bulk-generate flow for a single item to ensure locking
     const form = document.createElement('form');
@@ -499,76 +579,6 @@ document.getElementById('statusForm').addEventListener('submit', async function(
             })
         });
 
-// Lightweight, no-API counter helpers
-function getCount(elId){ const el = document.getElementById(elId); return el ? (parseInt(el.textContent.replace(/[^0-9]/g,'')||'0',10)||0) : 0; }
-function setCount(elId, val){ const el = document.getElementById(elId); if (el) el.textContent = String(val); }
-function bumpCounts(deltaPending, deltaGenerated){
-  setCount('pendingCount', Math.max(0, getCount('pendingCount') + deltaPending));
-  setCount('generatedCount', Math.max(0, getCount('generatedCount') + deltaGenerated));
-}
-
-// Bulk selection and generation
-const selectAll = document.getElementById('selectAll');
-const rowChecks = () => Array.from(document.querySelectorAll('.row-check'));
-const bulkBtn = document.getElementById('bulkGenerateBtn');
-
-function refreshBulkState() {
-  const selectable = rowChecks().filter(ch => !ch.disabled);
-  const anyChecked = selectable.some(ch => ch.checked);
-  bulkBtn.disabled = !anyChecked;
-  if (selectable.length) {
-    selectAll.checked = selectable.every(ch => ch.checked);
-    selectAll.indeterminate = !selectAll.checked && anyChecked;
-  } else {
-    selectAll.checked = false;
-    selectAll.indeterminate = false;
-  }
-}
-
-if (selectAll) {
-  selectAll.addEventListener('change', () => {
-    rowChecks().forEach(ch => { if (!ch.disabled) ch.checked = selectAll.checked; });
-    refreshBulkState();
-  });
-}
-
-rowChecks().forEach(ch => ch.addEventListener('change', refreshBulkState));
-refreshBulkState();
-
-bulkBtn.addEventListener('click', () => {
-  const ids = rowChecks().filter(ch => ch.checked && !ch.disabled).map(ch => ch.value);
-  if (!ids.length) return;
-  // Create and submit a form to open batch print in new tab
-  const form = document.createElement('form');
-  form.method = 'POST';
-  form.action = '{{ route('records.billing.bulk-generate') }}';
-  form.target = '_blank';
-
-  const csrf = document.createElement('input');
-  csrf.type = 'hidden';
-  csrf.name = '_token';
-  csrf.value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-  form.appendChild(csrf);
-
-  ids.forEach(id => {
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = 'ids[]';
-    input.value = id;
-    form.appendChild(input);
-  });
-
-  document.body.appendChild(form);
-  form.submit();
-  form.remove();
-  // Optimistic UI: blur selected rows and adjust counters locally
-  ids.forEach(id => {
-    const tr = document.querySelector(`tr[data-id="${id}"]`);
-    if (tr) tr.classList.add('locked-row');
-  });
-  bumpCounts(-ids.length, +ids.length);
-});
-        
         const result = await response.json();
         
         if (result.success) {

@@ -287,7 +287,10 @@
                 </div>
             </article>
             <article class="bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700/60 p-6">
-                <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-3">Recent issue submissions</h2>
+                <div class="flex items-center justify-between gap-3 mb-3">
+                    <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-100">Recent issue submissions</h2>
+                    <p class="text-[11px] text-gray-400 dark:text-gray-500">Tap a pill to escalate or close.</p>
+                </div>
                 <ul class="space-y-3 max-h-72 overflow-y-auto pr-1 text-xs text-gray-600 dark:text-gray-300">
                     @forelse(($recentIssues ?? []) as $issue)
                         <li class="rounded-xl bg-gray-50 dark:bg-gray-800 px-3 py-2">
@@ -302,6 +305,30 @@
                             @if($issue->message)
                                 <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{{ \Illuminate\Support\Str::limit($issue->message, 120) }}</p>
                             @endif
+                            <div class="mt-2 flex flex-wrap items-center gap-2">
+                                <form method="POST" action="{{ route('admin.reports.priority', $issue->id) }}" class="inline"
+                                      @if($issue->is_priority)
+                                      onsubmit="return confirm('Remove priority flag from this issue?');"
+                                      @else
+                                      onsubmit="return confirm('Mark this issue as priority?');"
+                                      @endif>
+                                    @csrf
+                                    <input type="hidden" name="is_priority" value="{{ $issue->is_priority ? 0 : 1 }}">
+                                    <button type="submit"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold transition {{ $issue->is_priority ? 'bg-red-100 text-red-600 border border-red-200 hover:bg-red-200/70' : 'bg-gray-200 text-gray-700 border border-gray-300 hover:bg-gray-300' }}">
+                                        <x-heroicon-o-fire class="w-3.5 h-3.5" /> {{ $issue->is_priority ? 'Priority' : 'Mark as priority' }}
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ route('admin.reports.status', $issue->id) }}" class="inline"
+                                      onsubmit="return confirm('Mark this issue as completed?');">
+                                    @csrf
+                                    <input type="hidden" name="status" value="completed">
+                                    <button type="submit"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold transition bg-emerald-100 text-emerald-700 border border-emerald-200 hover:bg-emerald-200/70">
+                                        <x-heroicon-o-check class="w-3.5 h-3.5" /> Complete
+                                    </button>
+                                </form>
+                            </div>
                         </li>
                     @empty
                         <li class="text-gray-400">No recent issues submitted within this range.</li>

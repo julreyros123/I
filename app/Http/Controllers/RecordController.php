@@ -306,17 +306,11 @@ class RecordController extends Controller
     public function updateBillStatus(Request $request, $id)
     {
         $request->validate([
-            'bill_status' => 'required|in:Outstanding Payment,Overdue,Paid,Notice of Disconnection,Disconnected',
+            'bill_status' => 'required|in:Pending,Outstanding Payment,Overdue,Paid,Notice of Disconnection,Disconnected',
             'notes' => 'nullable|string|max:500'
         ]);
 
         $billingRecord = BillingRecord::findOrFail($id);
-        if ($billingRecord->is_generated) {
-            return response()->json([
-                'success' => false,
-                'message' => 'This bill is locked and cannot be modified after generation.'
-            ], 403);
-        }
         $fromStatus = $billingRecord->bill_status;
         $billingRecord->update([
             'bill_status' => $request->bill_status,
@@ -344,10 +338,16 @@ class RecordController extends Controller
             ],
         ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Bill status updated successfully!'
-        ]);
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Bill status updated successfully!'
+            ]);
+        }
+
+        return redirect()
+            ->route('records.billing')
+            ->with('success', 'Bill status updated successfully!');
     }
 
     public function printBill($id)

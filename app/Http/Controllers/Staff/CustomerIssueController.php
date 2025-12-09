@@ -178,10 +178,22 @@ class CustomerIssueController extends Controller
                 $message .= "\n\nDetails:\n" . trim($data['details']);
             }
 
+            $reportCategory = match ($data['issue_type']) {
+                'Water quality' => 'Water quality',
+                'Service interruption' => 'Service interruption',
+                'Meter concern' => 'Meter concern',
+                'Billing dispute' => 'Billing dispute',
+                'Collection or payment' => 'Collection or payment',
+                'Other' => 'Other (customer)',
+                default => 'Other (customer)',
+            };
+
             $report = Report::create([
                 'user_id' => Auth::id(),
+                'report_type' => 'customer',
                 'message' => $message,
-                'category' => $data['issue_type'] ?: 'Customer Issue',
+                'category' => $reportCategory,
+                'customer_reference' => $customer->account_no,
                 'other_problem' => $data['subject'] ?? null,
                 'status' => 'open',
                 'is_priority' => $isPriority,
