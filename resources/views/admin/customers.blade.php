@@ -4,15 +4,9 @@
 
 @section('content')
 <div x-data="{ selected:new Set(), all:false, drawer:false }" class="w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 font-[Poppins] space-y-6">
-    <div class="flex items-center justify-between">
-        <h1 class="text-xl font-semibold text-gray-800 dark:text-gray-100">Customer Management</h1>
-        <div class="flex flex-wrap items-center gap-2">
-            <button class="px-3 py-2 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm">Import CSV</button>
-            <button class="px-3 py-2 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm">Export CSV</button>
-            <button class="px-3 py-2 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm">Merge Duplicates</button>
-            <button class="px-3 py-2 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm">Audit Log</button>
-        </div>
-    </div>
+    @php
+        $advancedFiltersOpen = filled($filters['classification'] ?? null) || filled($filters['created'] ?? null);
+    @endphp
 
     <!-- Replace Meter Modal -->
     <div id="replaceMeterModal" class="hidden fixed inset-0 bg-black/50 z-50 items-center justify-center p-4">
@@ -310,678 +304,6 @@
         </div>
     </div>
 
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-200 dark:border-gray-700 p-4 lg:p-5 mt-6">
-        <div class="flex items-center justify-between mb-3">
-            <h2 class="text-base md:text-lg font-semibold text-gray-800 dark:text-gray-100">New Connection Applications</h2>
-            <div class="flex items-center gap-2 text-xs">
-                <input id="ncSearch" type="text" placeholder="Search applicant or address" class="border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1 bg-white dark:bg-gray-900" />
-                <select id="ncFilter" class="border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1 bg-white dark:bg-gray-900">
-                    <option value="">All</option>
-                    <option value="registered">Registered</option>
-                    <option value="inspected">Inspected</option>
-                    <option value="approved">Approved</option>
-                    <option value="assessed">Assessed</option>
-                    <option value="paid">Paid</option>
-                    <option value="scheduled">Scheduled</option>
-                    <option value="installed">Installed</option>
-                </select>
-                <button id="ncReload" class="px-3 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">Reload</button>
-                <button id="ncExport" class="px-3 py-1 rounded-md bg-emerald-600 text-white">Export CSV</button>
-            </div>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-                <thead class="bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300">
-                    <tr>
-                        <th class="px-4 py-2 text-left">ID</th>
-                        <th class="px-4 py-2 text-left">Applicant</th>
-                        <th class="px-4 py-2 text-left">Barangay</th>
-                        <th class="px-4 py-2 text-left">Fee Total</th>
-                        <th class="px-4 py-2 text-left">Paid At</th>
-                        <th class="px-4 py-2 text-left">Schedule Date</th>
-                        <th class="px-4 py-2 text-left">Status</th>
-                        <th class="px-4 py-2 text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="ncBody" class="divide-y divide-gray-200 dark:divide-gray-700 text-gray-800 dark:text-gray-100">
-                    <tr><td colspan="5" class="px-4 py-4 text-center text-gray-500">Loading...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <script>
-    (function(){
-        function toast(msg, type){ try { if (typeof window.showToast==='function'){ window.showToast(msg, type||'info'); return; } } catch(_){} alert(msg); }
-        const body = document.getElementById('ncBody');
-        const filter = document.getElementById('ncFilter');
-        const search = document.getElementById('ncSearch');
-        const installedSelect = document.getElementById('installedCustomerSelect');
-        const reloadBtn = document.getElementById('ncReload');
-        const exportBtn = document.getElementById('ncExport');
-        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-        const currentRole = @json(auth()->user()->role ?? null);
-
-        // Modals and fields
-        // Assign meter
-        const amModal = document.getElementById('assignMeterModal');
-        const amClose = document.getElementById('amClose');
-        const amAccountId = document.getElementById('amAccountId');
-        const amAccountName = document.getElementById('amAccountName');
-        const amSearch = document.getElementById('amSearch');
-        const amSearchBtn = document.getElementById('amSearchBtn');
-        const amMeter = document.getElementById('amMeter');
-        const amDate = document.getElementById('amDate');
-        const amReason = document.getElementById('amReason');
-        const amNotes = document.getElementById('amNotes');
-        const amSave = document.getElementById('amSave');
-
-        // Replace meter
-        const rmModal = document.getElementById('replaceMeterModal');
-        const rmClose = document.getElementById('rmClose');
-        const rmAccountId = document.getElementById('rmAccountId');
-        const rmAccountName = document.getElementById('rmAccountName');
-        const rmCurrent = document.getElementById('rmCurrent');
-        const rmUnassignDate = document.getElementById('rmUnassignDate');
-        const rmReason = document.getElementById('rmReason');
-        const rmSearch = document.getElementById('rmSearch');
-        const rmSearchBtn = document.getElementById('rmSearchBtn');
-        const rmMeter = document.getElementById('rmMeter');
-        const rmAssignDate = document.getElementById('rmAssignDate');
-        const rmSave = document.getElementById('rmSave');
-        let __rmCurrentMeterId = null;
-
-        const assessModal = document.getElementById('assessModal');
-        const assessId = document.getElementById('assessId');
-        const feeApp = document.getElementById('fee_application');
-        const feeInsp = document.getElementById('fee_inspection');
-        const feeTotalDisp = document.getElementById('fee_total_display');
-        const assessSave = document.getElementById('assessSave');
-        const assessClose = document.getElementById('assessClose');
-
-        const payModal = document.getElementById('payModal');
-        const payId = document.getElementById('payId');
-        const receiptNo = document.getElementById('receipt_no');
-        const paySave = document.getElementById('paySave');
-        const payClose = document.getElementById('payClose');
-
-        const schedModal = document.getElementById('scheduleModal');
-        const schedId = document.getElementById('schedId');
-        const schedDate = document.getElementById('schedule_date');
-        const schedSave = document.getElementById('scheduleSave');
-        const schedClose = document.getElementById('scheduleClose');
-
-        const installModal = document.getElementById('installModal');
-        const installId = document.getElementById('installId');
-        const installSave = document.getElementById('installSave');
-        const installClose = document.getElementById('installClose');
-
-        // New Connection full address modal
-        const ncAddressModal = document.getElementById('ncAddressModal');
-        const ncAddressText = document.getElementById('ncAddressText');
-        const ncAddressClose = document.getElementById('ncAddressClose');
-        const ncAddressCloseBtn = document.getElementById('ncAddressCloseBtn');
-
-        function show(el){ if (el){ el.classList.remove('hidden'); el.classList.add('flex'); } }
-        function hide(el){ if (el){ el.classList.add('hidden'); el.classList.remove('flex'); } }
-
-        function parseAmt(v){ var n = parseFloat(v); return isFinite(n) && n>0 ? n : 0; }
-        function formatPhp(n){ try { return new Intl.NumberFormat('en-PH',{ style:'currency', currency:'PHP' }).format(n); } catch(_) { return '₱' + (n.toFixed? n.toFixed(2): n); } }
-        function updateFeeTotal(){
-            var total = parseAmt(feeApp?.value)||0;
-            total += parseAmt(feeInsp?.value)||0;
-            if (feeTotalDisp) feeTotalDisp.textContent = formatPhp(total);
-        }
-
-        async function fetchApps(){
-            const params = new URLSearchParams();
-            if (filter && filter.value) params.set('status', filter.value);
-            const res = await fetch('/api/connections' + (params.toString()? ('?'+params.toString()):''));
-            if (!res.ok) throw new Error('fetch failed');
-            return await res.json();
-        }
-        function rowActions(app){
-            const s = String(app.status || '').toLowerCase();
-            const id = app.id;
-            const actions = [];
-
-            // When application is approved/assessed but not yet paid, disable actions and show waiting label
-            const isApprovedOrAssessed = s === 'approved' || s === 'assessed';
-            const isPaid = !!app.paid_at || s === 'paid' || s === 'scheduled' || s === 'installed';
-            if (isApprovedOrAssessed && !isPaid){
-                return '<span class="text-xs font-medium text-amber-600">Waiting for payment</span>';
-            }
-
-            if (s === 'registered' || s === 'inspected'){
-                actions.push(`<button data-act="approve" data-id="${id}" class="text-blue-600">Approve</button>`);
-            }
-            if (s === 'approved' || s === 'assessed'){
-                actions.push(`<button data-act="assess" data-id="${id}" class="text-emerald-600">Assess</button>`);
-            }
-            // Payment is handled via the Payment module; do not render an inline Pay action here
-            if (s === 'paid' || s === 'scheduled'){
-                actions.push(`<button data-act="schedule" data-id="${id}" class="text-purple-600">Schedule</button>`);
-            }
-            // Only scheduled applications can be marked as installed; once installed, we wait for meter assignment
-            if (s === 'scheduled'){
-                actions.push(`<button data-act="install" data-id="${id}" class="text-indigo-600">Install</button>`);
-            }
-            if (s === 'installed'){
-                return '<span class="text-xs font-medium text-emerald-600">Waiting for meter assignment</span>';
-            }
-            if (!actions.length){
-                return '<span class="text-xs text-gray-400">No actions</span>';
-            }
-            return actions.join(' \u2022 ');
-        }
-        function toNumber(v){ var n = parseFloat(v); return isFinite(n)? n : 0; }
-        function fmtDate(d){ if (!d) return ''; try { return String(d).slice(0,10); } catch(_){ return ''; } }
-        function fmtPhp(n){ try { return new Intl.NumberFormat('en-PH',{ style:'currency', currency:'PHP' }).format(n); } catch(_){ return '₱'+(n?.toFixed?n.toFixed(2):n); } }
-        let __ncLastItems = null;
-
-        function render(items){
-            const list = Array.isArray(items?.data) ? items.data : [];
-            const q = (search?.value||'').toLowerCase().trim();
-            const filtered = list.filter(app => {
-                if (!q) return true;
-                const a = (app.applicant_name||'').toLowerCase();
-                const addr = (app.address||'').toLowerCase();
-                return a.includes(q) || addr.includes(q);
-            });
-
-        // Initial load on page ready
-        load();
-
-        // Latest application badges and actions per customer row
-        async function fetchLatestApp(custId){
-            const res = await fetch(`/api/applications/latest?customer_id=${encodeURIComponent(custId)}`, { headers:{ 'Accept':'application/json' } });
-            if (!res.ok) return null; const data = await res.json().catch(()=>({}));
-            return data?.application || null;
-        }
-        function renderBadges(host, app){
-            if (!host) return;
-            if (!app){ host.innerHTML = '<span class="text-gray-400">No application</span>'; return; }
-            const sBadge = `<span class="px-2 py-0.5 rounded-full ${app.status==='approved'?'bg-emerald-100 text-emerald-700':(app.status==='registered'?'bg-gray-100 text-gray-700':'bg-blue-100 text-blue-700')}">${app.status}</span>`;
-            const scoreBadge = typeof app.score==='number' ? `<span class="px-2 py-0.5 rounded ${app.score>=80?'bg-green-100 text-green-700':(app.score>=60?'bg-yellow-100 text-yellow-700':'bg-red-100 text-red-700')}">Score ${app.score}</span>` : '';
-            const riskBadge = app.risk_level ? `<span class="px-2 py-0.5 rounded ${app.risk_level==='low'?'bg-green-100 text-green-700':(app.risk_level==='medium'?'bg-yellow-100 text-yellow-700':'bg-red-100 text-red-700')}">${app.risk_level}</span>` : '';
-            host.innerHTML = [sBadge, scoreBadge, riskBadge].filter(Boolean).join(' ');
-        }
-        function attachAppActions(row, app){
-            const rescore = row.querySelector('.app-rescore-btn');
-            const approve = row.querySelector('.app-approve-btn');
-            const reject = row.querySelector('.app-reject-btn');
-            const viewkyc = row.querySelector('.app-viewkyc-link');
-            if (!app){ [rescore,approve,reject,viewkyc].forEach(el=>el&&el.classList.add('hidden')); return; }
-            if (rescore){ rescore.dataset.appId = app.id; rescore.classList.remove('hidden'); }
-            if (approve){ approve.dataset.appId = app.id; approve.classList.remove('hidden'); }
-            if (reject){ reject.dataset.appId = app.id; reject.classList.remove('hidden'); }
-            if (viewkyc){ viewkyc.href = `/applications/${app.id}`; viewkyc.classList.remove('hidden'); }
-        }
-        async function hydrateRows(){
-            const rows = document.querySelectorAll('tr[data-cust-id]');
-            for (const row of rows){
-                const id = row.getAttribute('data-cust-id');
-                const host = row.querySelector('.app-badges');
-                try{
-                    const app = await fetchLatestApp(id);
-                    renderBadges(host, app);
-                    attachAppActions(row, app);
-                } catch(_){ if (host) host.innerHTML = '<span class="text-gray-400">—</span>'; }
-            }
-        }
-        hydrateRows();
-
-        // Inline actions handlers
-        document.addEventListener('click', async function(e){
-            const rescore = e.target?.closest?.('.app-rescore-btn');
-            const approve = e.target?.closest?.('.app-approve-btn');
-            const reject = e.target?.closest?.('.app-reject-btn');
-            const addrBtn = e.target?.closest?.('.nc-address-btn');
-            try{
-                if (addrBtn){
-                    const full = addrBtn.getAttribute('data-full-address') || '';
-                    if (ncAddressText) ncAddressText.textContent = full || '—';
-                    show(ncAddressModal);
-                    return;
-                }
-                if (rescore){
-                    const id = rescore.getAttribute('data-app-id');
-                    if (!id) return; await fetch(`/api/applications/${id}/score`, { method:'POST', headers:{ 'Accept':'application/json', 'X-CSRF-TOKEN': token||'' } });
-                    toast('Re-scored','success'); hydrateRows(); return;
-                }
-                if (approve){
-                    const id = approve.getAttribute('data-app-id');
-                    if (!id) return; const r = await fetch(`/api/applications/${id}/approve`, { method:'PUT', headers:{ 'Accept':'application/json','Content-Type':'application/json', 'X-CSRF-TOKEN': token||'' }, body: JSON.stringify({ auto_verify: false }) });
-                    if (!r.ok) throw 0; toast('Approved','success'); hydrateRows(); return;
-                }
-                if (reject){
-                    const id = reject.getAttribute('data-app-id');
-                    if (!id) return; const reason = prompt('Reason (optional)');
-                    const r = await fetch(`/api/applications/${id}/reject`, { method:'PUT', headers:{ 'Accept':'application/json','Content-Type':'application/json', 'X-CSRF-TOKEN': token||'' }, body: JSON.stringify({ reason }) });
-                    if (!r.ok) throw 0; toast('Rejected','success'); hydrateRows(); return;
-                }
-            } catch(_){ toast('Action failed','error'); }
-        });
-
-        // Close handlers for full address modal
-        if (ncAddressClose){ ncAddressClose.addEventListener('click', () => hide(ncAddressModal)); }
-        if (ncAddressCloseBtn){ ncAddressCloseBtn.addEventListener('click', () => hide(ncAddressModal)); }
-            if (filtered.length===0){ body.innerHTML = '<tr><td colspan="8" class="px-4 py-4 text-center text-gray-500">No applications.</td></tr>'; return; }
-            body.innerHTML = filtered.map(app => {
-                const total = (toNumber(app.fee_application)+toNumber(app.fee_inspection));
-                const fullAddr = (app.address || '').toString();
-                const beforeComma = fullAddr.split(',')[0]?.trim() || '';
-                const barangay = beforeComma || (app.barangay || '').toString().trim() || fullAddr;
-                const safeFullAddr = fullAddr.replace(/"/g,'&quot;');
-                return `
-                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer" data-app-id="${app.id}">
-                    <td class="px-4 py-2">${app.application_code || app.id}</td>
-                    <td class="px-4 py-2">${app.applicant_name||''}</td>
-                    <td class="px-4 py-2 max-w-xs truncate">
-                        <button type="button" class="nc-address-btn text-blue-600 hover:underline" data-full-address="${safeFullAddr}">
-                            ${barangay}
-                        </button>
-                    </td>
-                    <td class="px-4 py-2">${total>0? fmtPhp(total): '—'}</td>
-                    <td class="px-4 py-2">${fmtDate(app.paid_at)}</td>
-                    <td class="px-4 py-2">${fmtDate(app.schedule_date)}</td>
-                    <td class="px-4 py-2"><span class="px-2 py-1 rounded-full text-[11px] ${badgeClass(app.status)}">${app.status}</span></td>
-                    <td class="px-4 py-2 text-right">${rowActions(app)}</td>
-                </tr>`;
-            }).join('');
-        }
-        function badgeClass(s){
-            switch(s){
-                case 'registered': return 'bg-gray-100 text-gray-700';
-                case 'inspected': return 'bg-blue-100 text-blue-700';
-                case 'approved': return 'bg-emerald-100 text-emerald-700';
-                case 'assessed': return 'bg-amber-100 text-amber-700';
-                case 'paid': return 'bg-purple-100 text-purple-700';
-                case 'scheduled': return 'bg-indigo-100 text-indigo-700';
-                case 'installed': return 'bg-green-100 text-green-700';
-                default: return 'bg-gray-100 text-gray-700';
-            }
-        }
-        async function load(){
-            try{
-                const data = await fetchApps();
-                __ncLastItems = data.items;
-                render(__ncLastItems);
-            } catch(e){
-                body.innerHTML = '<tr><td colspan="8" class="px-4 py-4 text-center text-red-500">Failed to load.</td></tr>';
-            }
-        }
-
-        if (reloadBtn) reloadBtn.addEventListener('click', load);
-        if (filter) filter.addEventListener('change', load);
-        if (search) search.addEventListener('input', function(){
-            if (__ncLastItems){
-                render(__ncLastItems);
-            } else {
-                load();
-            }
-        });
-
-        document.addEventListener('click', async function(ev){
-            const t = ev.target; if (!t || !t.getAttribute) return;
-            const act = t.getAttribute('data-act'); const id = t.getAttribute('data-id'); if (!act || !id) return;
-            try{
-                if (act==='approve'){
-                    const res = await fetch(`/api/connections/${id}/approve`, { method:'PUT', headers:{ 'X-CSRF-TOKEN': token||'', 'Accept':'application/json' } });
-                    if (!res.ok) throw 0; toast('Approved','success'); load();
-                } else if (act==='assess'){
-                    assessId.value = id; feeApp.value='0'; feeInsp.value='0'; updateFeeTotal(); show(assessModal);
-                } else if (act==='pay'){
-                    payId.value = id; receiptNo.value='';
-                    const appEl = document.getElementById('payApplicant');
-                    const stEl = document.getElementById('payStatus');
-                    const fee = { app:document.getElementById('pFeeApp'), insp:document.getElementById('pFeeInsp'), total:document.getElementById('pFeeTotal') };
-                    const hint = document.getElementById('payHint');
-                    const link = document.getElementById('payModuleLink');
-                    const saveBtn = document.getElementById('paySave');
-                    saveBtn.disabled = true;
-                    show(payModal);
-                    try{
-                        const res = await fetch(`/api/connections/${id}`, { headers:{ 'Accept':'application/json' } });
-                        if (!res.ok) throw 0;
-                        const data = await res.json();
-                        const app = data?.application || {};
-                        const status = String(app.status||'').toLowerCase();
-                        if (aiId) aiId.textContent = app.application_code || app.id || '—';
-                        if (appEl) appEl.textContent = app.applicant_name || '—';
-                        if (stEl) { stEl.textContent = app.status || '—'; stEl.className = 'text-xs inline-flex items-center px-2 py-0.5 rounded-full '+(status==='assessed'?'bg-amber-100 text-amber-700':(status==='paid'?'bg-purple-100 text-purple-700':'bg-gray-100 text-gray-700')); }
-                        function fmt(n){ try { return new Intl.NumberFormat('en-PH',{ style:'currency', currency:'PHP' }).format(parseFloat(n||0)); } catch(_){ return '₱'+(parseFloat(n||0).toFixed(2)); } }
-                        if (fee.app) fee.app.textContent = fmt(app.fee_application);
-                        if (fee.insp) fee.insp.textContent = fmt(app.fee_inspection);
-                        const total = (parseFloat(app.fee_application||0)+parseFloat(app.fee_inspection||0));
-                        if (fee.total) fee.total.textContent = fmt(total);
-                        if (link) link.href = `/payment?application_id=${encodeURIComponent(id)}`;
-                        const roleOK = ['admin','cashier'].includes(String(currentRole||'').toLowerCase());
-                        const canPay = roleOK && status==='assessed';
-                        saveBtn.disabled = !canPay;
-                        if (hint) hint.classList.toggle('hidden', canPay);
-                    } catch(_){ /* keep disabled */ }
-                    setTimeout(()=>{ try{ receiptNo.focus(); }catch(_){} }, 50);
-                } else if (act==='schedule'){
-                    schedId.value = id;
-                    if (schedDate){
-                        const today = new Date();
-                        const y = today.getFullYear();
-                        const m = String(today.getMonth()+1).padStart(2,'0');
-                        const d = String(today.getDate()).padStart(2,'0');
-                        const todayStr = `${y}-${m}-${d}`;
-                        schedDate.min = todayStr;
-                        schedDate.value = todayStr;
-                    }
-                    show(schedModal);
-                } else if (act==='install'){
-                    installId.value = id; show(installModal);
-                }
-            } catch(e){ toast('Action failed','error'); }
-        });
-
-        // Modal handlers
-        // Assign Meter open buttons
-        document.addEventListener('click', function(e){
-            const btn = e.target?.closest?.('.assign-meter-btn');
-            if (!btn) return;
-            const status = (btn.getAttribute('data-cust-status')||'').toLowerCase();
-            if (status !== 'active') { toast('Complete registration and verification before assigning a meter.','warning'); return; }
-            const accountId = btn.getAttribute('data-account-id');
-            const accountName = btn.getAttribute('data-account-name');
-            if (amAccountId) amAccountId.value = accountId || '';
-            if (amAccountName) amAccountName.value = accountName || '';
-            if (amDate){
-                const today = new Date();
-                const y = today.getFullYear();
-                const m = String(today.getMonth()+1).padStart(2,'0');
-                const d = String(today.getDate()).padStart(2,'0');
-                amDate.value = `${y}-${m}-${d}`;
-            }
-            if (amSearch) amSearch.value = '';
-            if (amMeter) { amMeter.innerHTML = '<option value="">Loading...</option>'; }
-            show(amModal);
-            loadMeters();
-        });
-        if (amClose) amClose.addEventListener('click', ()=>hide(amModal));
-        if (amModal){ amModal.addEventListener('click', function(ev){ if (ev.target === amModal) hide(amModal); }); }
-        async function loadMeters(){
-            try{
-                const q = amSearch?.value?.trim() || '';
-                const url = '/admin/meters/api?status=inventory' + (q? ('&q='+encodeURIComponent(q)):'');
-                const res = await fetch(url, { headers:{ 'Accept':'application/json' } });
-                if (!res.ok) throw 0;
-                const data = await res.json();
-                const items = Array.isArray(data.items) ? data.items : [];
-                if (!amMeter) return;
-                amMeter.innerHTML = items.length? items.map(m=>`<option value="${m.id}">${m.serial} (${m.size||'-'} ${m.type||''})</option>`).join('') : '<option value="">No inventory meters found</option>';
-            } catch(_) {
-                if (amMeter) amMeter.innerHTML = '<option value="">Failed to load</option>';
-            }
-        }
-        if (amSearchBtn){ amSearchBtn.addEventListener('click', function(ev){ ev.preventDefault(); loadMeters(); }); }
-        if (amSave){
-            amSave.addEventListener('click', async function(){
-                const meterId = amMeter?.value;
-                const accountId = amAccountId?.value;
-                const assignedAt = amDate?.value;
-                if (!meterId){ toast('Select a meter','warning'); return; }
-                if (!accountId){ toast('Missing customer','error'); return; }
-                if (!assignedAt){ toast('Assigned date required','warning'); return; }
-                amSave.disabled = true; const old = amSave.textContent; amSave.textContent = 'Assigning...';
-                try{
-                    const payload = { account_id: Number(accountId), assigned_at: assignedAt, reason: amReason?.value||null, notes: amNotes?.value||null };
-                    const res = await fetch(`/admin/meters/${meterId}/assign`, { method:'POST', headers:{ 'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN': token||'' }, body: JSON.stringify(payload) });
-                    if (!res.ok) throw 0;
-                    toast('Meter assigned','success');
-                    hide(amModal);
-                } catch(_){ toast('Assign failed','error'); } finally { amSave.disabled=false; amSave.textContent=old; }
-            });
-        }
-
-        // Replace Meter handlers
-        document.addEventListener('click', async function(e){
-            // Verify Customer
-            const verifyBtn = e.target?.closest?.('.verify-customer-btn');
-            if (verifyBtn){
-                const id = verifyBtn.getAttribute('data-cust-id');
-                if (!id) return;
-                try{
-                    const res = await fetch(`/api/customer/${id}/verify`, { method:'PUT', headers:{ 'Accept':'application/json', 'X-CSRF-TOKEN': token||'' } });
-                    if (!res.ok) throw 0;
-                    const data = await res.json().catch(()=>({}));
-                    toast(data.message||'Customer verified','success');
-                    // Update UI: enable assign/replace in this row
-                    const row = verifyBtn.closest('tr');
-                    if (row){
-                        row.querySelectorAll('.assign-meter-btn, .replace-meter-btn').forEach(el=>{
-                            el.classList.remove('opacity-50','cursor-not-allowed');
-                            el.setAttribute('data-cust-status','Active');
-                            el.removeAttribute('title');
-                        });
-                        // Remove the verify button
-                        verifyBtn.remove();
-                        // If there's a status cell/pill, try to update text
-                        const statusPill = row.querySelector('span.rounded-full');
-                        if (statusPill) statusPill.textContent = 'Active';
-                    }
-                } catch(_){ toast('Failed to verify','error'); }
-                return;
-            }
-            const btn = e.target?.closest?.('.replace-meter-btn');
-            if (!btn) return;
-            const status = (btn.getAttribute('data-cust-status')||'').toLowerCase();
-            if (status !== 'active') { toast('Complete registration and verification before replacing a meter.','warning'); return; }
-            const accountId = btn.getAttribute('data-account-id');
-            const accountName = btn.getAttribute('data-account-name');
-            if (rmAccountId) rmAccountId.value = accountId || '';
-            if (rmAccountName) rmAccountName.value = accountName || '';
-            // default dates
-            const today = new Date();
-            const y = today.getFullYear();
-            const m = String(today.getMonth()+1).padStart(2,'0');
-            const d = String(today.getDate()).padStart(2,'0');
-            if (rmUnassignDate) rmUnassignDate.value = `${y}-${m}-${d}`;
-            if (rmAssignDate) rmAssignDate.value = `${y}-${m}-${d}`;
-            __rmCurrentMeterId = null;
-            if (rmCurrent) rmCurrent.value = 'Loading...';
-            if (rmSearch) rmSearch.value = '';
-            if (rmMeter) rmMeter.innerHTML = '<option value="">Loading...</option>';
-            show(rmModal);
-            try{
-                const res = await fetch(`/admin/meters/current?account_id=${encodeURIComponent(accountId)}`, { headers:{ 'Accept':'application/json' } });
-                const data = await res.json().catch(()=>({}));
-                const item = data?.item;
-                __rmCurrentMeterId = item?.id || null;
-                if (rmCurrent) rmCurrent.value = item? `${item.serial} (${item.size||'-'} ${item.type||''})` : 'No current meter';
-            } catch(_) {
-                if (rmCurrent) rmCurrent.value = 'Failed to load';
-            }
-            loadMetersForReplace();
-        });
-        if (rmClose) rmClose.addEventListener('click', ()=>hide(rmModal));
-        if (rmModal){ rmModal.addEventListener('click', function(ev){ if (ev.target === rmModal) hide(rmModal); }); }
-        async function loadMetersForReplace(){
-            try{
-                const q = rmSearch?.value?.trim() || '';
-                const url = '/admin/meters/api?status=inventory' + (q? ('&q='+encodeURIComponent(q)):'');
-                const res = await fetch(url, { headers:{ 'Accept':'application/json' } });
-                if (!res.ok) throw 0;
-                const data = await res.json();
-                const items = Array.isArray(data.items) ? data.items : [];
-                if (!rmMeter) return;
-                rmMeter.innerHTML = items.length? items.map(m=>`<option value="${m.id}">${m.serial} (${m.size||'-'} ${m.type||''})</option>`).join('') : '<option value="">No inventory meters found</option>';
-            } catch(_) {
-                if (rmMeter) rmMeter.innerHTML = '<option value="">Failed to load</option>';
-            }
-        }
-        if (rmSearchBtn){ rmSearchBtn.addEventListener('click', function(ev){ ev.preventDefault(); loadMetersForReplace(); }); }
-        if (rmSave){
-            rmSave.addEventListener('click', async function(){
-                const oldId = __rmCurrentMeterId;
-                const newId = rmMeter?.value;
-                const accountId = rmAccountId?.value;
-                const unassignAt = rmUnassignDate?.value;
-                const assignAt = rmAssignDate?.value;
-                const reason = rmReason?.value || 'Replacement';
-                if (!newId){ toast('Select a new meter','warning'); return; }
-                if (!accountId){ toast('Missing customer','error'); return; }
-                if (!assignAt || !unassignAt){ toast('Dates are required','warning'); return; }
-                rmSave.disabled = true; const oldText = rmSave.textContent; rmSave.textContent = 'Replacing...';
-                try{
-                    if (oldId){
-                        const res1 = await fetch(`/admin/meters/${oldId}/unassign`, { method:'POST', headers:{ 'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN': token||'' }, body: JSON.stringify({ unassigned_at: unassignAt, reason }) });
-                        if (!res1.ok) throw 0;
-                    }
-                    const payload = { account_id: Number(accountId), assigned_at: assignAt, reason };
-                    const res2 = await fetch(`/admin/meters/${newId}/assign`, { method:'POST', headers:{ 'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN': token||'' }, body: JSON.stringify(payload) });
-                    if (!res2.ok) throw 0;
-                    toast('Meter replaced','success');
-                    hide(rmModal);
-                } catch(_){ toast('Replace failed','error'); } finally { rmSave.disabled=false; rmSave.textContent=oldText; }
-            });
-        }
-        if (assessClose){ assessClose.addEventListener('click', ()=>hide(assessModal)); }
-        [feeApp, feeInsp].forEach(function(el){ if (el){ el.addEventListener('input', updateFeeTotal); }});
-        if (assessSave){ assessSave.addEventListener('click', async function(){
-            const id = assessId.value; assessSave.disabled = true; const old = assessSave.textContent; assessSave.textContent='Saving...';
-            try {
-                const payload = {
-                    fee_application: parseFloat(feeApp.value||'0')||0,
-                    fee_inspection: parseFloat(feeInsp.value||'0')||0,
-                };
-                const res = await fetch(`/api/connections/${id}/assess`, { method:'PUT', headers:{ 'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN': token||'' }, body: JSON.stringify(payload) });
-                if (!res.ok) throw 0;
-                toast('Assessment saved','success');
-                hide(assessModal);
-                load();
-            } catch(_){ toast('Save failed','error'); } finally { assessSave.disabled=false; assessSave.textContent=old; }
-        }); }
-
-        if (payClose){ payClose.addEventListener('click', ()=>hide(payModal)); }
-        if (paySave){ paySave.addEventListener('click', async function(){
-            const id = payId.value; if (!receiptNo.value){ toast('Receipt is required','warning'); return; }
-            paySave.disabled = true; const old = paySave.textContent; paySave.textContent='Saving...';
-            try {
-                const res = await fetch(`/api/connections/${id}/pay`, { method:'PUT', headers:{ 'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN': token||'' }, body: JSON.stringify({ payment_receipt_no: receiptNo.value }) });
-                if (!res.ok) throw 0; toast('Marked as paid','success'); hide(payModal); load();
-            } catch(_) { toast('Save failed','error'); } finally { paySave.disabled=false; paySave.textContent=old; }
-        }); }
-
-        if (receiptNo){
-            receiptNo.addEventListener('keydown', function(e){ if (e.key==='Enter'){ e.preventDefault(); if (!paySave.disabled) paySave.click(); } });
-        }
-
-        if (schedClose){ schedClose.addEventListener('click', ()=>hide(schedModal)); }
-        if (schedSave){ schedSave.addEventListener('click', async function(){
-            const id = schedId.value; if (!schedDate.value){ toast('Schedule date required','warning'); return; }
-            schedSave.disabled = true; const old = schedSave.textContent; schedSave.textContent='Saving...';
-            try {
-                const res = await fetch(`/api/connections/${id}/schedule`, { method:'PUT', headers:{ 'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN': token||'' }, body: JSON.stringify({ schedule_date: schedDate.value }) });
-                if (!res.ok) throw 0; toast('Scheduled','success'); hide(schedModal); load();
-            } catch(_) { toast('Save failed','error'); } finally { schedSave.disabled=false; schedSave.textContent=old; }
-        }); }
-
-        if (installClose){ installClose.addEventListener('click', ()=>hide(installModal)); }
-        if (installSave){ installSave.addEventListener('click', async function(){
-            const id = installId.value; installSave.disabled = true; const old = installSave.textContent; installSave.textContent='Saving...';
-            try {
-                const res = await fetch(`/api/connections/${id}/install`, { method:'PUT', headers:{ 'Accept':'application/json','X-CSRF-TOKEN': token||'' } });
-                if (!res.ok) throw 0; toast('Installed','success'); hide(installModal); load();
-            } catch(_) { toast('Save failed','error'); } finally { installSave.disabled=false; installSave.textContent=old; }
-        }); }
-
-        // Simple cache to avoid refetch every keystroke
-        let __lastItems = null;
-        async function load(){
-            try{ const data = await fetchApps(); __lastItems = data.items; render(data.items); }
-            catch(e){ body.innerHTML = '<tr><td colspan="8" class="px-4 py-4 text-center text-red-500">Failed to load.</td></tr>'; }
-        }
-        if (search){
-            search.addEventListener('input', function(){ if (__lastItems){ render(__lastItems); } });
-        }
-        if (exportBtn){
-            exportBtn.addEventListener('click', function(){
-                try{
-                    const listContainer = Array.isArray(__lastItems?.data) ? __lastItems.data : (Array.isArray(__lastItems)? __lastItems : []);
-                    const q = (search?.value||'').toLowerCase().trim();
-                    const filtered = listContainer.filter(app => {
-                        if (!q) return true;
-                        const a = (app.applicant_name||'').toLowerCase();
-                        const addr = (app.address||'').toLowerCase();
-                        return a.includes(q) || addr.includes(q);
-                    });
-                    if (filtered.length===0){ toast('Nothing to export', 'warning'); return; }
-                    const rows = [];
-                    rows.push(['ID','Applicant','Address','Fee Total','Paid At','Schedule Date','Status']);
-                    filtered.forEach(app => {
-                        const total = (toNumber(app.fee_application)+toNumber(app.fee_inspection)+toNumber(app.fee_materials)+toNumber(app.fee_labor)+toNumber(app.meter_deposit));
-                        rows.push([
-                            app.id,
-                            app.applicant_name||'',
-                            app.address||'',
-                            String(total||0),
-                            fmtDate(app.paid_at),
-                            fmtDate(app.schedule_date),
-                            app.status||''
-                        ]);
-                    });
-                    function csvEscape(v){
-                        const s = String(v??'');
-                        if (/[",\n]/.test(s)) return '"'+s.replace(/"/g,'""')+'"';
-                        return s;
-                    }
-                    const csv = rows.map(r => r.map(csvEscape).join(',')).join('\n');
-                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    const date = new Date();
-                    a.download = `applications_${date.toISOString().slice(0,10)}.csv`;
-                    document.body.appendChild(a);
-                    a.click();
-                    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); }, 0);
-                } catch(e){ toast('Export failed', 'error'); }
-            });
-        }
-        load();
-
-        // Populate dropdown with customers whose applications are installed
-        async function loadInstalledCustomersForDropdown(){
-            if (!installedSelect) return;
-            try{
-                installedSelect.innerHTML = '<option value="">Select customer with installed application…</option>';
-                const url = new URL('/api/connections', window.location.origin);
-                url.searchParams.set('status', 'installed');
-                const res = await fetch(url.toString(), { headers:{ 'Accept':'application/json' } });
-                if (!res.ok) throw 0;
-                const data = await res.json();
-                const list = (data && data.items && (data.items.data || data.items)) || [];
-                if (!Array.isArray(list) || list.length === 0) return;
-                list.forEach(app => {
-                    if (!app.customer_id) return;
-                    const label = `${app.applicant_name || 'Customer'} (APP-${app.id})`;
-                    installedSelect.insertAdjacentHTML('beforeend', `<option value="${app.customer_id}">${label}</option>`);
-                });
-            } catch(_){ /* silent */ }
-        }
-        if (installedSelect){
-            loadInstalledCustomersForDropdown();
-            installedSelect.addEventListener('change', function(){
-                const id = this.value;
-                if (!id) return;
-                const row = document.querySelector(`tr[data-cust-id="${id}"]`);
-                if (row){
-                    row.scrollIntoView({ behavior:'smooth', block:'center' });
-                    row.classList.add('bg-yellow-50');
-                    setTimeout(()=>row.classList.remove('bg-yellow-50'), 2000);
-                } else {
-                    toast('Customer not on this page. Use pagination to locate them.', 'info');
-                }
-            });
-        }
-    })();
-    </script>
     <!-- Edit Customer Modal -->
     <div id="adminEditCustomerModal" class="hidden fixed inset-0 bg-black/50 z-50 items-center justify-center p-4">
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg">
@@ -1024,23 +346,27 @@
         const fAddress = document.getElementById('aecAddress');
         const fContact = document.getElementById('aecContact');
 
-        const viewModal = document.getElementById('viewCustomerModal');
-        const vcClose = document.getElementById('vcClose');
-        const vcCloseBtn = document.getElementById('vcCloseBtn');
-        const vcAccountNo = document.getElementById('vcAccountNo');
-        const vcStatus = document.getElementById('vcStatus');
-        const vcName = document.getElementById('vcName');
-        const vcContact = document.getElementById('vcContact');
-        const vcAddress = document.getElementById('vcAddress');
-        const vcClassification = document.getElementById('vcClassification');
-        const vcCreated = document.getElementById('vcCreated');
-        const vcExtra = document.getElementById('vcExtra');
+        const drawer = document.getElementById('customerDrawer');
+        const drawerClose = document.getElementById('drawerClose');
+        const drawerCloseFooter = document.getElementById('drawerCloseFooter');
+        const drawerName = document.getElementById('drawerName');
+        const drawerAccount = document.getElementById('drawerAccount');
+        const drawerStatus = document.getElementById('drawerStatus');
+        const drawerConnection = document.getElementById('drawerConnection');
+        const drawerCreated = document.getElementById('drawerCreated');
+        const drawerAddress = document.getElementById('drawerAddress');
+        const drawerContact = document.getElementById('drawerContact');
+        const drawerExtra = document.getElementById('drawerExtra');
+        const drawerAudit = document.getElementById('drawerAudit');
+        const drawerAuditLink = document.getElementById('drawerAuditLink');
+        const drawerAssignBtn = document.getElementById('drawerAssignBtn');
+        const drawerReplaceBtn = document.getElementById('drawerReplaceBtn');
 
         function openModal(){ if (modal){ modal.classList.remove('hidden'); modal.classList.add('flex'); } }
         function closeModal(){ if (modal){ modal.classList.add('hidden'); modal.classList.remove('flex'); } }
 
-        function openViewModal(){ if (viewModal){ viewModal.classList.remove('hidden'); viewModal.classList.add('flex'); } }
-        function closeViewModal(){ if (viewModal){ viewModal.classList.add('hidden'); viewModal.classList.remove('flex'); } }
+        function openDrawer(){ if (drawer){ drawer.classList.remove('translate-x-full'); } }
+        function closeDrawer(){ if (drawer){ drawer.classList.add('translate-x-full'); } }
 
         function statusBadgeClass(status){
             const s = String(status||'').toLowerCase();
@@ -1050,25 +376,25 @@
         }
 
         async function loadCustomerAndShow(id){
-            if (!id || !viewModal) return;
+            if (!id || !drawer) return;
             try{
-                if (vcAccountNo) vcAccountNo.textContent = 'Loading…';
+                if (drawerAccount) drawerAccount.textContent = 'Loading…';
                 const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
                 const res = await fetch(`/api/customer/${id}`, { headers:{ 'Accept':'application/json','X-CSRF-TOKEN': token || '' } });
                 if (!res.ok) throw new Error('Failed');
                 const data = await res.json().catch(()=>({}));
                 const cust = data.customer || data || {};
-                if (vcAccountNo) vcAccountNo.textContent = cust.account_no || '—';
-                if (vcName) vcName.textContent = cust.name || '—';
-                if (vcContact) vcContact.textContent = cust.contact_no || '—';
-                if (vcAddress) vcAddress.textContent = cust.address || '—';
-                if (vcClassification) vcClassification.textContent = cust.classification || '—';
-                if (vcCreated) vcCreated.textContent = (cust.created_at || '').toString().slice(0,10) || '—';
-                if (vcStatus){
-                    vcStatus.textContent = cust.status || '—';
-                    vcStatus.className = 'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] ' + statusBadgeClass(cust.status);
+                if (drawerAccount) drawerAccount.textContent = cust.account_no || '—';
+                if (drawerName) drawerName.textContent = cust.name || '—';
+                if (drawerContact) drawerContact.textContent = cust.contact_no || '—';
+                if (drawerAddress) drawerAddress.textContent = cust.address || '—';
+                if (drawerConnection) drawerConnection.textContent = cust.classification || '—';
+                if (drawerCreated) drawerCreated.textContent = (cust.created_at || '').toString().slice(0,10) || '—';
+                if (drawerStatus){
+                    drawerStatus.textContent = cust.status || '—';
+                    drawerStatus.className = 'inline-flex items-center px-2 py-0.5 rounded-full text-[11px] ' + statusBadgeClass(cust.status);
                 }
-                if (vcExtra){
+                if (drawerExtra){
                     const entries = Object.entries(cust || {});
                     const skip = new Set(['id','account_no','name','address','contact_no','classification','status','created_at','updated_at']);
                     const rows = entries
@@ -1081,9 +407,52 @@
                             }
                             return `<div class="flex justify-between gap-2 py-0.5"><span class="text-gray-500">${label}</span><span class="text-gray-800 dark:text-gray-200 text-right">${String(val)}</span></div>`;
                         });
-                    vcExtra.innerHTML = rows.length ? rows.join('') : '<div class="text-gray-400">No additional data.</div>';
+                    drawerExtra.innerHTML = rows.length ? rows.join('') : '<div class="text-gray-400">No additional data.</div>';
                 }
-                openViewModal();
+                if (drawerAudit){
+                    const history = Array.isArray(data.audit || []) ? data.audit : [];
+                    if (history.length){
+                        drawerAudit.innerHTML = history.map(item => {
+                            const when = item.performed_at || item.created_at || '—';
+                            const action = item.action || '—';
+                            const by = (item.performed_by_user && item.performed_by_user.name) || item.performed_by || 'System';
+                            return `<div class="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2">
+                                <div class="flex items-center justify-between text-[11px] text-gray-400">
+                                    <span>${when}</span>
+                                    <span class="uppercase tracking-wide">${action}</span>
+                                </div>
+                                <div class="text-xs text-gray-700 dark:text-gray-200">${item.notes || 'No description provided.'}</div>
+                                <div class="text-[11px] text-gray-400 mt-1">Processed by ${by}</div>
+                            </div>`;
+                        }).join('');
+                    } else {
+                        drawerAudit.innerHTML = '<p class="text-gray-400">No recent activity for this customer.</p>';
+                    }
+                }
+                if (drawerAssignBtn){
+                    const disabled = (cust.status || '').toLowerCase() !== 'active';
+                    drawerAssignBtn.dataset.accountId = cust.id || '';
+                    drawerAssignBtn.dataset.accountName = cust.name || '';
+                    drawerAssignBtn.dataset.custStatus = cust.status || '';
+                    drawerAssignBtn.classList.toggle('opacity-50', disabled);
+                    drawerAssignBtn.classList.toggle('cursor-not-allowed', disabled);
+                    drawerAssignBtn.title = disabled ? 'Customer not active. Complete registration/verification first.' : '';
+                }
+                if (drawerReplaceBtn){
+                    const disabled = (cust.status || '').toLowerCase() !== 'active';
+                    drawerReplaceBtn.dataset.accountId = cust.id || '';
+                    drawerReplaceBtn.dataset.accountName = cust.name || '';
+                    drawerReplaceBtn.dataset.custStatus = cust.status || '';
+                    drawerReplaceBtn.classList.toggle('opacity-50', disabled);
+                    drawerReplaceBtn.classList.toggle('cursor-not-allowed', disabled);
+                    drawerReplaceBtn.title = disabled ? 'Customer not active. Complete registration/verification first.' : '';
+                }
+
+                if (drawerAuditLink){
+                    drawerAuditLink.setAttribute('href', `${drawerAuditLink.dataset.baseHref}?search=${encodeURIComponent(cust.account_no || '')}`);
+                }
+
+                openDrawer();
             } catch(e){ toast('Failed to load customer','error'); }
         }
 
@@ -1103,9 +472,9 @@
         });
         if (btnClose){ btnClose.addEventListener('click', closeModal); }
         if (modal){ modal.addEventListener('click', function(ev){ if (ev.target === modal) closeModal(); }); }
-        if (vcClose){ vcClose.addEventListener('click', closeViewModal); }
-        if (vcCloseBtn){ vcCloseBtn.addEventListener('click', closeViewModal); }
-        if (viewModal){ viewModal.addEventListener('click', function(ev){ if (ev.target === viewModal) closeViewModal(); }); }
+        if (drawerClose){ drawerClose.addEventListener('click', closeDrawer); }
+        if (drawerCloseFooter){ drawerCloseFooter.addEventListener('click', closeDrawer); }
+        if (drawer){ drawer.addEventListener('click', function(ev){ if (ev.target === drawer){ closeDrawer(); } }); }
         if (btnSave){
             btnSave.addEventListener('click', async function(){
                 const id = fId.value;
@@ -1133,124 +502,150 @@
         }
     })();
     </script>
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-200 dark:border-gray-700 p-4 lg:p-5">
-        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-3 w-full">
-                <div>
-                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Select Installed Customer</label>
-                    <select id="installedCustomerSelect" class="w-full border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 bg-white dark:bg-gray-900 text-sm">
-                        <option value="">Select customer with installed application…</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Status</label>
-                    <select class="w-full border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 bg-white dark:bg-gray-900 text-sm">
-                        <option value="">All</option>
-                        <option>Active</option>
-                        <option>Inactive</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Connection Type</label>
-                    <select class="w-full border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 bg-white dark:bg-gray-900 text-sm">
-                        <option value="">All</option>
-                        <option>Residential</option>
-                        <option>Commercial</option>
-                        <option>Industrial</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Created</label>
-                    <input type="date" class="w-full border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 bg-white dark:bg-gray-900 text-sm" />
-                </div>
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-dashed border-blue-300 dark:border-blue-500/50 p-6 mt-6">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+                <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">New Applicants Live in Their Own Workspace</h2>
+                <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">We moved the new connection queue into a dedicated module so you can triage approvals, inspections, and installations with richer analytics.</p>
             </div>
-            <div class="flex gap-2">
-                <button class="px-3 py-2 rounded-md bg-blue-600 text-white text-sm">Apply</button>
-                <button class="px-3 py-2 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm">Reset</button>
-            </div>
+            <a href="{{ route('admin.applicants.index') }}" class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700 transition">
+                <x-heroicon-o-arrow-right-circle class="w-5 h-5" /> Go to Applicant Workspace
+            </a>
         </div>
     </div>
 
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-200 dark:border-gray-700 p-4 lg:p-5">
-        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-            <div class="flex items-center gap-2">
-                <button class="px-3 py-2 rounded-md bg-emerald-600 text-white text-sm disabled:opacity-50" :disabled="selected.size===0">Activate</button>
-                <button class="px-3 py-2 rounded-md bg-amber-600 text-white text-sm disabled:opacity-50" :disabled="selected.size===0">Deactivate</button>
-                <button class="px-3 py-2 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm disabled:opacity-50" :disabled="selected.size===0">Export CSV</button>
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-200 dark:border-gray-700 p-4 lg:p-5 space-y-5">
+        <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div class="space-y-1">
+                <h1 class="text-xl font-semibold text-gray-800 dark:text-gray-100">Customer Management</h1>
+                <p class="text-[12px] text-gray-500 dark:text-gray-400">Search, filter, and manage customer records with full audit history.</p>
             </div>
-            <div class="flex items-center gap-2">
-                <button class="px-3 py-2 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm">Import CSV</button>
-                <button class="px-3 py-2 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm">Merge Duplicates</button>
-                <span class="text-xs text-gray-500" x-text="selected.size + ' selected'"></span>
+            <div class="flex flex-wrap items-center gap-2 text-xs sm:text-[13px]">
+                <a href="{{ route('admin.customers', array_filter([...request()->except('export'), 'export' => 'csv'])) }}" class="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-blue-600 text-white font-semibold shadow hover:bg-blue-500 transition">
+                    <x-heroicon-o-arrow-down-tray class="w-4 h-4" /> Export CSV
+                </a>
+                <button type="button" class="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <x-heroicon-o-users class="w-4 h-4" /> Merge Duplicates
+                </button>
+                <button type="button" id="openAuditLog" class="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <x-heroicon-o-clipboard-document-list class="w-4 h-4" /> Audit Log
+                </button>
             </div>
         </div>
 
+        <form id="customerFilters" method="GET" class="space-y-4">
+            <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
+                <div class="flex flex-1 items-center rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 overflow-hidden">
+                    <span class="px-3 text-gray-400">
+                        <x-heroicon-o-magnifying-glass class="w-4 h-4" />
+                    </span>
+                    <input id="customer-search" name="search" value="{{ $filters['search'] ?? '' }}" type="search" placeholder="Search name, account, or address" class="flex-1 bg-transparent px-2 py-2 text-sm text-gray-800 dark:text-gray-100 focus:outline-none" />
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm font-semibold hover:bg-blue-500 transition">Search</button>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a href="{{ route('admin.customers') }}" class="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-xs font-semibold text-gray-600 dark:text-gray-200 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800">Reset</a>
+                    <button type="button" id="toggleCustomerFilters" class="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-xs font-semibold text-gray-700 dark:text-gray-100 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800">
+                        <x-heroicon-o-funnel class="w-4 h-4" />
+                        More filters
+                    </button>
+                </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+                <span class="font-semibold uppercase tracking-wide text-[11px]">Status</span>
+                <label class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 cursor-pointer">
+                    <input type="radio" name="status" value="" class="w-3 h-3 text-blue-600 border-gray-300 focus:ring-blue-500" {{ empty($filters['status']) ? 'checked' : '' }}>
+                    <span>All</span>
+                </label>
+                @foreach($statusOptions as $option)
+                    <label class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 cursor-pointer">
+                        <input type="radio" name="status" value="{{ $option }}" class="w-3 h-3 text-blue-600 border-gray-300 focus:ring-blue-500" {{ ($filters['status'] ?? '') === $option ? 'checked' : '' }}>
+                        <span>{{ $option }}</span>
+                    </label>
+                @endforeach
+            </div>
+            <div id="customerAdvancedFilters" class="grid gap-3 md:grid-cols-2 lg:grid-cols-3 {{ $advancedFiltersOpen ? '' : 'hidden' }}">
+                <div>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1" for="customer-classification">Connection Type</label>
+                    <select id="customer-classification" name="classification" class="w-full border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-700 dark:text-gray-200">
+                        <option value="">Any</option>
+                        @foreach($classificationOptions as $option)
+                            <option value="{{ $option }}" @selected(($filters['classification'] ?? null) === $option)>{{ $option }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1" for="customer-created">Created Date</label>
+                    <input id="customer-created" name="created" value="{{ $filters['created'] ?? '' }}" type="date" class="w-full border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-700 dark:text-gray-200" />
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700/60 overflow-hidden">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 px-6 lg:px-8 py-5 border-b border-gray-100 dark:border-gray-800">
+            <div>
+                <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Customer Directory</h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Currently showing {{ $customers->count() }} of {{ $customers->total() }} records.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
+                <a href="{{ route('admin.customers', array_filter([...request()->except('export'), 'export' => 'csv'])) }}" class="inline-flex items-center gap-2 rounded-xl bg-blue-600 text-white px-4 py-2 font-semibold shadow hover:bg-blue-500 transition">
+                    <x-heroicon-o-arrow-down-tray class="w-4 h-4" /> Export CSV
+                </a>
+                <a href="#customerFilters" class="inline-flex items-center gap-2 rounded-xl border border-gray-300 dark:border-gray-700 px-4 py-2 text-gray-600 dark:text-gray-200 hover:border-blue-400 hover:text-blue-600 transition">
+                    <x-heroicon-o-funnel class="w-4 h-4" /> Adjust filters
+                </a>
+            </div>
+        </div>
         <div class="overflow-x-auto">
-            <table class="w-full text-sm js-datatable">
-                <thead class="bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300">
+            <table class="min-w-full text-sm border-collapse">
+                <thead class="bg-gradient-to-r from-blue-700 via-blue-600 to-blue-500 text-white uppercase text-[11px] tracking-wide">
                     <tr>
-                        <th class="px-4 py-2 w-10">
-                            <input type="checkbox" @change="all=$event.target.checked; selected = new Set(all?[1,2,3,4,5]:[])" />
-                        </th>
-                        <th class="px-4 py-2 text-left">Account No.</th>
-                        <th class="px-4 py-2 text-left">Name</th>
-                        <th class="px-4 py-2 text-left">Connection</th>
-                        <th class="px-4 py-2 text-left">Status</th>
-                        <th class="px-4 py-2 text-left">Created</th>
-                        <th class="px-4 py-2"></th>
+                        <th class="px-6 lg:px-8 py-3 text-left">Account No.</th>
+                        <th class="px-6 lg:px-8 py-3 text-left">Customer</th>
+                        <th class="px-6 lg:px-8 py-3 text-left">Contact</th>
+                        <th class="px-6 lg:px-8 py-3 text-left">Connection</th>
+                        <th class="px-6 lg:px-8 py-3 text-left">Status</th>
+                        <th class="px-6 lg:px-8 py-3 text-left">Created</th>
+                        <th class="px-6 lg:px-8 py-3 text-right">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-200 dark:divide-gray-700 text-gray-800 dark:text-gray-100">
+                <tbody class="text-gray-800 dark:text-gray-100">
                     @forelse($customers as $c)
-                    <tr data-cust-id="{{ $c->id }}" data-cust-status="{{ $c->status }}">
-                        <td class="px-4 py-2">
-                            <input type="checkbox" @change="($event.target.checked?selected.add({{ $c->id }}):selected.delete({{ $c->id }}))" />
-                        </td>
-                        <td class="px-4 py-2 font-mono">{{ $c->account_no }}</td>
-                        <td class="px-4 py-2">{{ $c->name }}</td>
-                        <td class="px-4 py-2">
-                            <div class="flex items-center gap-1 text-xs app-badges">
-                                <span class="text-gray-400">Loading…</span>
+                    <tr class="odd:bg-white even:bg-blue-50/40 dark:odd:bg-gray-900 dark:even:bg-gray-800/70 hover:bg-blue-100/60 dark:hover:bg-gray-800 transition-colors">
+                        <td class="px-6 lg:px-8 py-3 font-mono text-xs text-gray-500 dark:text-gray-400">{{ $c->account_no }}</td>
+                        <td class="px-6 lg:px-8 py-3">
+                            <div class="font-medium text-gray-900 dark:text-gray-100 flex items-start gap-2">
+                                <span>{{ $c->name }}</span>
+                                @if($c->status === 'Disconnected')
+                                    <span class="px-1.5 py-0.5 rounded-md bg-red-100 text-red-600 text-[11px]">Disconnected</span>
+                                @endif
                             </div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400 truncate max-w-xs">{{ $c->address }}</div>
                         </td>
-                        <td class="px-4 py-2">
+                        <td class="px-5 py-3 text-sm text-gray-600 dark:text-gray-300">{{ $c->contact_no ?? '—' }}</td>
+                        <td class="px-6 lg:px-8 py-3 text-sm text-gray-600 dark:text-gray-300">{{ $c->classification ?? '—' }}</td>
+                        <td class="px-6 lg:px-8 py-3">
                             @php $color = ($c->status === 'Active') ? 'bg-green-100 text-green-700' : (($c->status === 'Inactive' || $c->status === 'Disconnected') ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'); @endphp
                             <span class="px-2 py-1 rounded-full text-xs {{ $color }}">{{ $c->status ?? '—' }}</span>
                         </td>
-                        <td class="px-4 py-2">{{ optional($c->created_at)->format('Y-m-d') }}</td>
-                        <td class="px-4 py-2 text-right">
-                            <div class="inline-flex items-center gap-2">
-                                <button class="text-blue-600 view-customer-btn" data-cust-id="{{ $c->id }}">View</button>
+                        <td class="px-6 lg:px-8 py-3 text-sm text-gray-600 dark:text-gray-300">{{ optional($c->created_at)->format('Y-m-d') }}</td>
+                        <td class="px-6 lg:px-8 py-3 text-right">
+                            <div class="inline-flex items-center gap-2 text-xs font-medium">
                                 <details class="relative inline-block">
-                                    <summary class="list-none px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 cursor-pointer text-xs">Actions ▾</summary>
-                                    <div class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow z-10 py-1">
-                                        <div class="px-3 py-1 text-[10px] uppercase text-gray-400">Application</div>
-                                        <button class="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700 app-rescore-btn hidden"
-                                            data-cust-id="{{ $c->id }}">
-                                            Re-score
-                                        </button>
-                                        <button class="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700 app-approve-btn hidden"
-                                            data-cust-id="{{ $c->id }}">
-                                            Approve
-                                        </button>
-                                        <button class="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700 app-reject-btn hidden"
-                                            data-cust-id="{{ $c->id }}">
-                                            Reject
-                                        </button>
-                                        <a class="w-full block px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700 app-viewkyc-link hidden"
-                                            target="_blank">View KYC</a>
+                                    <summary class="list-none px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-gray-800 text-gray-600 dark:text-gray-200 cursor-pointer hover:bg-slate-200 dark:hover:bg-gray-700 transition">More ▾</summary>
+                                    <div class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg z-10 py-2">
                                         <div class="px-3 py-1 text-[10px] uppercase text-gray-400">Customer</div>
                                         <button class="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700 edit-customer-btn"
                                             data-cust-id="{{ $c->id }}"
                                             data-cust-name="{{ $c->name }}"
                                             data-cust-address="{{ $c->address }}"
                                             data-cust-contact="{{ $c->contact_no }}">
-                                            Edit
+                                            Edit info
                                         </button>
                                         @if (strtolower($c->status) !== 'active')
                                         <button class="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700 verify-customer-btn"
                                             data-cust-id="{{ $c->id }}">
-                                            Verify Customer
+                                            Verify customer
                                         </button>
                                         @endif
                                         <button class="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700 assign-meter-btn {{ strtolower($c->status) !== 'active' ? 'opacity-50 cursor-not-allowed' : '' }}"
@@ -1258,14 +653,14 @@
                                             data-account-name="{{ $c->name }}"
                                             data-cust-status="{{ $c->status }}"
                                             title="{{ strtolower($c->status) !== 'active' ? 'Customer not active. Complete registration/verification first.' : '' }}">
-                                            Assign Meter
+                                            Assign meter
                                         </button>
                                         <button class="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700 replace-meter-btn {{ strtolower($c->status) !== 'active' ? 'opacity-50 cursor-not-allowed' : '' }}"
                                             data-account-id="{{ $c->id }}"
                                             data-account-name="{{ $c->name }}"
                                             data-cust-status="{{ $c->status }}"
                                             title="{{ strtolower($c->status) !== 'active' ? 'Customer not active. Complete registration/verification first.' : '' }}">
-                                            Replace Meter
+                                            Replace meter
                                         </button>
                                     </div>
                                 </details>
@@ -1274,79 +669,97 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="px-4 py-6 text-center text-gray-500">No customers found.</td>
+                        <td colspan="7" class="px-6 lg:px-8 py-12 text-center text-sm text-gray-500 dark:text-gray-400">
+                            <div class="max-w-sm mx-auto space-y-2">
+                                <x-heroicon-o-inbox class="w-10 h-10 mx-auto text-gray-300" />
+                                <p class="font-medium">No customer records match the current filters.</p>
+                                <p class="text-xs">Adjust the filters or clear the search to see all customers.</p>
+                            </div>
+                        </td>
                     </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
-        <div class="flex items-center justify-between mt-4 text-xs text-gray-500">
-            <div>
+        <div class="px-6 lg:px-8 py-5 border-t border-gray-100 dark:border-gray-800 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-xs text-gray-500">
+            <div class="leading-tight">
                 @if($customers->total() > 0)
-                    Showing {{ $customers->firstItem() }}–{{ $customers->lastItem() }} of {{ $customers->total() }}
+                    Showing <span class="font-semibold text-gray-700 dark:text-gray-200">{{ $customers->firstItem() }}–{{ $customers->lastItem() }}</span> of <span class="font-semibold text-gray-700 dark:text-gray-200">{{ $customers->total() }}</span> records
                 @else
-                    Showing 0 of 0
+                    Showing <span class="font-semibold text-gray-700 dark:text-gray-200">0</span> of <span class="font-semibold text-gray-700 dark:text-gray-200">0</span> records
                 @endif
             </div>
-            <div class="flex items-center gap-1">
-                {{ $customers->links() }}
+            <div class="flex items-center gap-2 sm:justify-end">
+                <a href="{{ $customers->onFirstPage() ? '#' : $customers->previousPageUrl() }}"
+                   class="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-200 text-xs font-medium transition {{ $customers->onFirstPage() ? 'opacity-40 pointer-events-none' : 'hover:border-blue-400 hover:text-blue-600' }}">
+                    Previous
+                </a>
+                <a href="{{ $customers->hasMorePages() ? $customers->nextPageUrl() : '#' }}"
+                   class="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-200 text-xs font-medium transition {{ $customers->hasMorePages() ? 'hover:border-blue-400 hover:text-blue-600' : 'opacity-40 pointer-events-none' }}">
+                    Next
+                </a>
             </div>
         </div>
     </div>
 
-    <!-- Customer Details Modal (view only) -->
-    <div id="viewCustomerModal" class="hidden fixed inset-0 bg-black/50 z-50 items-center justify-center p-4">
-        <div class="bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-2xl">
-            <div class="flex items-center justify-between px-5 py-3 border-b border-gray-200 dark:border-gray-700">
-                <h3 class="text-base md:text-lg font-semibold text-gray-800 dark:text-gray-100">Customer Details</h3>
-                <button id="vcClose" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">Close</button>
-            </div>
-            <div class="px-5 py-4 space-y-4 text-sm">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
-                        <div class="text-xs text-gray-500 dark:text-gray-400">Account No.</div>
-                        <div id="vcAccountNo" class="font-mono font-medium text-gray-900 dark:text-gray-100">—</div>
-                    </div>
-                    <div>
-                        <div class="text-xs text-gray-500 dark:text-gray-400">Status</div>
-                        <div id="vcStatus" class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-gray-100 text-gray-700">—</div>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
-                        <div class="text-xs text-gray-500 dark:text-gray-400">Name</div>
-                        <div id="vcName" class="font-medium text-gray-900 dark:text-gray-100">—</div>
-                    </div>
-                    <div>
-                        <div class="text-xs text-gray-500 dark:text-gray-400">Contact No.</div>
-                        <div id="vcContact" class="text-gray-800 dark:text-gray-200">—</div>
-                    </div>
-                </div>
-                <div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400">Address</div>
-                    <div id="vcAddress" class="text-gray-800 dark:text-gray-200">—</div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
-                        <div class="text-xs text-gray-500 dark:text-gray-400">Connection Type</div>
-                        <div id="vcClassification" class="text-gray-800 dark:text-gray-200">—</div>
-                    </div>
-                    <div>
-                        <div class="text-xs text-gray-500 dark:text-gray-400">Created At</div>
-                        <div id="vcCreated" class="text-gray-800 dark:text-gray-200">—</div>
-                    </div>
-                </div>
-                <div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Other Fields</div>
-                    <div class="max-h-40 overflow-auto border border-gray-200 dark:border-gray-700 rounded-md p-2 text-xs" id="vcExtra">
-                        <div class="text-gray-400">No additional data.</div>
-                    </div>
-                </div>
-            </div>
-            <div class="px-5 py-4 border-t border-gray-200 dark:border-gray-700 text-right">
-                <button id="vcCloseBtn" class="px-3 py-2 rounded-md bg-blue-600 text-white text-sm">Close</button>
-            </div>
-        </div>
-    </div>
+    <!-- Audit Log Modal -->
 </div>
 @endsection
+
+@push('scripts')
+<script>
+(function(){
+    const auditBtn = document.getElementById('openAuditLog');
+    const auditModal = document.getElementById('customerAuditLogModal');
+    const auditClose = document.getElementById('closeAuditLog');
+    const form = document.querySelector('form[method="GET"]');
+    const toggleFilters = document.getElementById('toggleCustomerFilters');
+    const advancedFilters = document.getElementById('customerAdvancedFilters');
+    const inlineForm = document.getElementById('inlineFilterForm');
+
+    function toggleModal(show){
+        if (!auditModal) return;
+        if (show){
+            auditModal.classList.remove('hidden');
+            auditModal.classList.add('flex');
+        } else {
+            auditModal.classList.add('hidden');
+            auditModal.classList.remove('flex');
+        }
+    }
+
+    if (auditBtn){ auditBtn.addEventListener('click', function(){ toggleModal(true); }); }
+    if (auditClose){ auditClose.addEventListener('click', function(){ toggleModal(false); }); }
+    if (auditModal){
+        auditModal.addEventListener('click', function(ev){ if (ev.target === auditModal) toggleModal(false); });
+    }
+
+    if (toggleFilters && advancedFilters){
+        const preferredState = sessionStorage.getItem('customerAdvancedFilters') === 'open';
+        if (preferredState){
+            advancedFilters.classList.remove('hidden');
+        }
+        toggleFilters.addEventListener('click', function(){
+            const isHidden = advancedFilters.classList.contains('hidden');
+            advancedFilters.classList.toggle('hidden', !isHidden);
+            sessionStorage.setItem('customerAdvancedFilters', advancedFilters.classList.contains('hidden') ? 'closed' : 'open');
+        });
+    }
+
+    if (form){
+        const autoSubmitControls = form.querySelectorAll('input[type="radio"], select[name="classification"], input[name="created"]');
+        autoSubmitControls.forEach(function(control){
+            control.addEventListener('change', function(){ form.submit(); });
+        });
+    }
+
+    if (inlineForm){
+        inlineForm.addEventListener('submit', function(ev){
+            ev.preventDefault();
+            const params = new URLSearchParams(new FormData(inlineForm));
+            window.location.href = `${inlineForm.getAttribute('action') || window.location.pathname}?${params.toString()}`;
+        });
+    }
+})();
+</script>
+@endpush

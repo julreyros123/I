@@ -85,4 +85,73 @@ class CustomerApplication extends Model
         }
         return 'APP-'.str_pad((string) $id, 6, '0', STR_PAD_LEFT);
     }
+
+    public function getDocumentsAttribute($value): array
+    {
+        $docs = $value;
+        if (is_string($docs)) {
+            $decoded = json_decode($docs, true);
+            $docs = is_array($decoded) ? $decoded : [];
+        }
+
+        if (!is_array($docs)) {
+            $docs = [];
+        }
+
+        foreach (['id_type', 'id_number'] as $key) {
+            if (array_key_exists($key, $docs)) {
+                $docs[$key] = $this->normalizeDocumentValue($docs[$key]);
+            }
+        }
+
+        return $docs;
+    }
+
+    public function setDocumentsAttribute($value): void
+    {
+        if (is_null($value)) {
+            $this->attributes['documents'] = null;
+            return;
+        }
+
+        if (!is_array($value)) {
+            $value = (array) $value;
+        }
+
+        foreach (['id_type', 'id_number'] as $key) {
+            if (array_key_exists($key, $value)) {
+                $value[$key] = $this->normalizeDocumentValue($value[$key]);
+            }
+        }
+
+        $this->attributes['documents'] = json_encode($value, JSON_UNESCAPED_UNICODE);
+    }
+
+    protected function normalizeDocumentValue($value): ?string
+    {
+        if (is_null($value)) {
+            return null;
+        }
+
+        if (is_array($value)) {
+            if (empty($value)) {
+                return null;
+            }
+            $first = reset($value);
+            return $this->normalizeDocumentValue($first);
+        }
+
+        if (is_object($value)) {
+            if (method_exists($value, '__toString')) {
+                return $this->normalizeDocumentValue((string) $value);
+            }
+            if ($value instanceof self) {
+                return null;
+            }
+        }
+
+        $string = trim((string) $value);
+
+        return $string !== '' ? $string : null;
+    }
 }

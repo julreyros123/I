@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Customer extends Model
 {
@@ -50,6 +51,11 @@ class Customer extends Model
     public function paymentRecords()
     {
         return $this->hasMany(PaymentRecord::class);
+    }
+
+    public function latestApplication(): HasOne
+    {
+        return $this->hasOne(\App\Models\CustomerApplication::class)->latestOfMany();
     }
 
     // Helper methods

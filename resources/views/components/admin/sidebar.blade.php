@@ -37,15 +37,41 @@
                     <span>Main</span>
                 </a>
             </li>
-            <li>
-                <a href="{{ route('admin.customers') }}"
-                   class="flex items-center gap-3 px-3 py-2 rounded-lg 
-                          hover:bg-blue-700/60 dark:hover:bg-gray-800 
-                          transition-all duration-200 ease-in-out font-medium 
-                          {{ request()->routeIs('admin.customers') ? 'bg-blue-700/50 dark:bg-gray-800 text-white' : '' }}">
-                    <x-heroicon-o-user-group class="w-5 h-5 text-blue-300 dark:text-gray-400" />
-                    <span>Customer Data Management</span>
-                </a>
+            <li x-data="{ openCustomers: {{ request()->routeIs('admin.customers', 'admin.applicants.*') ? 'true' : 'false' }} }">
+                <button @click="openCustomers = !openCustomers"
+                        class="w-full flex items-center justify-between px-3 py-2 rounded-lg 
+                               hover:bg-blue-700/60 dark:hover:bg-gray-800 transition-all duration-200 ease-in-out font-medium">
+                    <span class="flex items-center gap-3">
+                        <x-heroicon-o-user-group class="w-5 h-5 text-blue-300 dark:text-gray-400" />
+                        <span>Customers</span>
+                    </span>
+                    <svg :class="openCustomers ? 'rotate-180' : ''"
+                         class="w-4 h-4 transform transition-all duration-200 ease-in-out"
+                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+                <ul x-show="openCustomers" x-transition
+                    class="mt-2 ml-6 space-y-1 bg-blue-800/95 dark:bg-gray-950 
+                           border border-blue-700 dark:border-gray-800 
+                           rounded-lg shadow-lg overflow-hidden">
+                    <li>
+                        <a href="{{ route('admin.customers') }}"
+                           class="block px-3 py-2 hover:bg-blue-700/70 dark:hover:bg-gray-800 
+                                  transition-all duration-200 ease-in-out rounded-md 
+                                  {{ request()->routeIs('admin.customers') ? 'bg-blue-700/60 dark:bg-gray-800 text-white' : '' }}">
+                            Customer Management
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.applicants.index') }}"
+                           class="block px-3 py-2 hover:bg-blue-700/70 dark:hover:bg-gray-800 
+                                  transition-all duration-200 ease-in-out rounded-md 
+                                  {{ request()->routeIs('admin.applicants.*') ? 'bg-blue-700/60 dark:bg-gray-800 text-white' : '' }}">
+                            New Applicants
+                        </a>
+                    </li>
+                </ul>
             </li>
             <li>
                 <a href="{{ route('admin.meters') }}"

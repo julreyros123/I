@@ -1,10 +1,13 @@
 <?php
 namespace App\Models;
 
+use App\Models\MeterServiceTicket;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+
+/** @var class-string<MeterServiceTicket> */
 
 class Meter extends Model
 {
@@ -27,4 +30,5 @@ class Meter extends Model
     public function assignments(): HasMany { return $this->hasMany(MeterAssignment::class); }
     public function audits(): HasMany { return $this->hasMany(MeterAudit::class); }
     public function currentCustomer(): BelongsTo { return $this->belongsTo(Customer::class, 'current_account_id'); }
+    public function serviceTickets(): HasMany { return $this->hasMany(MeterServiceTicket::class); }
 }

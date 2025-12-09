@@ -50,6 +50,9 @@ class BillingController extends Controller
     {
         $data = $request->validate([
             'account_no' => ['required','string','max:50'],
+            'invoice_number' => ['nullable','string','max:50','unique:billing_records,invoice_number'],
+            'prepared_by' => ['nullable','string','max:255'],
+            'issued_at' => ['nullable','date'],
             'previous_reading' => ['required','numeric','min:0'],
             'current_reading' => ['required','numeric','min:0','gt:previous_reading'],
             'consumption_cu_m' => ['required','numeric','min:0'],
@@ -95,6 +98,8 @@ class BillingController extends Controller
             $billingRecord = BillingRecord::create([
                 'customer_id' => $customer->id,
                 'account_no' => $data['account_no'],
+                'invoice_number' => $data['invoice_number'] ?? $this->generateInvoiceNumber(),
+                'prepared_by' => $data['prepared_by'] ?? optional($request->user())->name,
                 'previous_reading' => $data['previous_reading'],
                 'current_reading' => $data['current_reading'],
                 'consumption_cu_m' => $data['consumption_cu_m'],
@@ -104,11 +109,12 @@ class BillingController extends Controller
                 'overdue_penalty' => $data['overdue_penalty'] ?? 0,
                 'vat' => $data['vat'] ?? 0,
                 'total_amount' => $data['total_amount'],
-                'bill_status' => 'Outstanding Payment', // Default status for new bills
+                'bill_status' => 'Pending',
                 'notes' => null,
                 'date_from' => $data['date_from'],
                 'date_to' => $data['date_to'],
                 'due_date' => $dueDate,
+                'issued_at' => $data['issued_at'] ? Carbon::parse($data['issued_at']) : Carbon::now(),
             ]);
 
             // Update customer's previous reading
@@ -119,6 +125,7 @@ class BillingController extends Controller
             return response()->json([
                 'ok' => true,
                 'billing_record_id' => $billingRecord->id,
+                'invoice_number' => $billingRecord->invoice_number,
                 'message' => 'Bill saved successfully!',
             ]);
         } catch (\Exception $e) {
@@ -127,6 +134,23 @@ class BillingController extends Controller
                 'error' => $e->getMessage()
             ], 400);
         }
+    }
+
+    private function generateInvoiceNumber(): string
+    {
+        $prefix = 'INV-' . now()->format('Ymd');
+        $suffix = strtoupper(str_pad(dechex(random_int(0, 0xFFFF)), 4, '0', STR_PAD_LEFT));
+
+        $candidate = $prefix . '-' . $suffix;
+        $attempts = 0;
+
+        while (BillingRecord::where('invoice_number', $candidate)->exists() && $attempts < 5) {
+            $suffix = strtoupper(str_pad(dechex(random_int(0, 0xFFFF)), 4, '0', STR_PAD_LEFT));
+            $candidate = $prefix . '-' . $suffix;
+            $attempts++;
+        }
+
+        return $candidate;
     }
 
     public function getPaymentHistory(Request $request): JsonResponse

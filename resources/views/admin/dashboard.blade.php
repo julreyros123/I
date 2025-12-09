@@ -7,81 +7,77 @@
     <div class="grid grid-cols-12 gap-6 mt-2 md:mt-3">
         <div class="col-span-12 grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
             <!-- Billed (This Month) -->
-            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-200 dark:border-gray-700 p-4 lg:p-4 hover:shadow-lg transition-shadow duration-200">
-                <div class="flex items-center justify-between gap-3">
-                    <div class="flex items-center gap-3 min-w-0">
-                        <div class="shrink-0 kpi-icon rounded-full flex items-center justify-center bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300" style="--kpi-icon-size: 3rem;">
-                            <x-heroicon-o-document-text class="w-full h-full" />
+            <div class="group relative overflow-hidden rounded-2xl shadow-lg p-4 lg:p-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 bg-blue-600 text-white">
+                <div class="relative flex h-full flex-col justify-between">
+                    <div class="flex items-start gap-3">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20">
+                            <x-heroicon-o-document-text class="w-6 h-6" />
                         </div>
-                        <div class="min-w-0 text-left space-y-1">
-                            <p class="text-xs text-gray-500 dark:text-gray-400">Billed (This Month)</p>
-                            <p class="text-[11px] text-gray-500 dark:text-gray-400">This month so far</p>
+                        <div class="space-y-1">
+                            <p class="text-[11px] uppercase tracking-[0.2em] text-white/70">Billed revenue</p>
+                            <p class="text-sm font-semibold text-white">Invoices this month</p>
                         </div>
                     </div>
-                    <div class="text-right">
-                        <p class="text-2xl font-semibold text-gray-800 dark:text-gray-100">
-                            ₱{{ number_format($stats['month_billed'] ?? 0, 2) }}
-                        </p>
+                    <div class="text-right space-y-1 pt-6">
+                        <p class="text-3xl font-semibold">₱{{ number_format($stats['month_billed'] ?? 0, 2) }}</p>
+                        <p class="text-[11px] text-white/70">Live total billed</p>
                     </div>
                 </div>
             </div>
 
             <!-- Collected (This Month) -->
-            <a href="{{ route('records.payments') }}" class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-200 dark:border-gray-700 p-4 lg:p-4 hover:shadow-lg transition-shadow duration-200 focus:ring-2 focus:ring-blue-500 outline-none">
-                <div class="flex items-center justify-between gap-3">
-                    <div class="flex items-center gap-3 min-w-0">
-                        <div class="shrink-0 kpi-icon rounded-full flex items-center justify-center bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-300" style="--kpi-icon-size: 3rem;">
-                            <x-heroicon-o-banknotes class="w-full h-full" />
+            <a href="{{ route('records.payments') }}" class="group relative overflow-hidden rounded-2xl shadow-lg p-4 lg:p-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 bg-blue-600 text-white">
+                <div class="relative flex h-full flex-col justify-between">
+                    <div class="flex items-start gap-3">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20">
+                            <x-heroicon-o-banknotes class="w-6 h-6" />
                         </div>
-                        <div class="min-w-0 text-left space-y-1">
-                            <p class="text-xs text-gray-500 dark:text-gray-400">Collected (This Month)</p>
-                            <p class="text-[11px] text-gray-500 dark:text-gray-400">Go to payments</p>
+                        <div class="space-y-1">
+                            <p class="text-[11px] uppercase tracking-[0.2em] text-white/70">Collections</p>
+                            <p class="text-sm font-semibold text-white">Posted receipts</p>
                         </div>
                     </div>
-                    <div class="text-right">
-                        <p class="text-2xl font-semibold text-green-600">
-                            ₱{{ number_format($stats['month_collected'] ?? 0, 2) }}
-                        </p>
+                    <div class="text-right space-y-1 pt-6">
+                        <p class="text-3xl font-semibold">₱{{ number_format($stats['month_collected'] ?? 0, 2) }}</p>
+                        <p class="text-[11px] text-white/70">Settled ledger payments</p>
                     </div>
                 </div>
             </a>
 
             <!-- Customers -->
-            <a href="{{ route('admin.customers') }}" class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-200 dark:border-gray-700 p-4 lg:p-4 hover:shadow-lg transition-shadow duration-200 focus:ring-2 focus:ring-blue-500 outline-none">
-                <div class="flex items-center justify-between gap-3">
-                    <div class="flex items-center gap-3 min-w-0">
-                        <div class="shrink-0 kpi-icon rounded-full flex items-center justify-center bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300" style="--kpi-icon-size: 3rem;">
-                            <x-heroicon-o-users class="w-full h-full" />
+            <a href="{{ route('admin.customers') }}" class="group relative overflow-hidden rounded-2xl shadow-lg p-4 lg:p-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 bg-blue-600 text-white">
+                <div class="relative flex h-full flex-col justify-between">
+                    <div class="flex items-start gap-3">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20">
+                            <x-heroicon-o-users class="w-6 h-6" />
                         </div>
-                        <div class="min-w-0 text-left space-y-1">
-                            <p class="text-xs text-gray-500 dark:text-gray-400">Customers</p>
-                            <p class="text-[11px] text-gray-500 dark:text-gray-400">Manage customers</p>
+                        <div class="space-y-1">
+                            <p class="text-[11px] uppercase tracking-[0.2em] text-white/70">Active customers</p>
+                            <p class="text-sm font-semibold text-white">Accounts in good standing</p>
                         </div>
                     </div>
-                    <div class="text-right">
-                        <p class="text-2xl font-semibold text-gray-800 dark:text-gray-100">
-                            {{ number_format($stats['customers'] ?? 0) }}
-                        </p>
+                    <div class="text-right space-y-1 pt-6">
+                        <p class="text-4xl font-semibold">{{ number_format($stats['customers'] ?? 0) }}</p>
+                        <p class="text-[11px] text-white/70">Profiles in good standing</p>
                     </div>
                 </div>
             </a>
 
             <!-- Collection Rate -->
-            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-200 dark:border-gray-700 p-4 lg:p-4 hover:shadow-lg transition-shadow duration-200">
-                <div class="flex items-center justify-between gap-3">
-                    <div class="flex items-center gap-3 min-w-0">
-                        <div class="shrink-0 kpi-icon rounded-full flex items-center justify-center bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-300" style="--kpi-icon-size: 3rem;">
-                            <x-heroicon-o-arrow-trending-up class="w-full h-full" />
+            <div class="group relative overflow-hidden rounded-2xl shadow-lg p-4 lg:p-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 bg-blue-600 text-white">
+                <div class="relative flex h-full flex-col justify-between">
+                    <div class="flex items-start gap-3">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20">
+                            <x-heroicon-o-arrow-trending-up class="w-6 h-6" />
                         </div>
-                        <div class="min-w-0 text-left space-y-1">
-                            <p class="text-xs text-gray-500 dark:text-gray-400">Collection Rate</p>
-                            <p class="text-[11px] text-gray-500 dark:text-gray-400">Compared to last period</p>
+                        <div class="space-y-1">
+                            <p class="text-[11px] uppercase tracking-[0.2em] text-white/70">Collection rate</p>
+                            <p class="text-sm font-semibold text-white">Paid vs billed</p>
                         </div>
                     </div>
-                    <div class="text-right">
-                        <p class="text-2xl font-semibold text-gray-800 dark:text-gray-100">
-                            {{ number_format(($stats['collection_rate'] ?? 0) * 100, 1) }}%
-                        </p>
+                    <div class="text-right space-y-1 pt-6">
+                        <p class="text-3xl font-semibold">{{ number_format(($stats['collection_rate'] ?? 0) * 100, 1) }}%</p>
+                        <p class="text-[11px] text-white/70">Target ≥ 90%</p>
                     </div>
                 </div>
             </div>
@@ -91,17 +87,17 @@
     <!-- Top row: Revenue Growth (full width) -->
     <div class="grid grid-cols-12 gap-4 lg:gap-5">
         <!-- Revenue Growth (much larger) -->
-        <div class="col-span-12 bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-200 dark:border-gray-700 p-2 lg:p-3">
-            <div class="flex items-center justify-between mb-0">
+        <div class="col-span-12 bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-200 dark:border-gray-700 p-3 lg:p-4">
+            <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 mb-4 lg:mb-5">
                 <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Insights</h2>
-                <div class="flex items-center gap-3 text-sm">
-                    <div class="inline-flex items-center gap-1">
+                <div class="flex flex-wrap items-center gap-3 text-sm">
+                    <div class="inline-flex flex-wrap items-center gap-1">
                         <span class="text-gray-500 dark:text-gray-300">Metric:</span>
                         <button type="button" id="metricRevenue" class="px-3 py-1.5 rounded-md bg-blue-600 text-white hover:bg-blue-700 dark:hover:bg-blue-500">Revenue</button>
                         <button type="button" id="metricCustomers" class="px-3 py-1.5 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 border border-transparent dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 dark:border-gray-700">Customers</button>
                         <button type="button" id="metricUsage" class="px-3 py-1.5 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 border border-transparent dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 dark:border-gray-700">Avg Usage</button>
                     </div>
-                    <div class="inline-flex items-center gap-1">
+                    <div class="inline-flex flex-wrap items-center gap-1">
                         <span class="text-gray-500 dark:text-gray-300">Range:</span>
                         <button type="button" id="btnMonth" class="px-3 py-1.5 rounded-md bg-blue-600 text-white hover:bg-blue-700 dark:hover:bg-blue-500">Monthly</button>
                         <button type="button" id="btnYear" class="px-3 py-1.5 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 border border-transparent dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 dark:border-gray-700">Yearly</button>
@@ -273,116 +269,207 @@ if (count($seriesYearUsage) !== 5) { $seriesYearUsage = array_pad($seriesYearUsa
 
     </div>
 
-    <!-- Second row: Staff Reminders (8) + Analytics donut (4) -->
+    <!-- Second row: Admin Tasks (8) + Analytics (4) -->
     <div class="grid grid-cols-12 gap-6">
-        <!-- Staff Reminders -->
+        <!-- Admin Tasks -->
         <div class="col-span-12 lg:col-span-8 bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-200 dark:border-gray-700 p-4 lg:p-5">
-            <div class="flex items-center justify-between mb-3">
+            <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
                 <div>
-                    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Staff Reminders</h2>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Reminders for staff to generate and deliver up-to-date bills.</p>
+                    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Admin Tasks</h2>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Stay on top of new applications that still need approvals or installations.</p>
                 </div>
-                <a href="{{ route('records.billing') }}" class="text-sm text-blue-600 hover:text-blue-700">Go to billing</a>
+                <a href="{{ route('admin.applicants.index') }}" class="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700">
+                    View applications
+                    <x-heroicon-o-arrow-top-right-on-square class="w-4 h-4" />
+                </a>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/50 rounded-xl p-3 flex items-center gap-3">
-                    <div class="rounded-full bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-200 p-2">
-                        <x-heroicon-o-exclamation-triangle class="w-5 h-5" />
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                <a href="{{ route('admin.applicants.index', ['status' => 'pending']) }}" class="group relative overflow-hidden rounded-xl border border-amber-200 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-900/10 p-4">
+                    <div class="absolute inset-y-0 left-0 w-1 bg-amber-500/80 group-hover:bg-amber-500 transition-all"></div>
+                    <div class="relative flex items-center gap-3">
+                        <div class="rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-200 p-2">
+                            <x-heroicon-o-clipboard-document-check class="w-5 h-5" />
+                        </div>
+                        <div class="space-y-1">
+                            <p class="text-xs font-medium text-amber-700 dark:text-amber-200 tracking-wide uppercase">Need approval</p>
+                            <p class="text-2xl font-semibold text-amber-900 dark:text-amber-50">{{ number_format($applicationsPendingApprovalCount ?? 0) }}</p>
+                            <p class="text-[11px] text-amber-700/80 dark:text-amber-100/70">Applications awaiting review</p>
+                        </div>
                     </div>
-                    <div class="space-y-1">
-                        <p class="text-xs font-medium text-blue-700 dark:text-blue-200">Bills Pending Generation</p>
-                        <p class="text-lg font-semibold text-blue-900 dark:text-blue-100">
-                            {{ number_format($pendingGenerationCount ?? 0) }} bills
-                        </p>
+                </a>
+                <a href="{{ route('admin.applicants.index', ['status' => 'scheduled']) }}" class="group relative overflow-hidden rounded-xl border border-sky-200 dark:border-sky-500/40 bg-sky-50 dark:bg-sky-900/10 p-4">
+                    <div class="absolute inset-y-0 left-0 w-1 bg-sky-500/80 group-hover:bg-sky-500 transition-all"></div>
+                    <div class="relative flex items-center gap-3">
+                        <div class="rounded-full bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-200 p-2">
+                            <x-heroicon-o-wrench-screwdriver class="w-5 h-5" />
+                        </div>
+                        <div class="space-y-1">
+                            <p class="text-xs font-medium text-sky-700 dark:text-sky-200 tracking-wide uppercase">Need installation</p>
+                            <p class="text-2xl font-semibold text-sky-900 dark:text-sky-50">{{ number_format($applicationsPendingInstallationCount ?? 0) }}</p>
+                            <p class="text-[11px] text-sky-700/80 dark:text-sky-100/70">Jobs scheduled or in-progress</p>
+                        </div>
                     </div>
-                </div>
-                <div class="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/50 rounded-xl p-3 flex items-center gap-3">
-                    <div class="rounded-full bg-red-100 dark:bg-red-900/60 text-red-700 dark:text-red-200 p-2">
-                        <x-heroicon-o-banknotes class="w-5 h-5" />
-                    </div>
-                    <div class="space-y-1">
-                        <p class="text-xs font-medium text-red-700 dark:text-red-200">Amount Pending Generation</p>
-                        <p class="text-lg font-semibold text-red-900 dark:text-red-100">
-                            ₱{{ number_format($pendingGenerationAmount ?? 0, 2) }}
-                        </p>
-                    </div>
-                </div>
+                </a>
             </div>
 
-            <div class="space-y-3">
-                <p class="text-xs uppercase tracking-wide text-gray-400">Bills to generate and deliver</p>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead class="bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300">
-                            <tr>
-                                <th class="px-4 py-2 text-left">Account</th>
-                                <th class="px-4 py-2 text-left">Customer</th>
-                                <th class="px-4 py-2 text-left">Bill Date</th>
-                                <th class="px-4 py-2 text-left">Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700 text-gray-800 dark:text-gray-100">
-                            @forelse($pendingGenerationList as $bill)
-                                <tr>
-                                    <td class="px-4 py-2 whitespace-nowrap text-xs md:text-sm">{{ $bill->account_no }}</td>
-                                    <td class="px-4 py-2 whitespace-nowrap text-xs md:text-sm">{{ $bill->customer->name ?? '—' }}</td>
-                                    <td class="px-4 py-2 whitespace-nowrap text-xs md:text-sm">{{ optional($bill->created_at)->format('Y-m-d') }}</td>
-                                    <td class="px-4 py-2 whitespace-nowrap text-xs md:text-sm font-medium text-red-600 dark:text-red-400">
-                                        ₱{{ number_format($bill->total_amount ?? 0, 2) }}
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="4" class="px-4 py-4 text-center text-gray-500 dark:text-gray-400 text-sm">No bills pending generation or delivery.</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">Awaiting approval</h3>
+                        <span class="inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-200 px-2 py-0.5 text-[11px] font-medium">{{ number_format($applicationsPendingApprovalCount ?? 0) }}</span>
+                    </div>
+                    <ul class="space-y-3">
+                        @forelse($applicationsPendingApprovalList as $application)
+                            <li class="rounded-xl border border-gray-100 dark:border-gray-700/70 bg-white dark:bg-gray-900/40 px-3 py-2.5 shadow-sm">
+                                @php($statusLabel = \Illuminate\Support\Str::headline($application->status ?? 'pending'))
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{{ $application->applicant_name ?? 'Unnamed applicant' }}</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ $application->address ?? 'No address provided' }}</p>
+                                        <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-1">Filed {{ optional($application->created_at)->diffForHumans() ?? '—' }}</p>
+                                    </div>
+                                    <div class="flex flex-col items-end gap-2">
+                                        <span class="inline-flex items-center rounded-full bg-amber-100/80 dark:bg-amber-500/30 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:text-amber-200">{{ $statusLabel }}</span>
+                                        <a href="{{ route('admin.applicants.show', $application->id) }}" class="text-xs font-medium text-blue-600 hover:text-blue-500">Review</a>
+                                    </div>
+                                </div>
+                            </li>
+                        @empty
+                            <li class="text-sm text-gray-500 dark:text-gray-400">No applications awaiting approval.</li>
+                        @endforelse
+                    </ul>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">Awaiting installation</h3>
+                        <span class="inline-flex items-center rounded-full bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-200 px-2 py-0.5 text-[11px] font-medium">{{ number_format($applicationsPendingInstallationCount ?? 0) }}</span>
+                    </div>
+                    <ul class="space-y-3">
+                        @forelse($applicationsPendingInstallationList as $application)
+                            <li class="rounded-xl border border-gray-100 dark:border-gray-700/70 bg-white dark:bg-gray-900/40 px-3 py-2.5 shadow-sm">
+                                @php($statusLabel = \Illuminate\Support\Str::headline($application->status ?? 'scheduled'))
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{{ $application->applicant_name ?? 'Unnamed applicant' }}</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ $application->address ?? 'No address provided' }}</p>
+                                        <p class="text-[11px] text-gray-400 dark:text-gray-500 mt-1">Schedule {{ optional($application->schedule_date)->format('M d, Y') ?? 'Not set' }}</p>
+                                    </div>
+                                    <div class="flex flex-col items-end gap-2">
+                                        <span class="inline-flex items-center rounded-full bg-sky-100/80 dark:bg-sky-500/30 px-2 py-0.5 text-[11px] font-medium text-sky-700 dark:text-sky-200">{{ $statusLabel }}</span>
+                                        <a href="{{ route('admin.applicants.show', $application->id) }}" class="text-xs font-medium text-blue-600 hover:text-blue-500">Open</a>
+                                    </div>
+                                </div>
+                            </li>
+                        @empty
+                            <li class="text-sm text-gray-500 dark:text-gray-400">No installations awaiting action.</li>
+                        @endforelse
+                    </ul>
                 </div>
             </div>
         </div>
 
         <!-- Analytics donut -->
         <div class="col-span-12 lg:col-span-4 bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-200 dark:border-gray-700 p-4 lg:p-6">
-            <div class="flex items-center justify-between mb-2">
-                <h2 class="text-base lg:text-lg font-semibold text-gray-800 dark:text-gray-100">Analytics</h2>
-                <span class="text-[11px] lg:text-xs text-gray-500">Connection Types</span>
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <div>
+                    <h2 class="text-base lg:text-lg font-semibold text-gray-800 dark:text-gray-100">Connection Analytics</h2>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Live mix of connection classifications.</p>
+                </div>
+                <div class="inline-flex items-center rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 text-[11px] font-medium overflow-hidden">
+                    <button type="button" data-connection-mode="count" class="px-3 py-1.5 bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-300">Count</button>
+                    <button type="button" data-connection-mode="percentage" class="px-3 py-1.5 text-gray-500 dark:text-gray-400 hover:text-blue-500">Share</button>
+                </div>
             </div>
             <div class="h-[12rem] md:h-[14rem] lg:h-[18rem] flex items-center justify-center">
-                <div class="w-40 h-40 md:w-48 md:h-48 lg:w-56 lg:h-56 relative">
-                    <svg viewBox="0 0 100 100" class="w-full h-full rotate-[-90deg]">
-                        <!-- Background track -->
-                        <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" class="text-gray-200 dark:text-slate-600" stroke-width="12" />
-                        <!-- Segments: 60% blue, 25% green, 15% red -->
-                        <!-- circumference ≈ 251.33 -->
-                        <circle cx="50" cy="50" r="40" fill="none" stroke="#1e3a8a" stroke-width="12" stroke-linecap="butt" stroke-dasharray="150.8 1000" stroke-dashoffset="0" />
-                        <circle cx="50" cy="50" r="40" fill="none" stroke="#2563eb" stroke-width="12" stroke-linecap="butt" stroke-dasharray="62.8 1000" stroke-dashoffset="-150.8" />
-                        <circle cx="50" cy="50" r="40" fill="none" stroke="#38bdf8" stroke-width="12" stroke-linecap="butt" stroke-dasharray="37.7 1000" stroke-dashoffset="-213.6" />
-                    </svg>
-                    <div class="absolute inset-0 flex items-center justify-center rotate-0">
-                        <div class="inline-flex flex-row items-center gap-1 whitespace-nowrap w-max min-w-[110px] md:min-w-[130px] tracking-tight text-gray-800 dark:text-gray-100">
-                            <span class="text-base md:text-lg font-semibold">—%</span>
-                            <span class="text-sm md:text-base text-gray-500">Residential</span>
+                <div id="connectionChart" class="w-full h-full"></div>
+            </div>
+            <div class="mt-4 space-y-3">
+                @forelse($connectionAnalytics as $index => $entry)
+                    <div class="flex items-center justify-between text-sm">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full" style="background-color: {{ $connectionColorPalette[$index % max(1, count($connectionColorPalette))] ?? '#2563eb' }}"></span>
+                            <span class="text-gray-600 dark:text-gray-300">{{ $entry['label'] }}</span>
+                        </div>
+                        <div class="text-right font-semibold text-gray-800 dark:text-gray-100">
+                            <span data-connection-count-value="{{ $index }}">{{ number_format($entry['count']) }}</span>
+                            <span class="hidden" data-connection-percentage-value="{{ $index }}">{{ number_format($entry['percentage'], 1) }}%</span>
                         </div>
                     </div>
-                </div>
-            </div>
-            <div class="mt-3 grid grid-cols-3 gap-2 text-center text-[11px] md:text-xs">
-                <div class="space-y-1">
-                    <div class="flex items-center justify-center gap-1"><span class="w-2 h-2 rounded-full" style="background-color:#1e3a8a"></span><span>Residential</span></div>
-                    <div class="font-semibold">—</div>
-                </div>
-                <div class="space-y-1">
-                    <div class="flex items-center justify-center gap-1"><span class="w-2 h-2 rounded-full" style="background-color:#2563eb"></span><span>Commercial</span></div>
-                    <div class="font-semibold">—</div>
-                </div>
-                <div class="space-y-1">
-                    <div class="flex items-center justify-center gap-1"><span class="w-2 h-2 rounded-full" style="background-color:#38bdf8"></span><span>Industrial</span></div>
-                    <div class="font-semibold">—</div>
-                </div>
+                @empty
+                    <p class="text-sm text-gray-500 dark:text-gray-400 text-center">No connection data yet.</p>
+                @endforelse
             </div>
         </div>
     </div>
+    <script>
+    document.addEventListener('DOMContentLoaded', function(){
+        const chartEl = document.querySelector('#connectionChart');
+        if (!chartEl || typeof ApexCharts === 'undefined') { return; }
+
+        const palette = @json($connectionColorPalette ?? []);
+        const labels = @json($connectionAnalyticsLabels ?? []);
+        const counts = @json(array_map('intval', $connectionAnalyticsCounts ?? []));
+        const percentages = @json(($connectionAnalytics ?? collect())->pluck('percentage')->map(fn($v) => (float) $v)->toArray());
+
+        const hasData = (counts || []).some(function(value){ return Number(value) > 0; });
+        const seriesCounts = hasData ? counts : labels.map(() => 0);
+        const seriesPercent = hasData ? percentages : labels.map(() => 0);
+
+        const chart = new ApexCharts(chartEl, {
+            chart: {
+                type: 'donut',
+                height: '100%',
+                toolbar: { show: false }
+            },
+            labels: labels,
+            series: seriesCounts,
+            colors: palette.length ? palette : undefined,
+            legend: { show: false },
+            dataLabels: {
+                enabled: true,
+                formatter: function(val){ return Math.round(val) + '%'; }
+            },
+            responsive: [{
+                breakpoint: 768,
+                options: { dataLabels: { enabled: false } }
+            }]
+        });
+
+        chart.render();
+
+        const toggleButtons = document.querySelectorAll('[data-connection-mode]');
+        const countBadges = document.querySelectorAll('[data-connection-count-value]');
+        const percentBadges = document.querySelectorAll('[data-connection-percentage-value]');
+
+        function setMode(mode){
+            toggleButtons.forEach(function(btn){
+                const active = btn.getAttribute('data-connection-mode') === mode;
+                btn.classList.toggle('bg-white', active);
+                btn.classList.toggle('dark:bg-gray-800', active);
+                btn.classList.toggle('text-blue-600', active);
+                btn.classList.toggle('dark:text-blue-300', active);
+                btn.classList.toggle('text-gray-500', !active);
+                btn.classList.toggle('dark:text-gray-400', !active);
+            });
+
+            countBadges.forEach(function(el){ el.classList.toggle('hidden', mode !== 'count'); });
+            percentBadges.forEach(function(el){ el.classList.toggle('hidden', mode !== 'percentage'); });
+
+            if (mode === 'count') {
+                chart.updateSeries(seriesCounts);
+            } else {
+                chart.updateSeries(seriesPercent.length ? seriesPercent : labels.map(() => 0));
+            }
+        }
+
+        toggleButtons.forEach(function(btn){
+            btn.addEventListener('click', function(){ setMode(btn.getAttribute('data-connection-mode')); });
+        });
+
+        setMode('count');
+    });
+    </script>
 </div>
 @endsection

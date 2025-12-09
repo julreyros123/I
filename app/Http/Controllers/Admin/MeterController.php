@@ -31,8 +31,17 @@ class MeterController extends Controller
             type: $request->get('type'),
             barangay: $request->get('barangay'),
             perPage: 15,
+            scope: $request->get('scope', 'eligible'),
         ));
-        return view('admin.meters', $result);
+
+        $inventoryMeters = Meter::query()
+            ->where('status', 'inventory')
+            ->orderBy('serial')
+            ->get(['id', 'serial', 'type', 'size', 'manufacturer', 'seal_no']);
+
+        return view('admin.meters', array_merge($result, [
+            'inventoryMeters' => $inventoryMeters,
+        ]));
     }
 
     public function store(StoreMeterRequest $request)
@@ -86,6 +95,7 @@ class MeterController extends Controller
     {
         $data = $request->validate([
             'account_id' => 'required|integer|exists:customers,id',
+            'application_id' => 'nullable|integer|exists:customer_applications,id',
             'assigned_at' => 'required|date',
             'reason' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
@@ -93,24 +103,31 @@ class MeterController extends Controller
 
         // Guard: only allow meter assignment when latest application has been paid and reached paid/scheduled/installed stage
         $customer = Customer::find($data['account_id']);
-        $latestApp = null;
+        $targetApp = null;
         if ($customer) {
-            $latestApp = CustomerApplication::where('customer_id', $customer->id)
-                ->orderByDesc('created_at')
-                ->first();
+            if (!empty($data['application_id'])) {
+                $targetApp = CustomerApplication::where('id', $data['application_id'])
+                    ->where('customer_id', $customer->id)
+                    ->first();
+            }
 
-            // Consider the application paid if paid_at is set, regardless of stored fee_total
-            $hasPaid = $latestApp && !is_null($latestApp->paid_at);
-            $stageOk = $latestApp && in_array($latestApp->status, ['paid', 'scheduled', 'installed'], true);
+            if (!$targetApp) {
+                $targetApp = CustomerApplication::where('customer_id', $customer->id)
+                    ->orderByDesc('created_at')
+                    ->first();
+            }
+
+            $hasPaid = $targetApp && !is_null($targetApp->paid_at);
+            $stageOk = $targetApp && in_array($targetApp->status, ['paid', 'scheduled', 'installed'], true);
 
             if (!($hasPaid && $stageOk)) {
                 return back()->withErrors([
-                    'account_id' => 'Cannot assign meter: application fees are not fully paid or application is not yet in a paid/scheduled/installed state.',
+                    'account_id' => 'Cannot assign meter: application fees are not fully paid or application is not yet in a paid state.',
                 ])->withInput();
             }
         }
 
-        DB::transaction(function() use ($meter, $data, $latestApp) {
+        DB::transaction(function() use ($meter, $data, $targetApp) {
             MeterAssignment::where('meter_id',$meter->id)->whereNull('unassigned_at')->update([
                 'unassigned_at' => now(),
                 'unassigned_by' => optional(auth()->user())->id,
@@ -141,6 +158,13 @@ class MeterController extends Controller
                 $customer->meter_size = $meter->size;
                 $customer->status = 'Active';
                 $customer->save();
+            }
+
+            if ($targetApp) {
+                $targetApp->status = $targetApp->status === 'paid' ? 'scheduled' : $targetApp->status;
+                $targetApp->schedule_date = $targetApp->schedule_date ?? now();
+                $targetApp->scheduled_by = $targetApp->scheduled_by ?? optional(auth()->user())->id;
+                $targetApp->save();
             }
 
         });
@@ -205,80 +229,6 @@ class MeterController extends Controller
                     fputcsv($out, $row);
                 }
             });
-            fclose($out);
-        };
-        return response()->stream($callback, 200, $headers);
-    }
-
-    public function bulkStatus(Request $request)
-    {
-        $data = $request->validate([
-            'ids' => 'required|array',
-            'ids.*' => 'integer|exists:meters,id',
-            'status' => 'required|in:inventory,installed,active,maintenance,inactive,retired',
-        ]);
-        $count = 0;
-        foreach ($data['ids'] as $id) {
-            $m = Meter::find($id);
-            if (!$m) continue;
-            $before = $m->toArray();
-            $m->update(['status' => $data['status']]);
-            MeterAudit::create([
-                'meter_id' => $m->id,
-                'action' => 'status_change',
-                'changed_by' => optional(auth()->user())->id,
-                'from_json' => $before,
-                'to_json' => $m->fresh()->toArray(),
-                'reason' => 'bulk',
-            ]);
-            $count++;
-        }
-        return redirect()->back()->with('success', "Updated status for $count meters.");
-    }
-
-    public function import(Request $request)
-    {
-        $request->validate(['file' => 'required|file|mimes:csv,txt']);
-        $file = $request->file('file');
-        $h = fopen($file->getRealPath(), 'r');
-        $header = fgetcsv($h);
-        $created = 0; $updated = 0;
-        while (($row = fgetcsv($h)) !== false) {
-            $data = array_combine($header, $row);
-            if (!isset($data['serial']) || empty($data['serial'])) continue;
-            $meter = Meter::firstOrNew(['serial' => $data['serial']]);
-            $before = $meter->exists ? $meter->toArray() : null;
-            $meter->fill([
-                'status' => $data['status'] ?? $meter->status ?? 'inventory',
-                'type' => $data['type'] ?? null,
-                'size' => $data['size'] ?? null,
-                'barangay' => $data['barangay'] ?? null,
-                'location_address' => $data['location_address'] ?? null,
-            ]);
-            $meter->save();
-            MeterAudit::create([
-                'meter_id' => $meter->id,
-                'action' => $before ? 'update' : 'import',
-                'changed_by' => optional(auth()->user())->id,
-                'from_json' => $before,
-                'to_json' => $meter->fresh()->toArray(),
-            ]);
-            $meter->wasRecentlyCreated ? $created++ : $updated++;
-        }
-        fclose($h);
-        return redirect()->back()->with('success', "Import complete. Created: $created, Updated: $updated");
-    }
-
-    public function template()
-    {
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="meters_template.csv"',
-        ];
-        $columns = ['serial','status','type','size','barangay','location_address'];
-        $callback = function() use ($columns) {
-            $out = fopen('php://output', 'w');
-            fputcsv($out, $columns);
             fclose($out);
         };
         return response()->stream($callback, 200, $headers);

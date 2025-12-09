@@ -3,233 +3,262 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Water Bill - {{ $billingRecord->customer->name }}</title>
+    <title>Billing Statement • {{ optional($billingRecord->customer)->name ?? 'Customer' }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('css/print-billing.css') }}">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background: white;
-            color: black;
+            font-family: 'Poppins', sans-serif;
+            background: #e9f0fb;
+            padding: 24px;
         }
-        .bill-container {
-            max-width: 800px;
-            margin: 0 auto;
-            border: 2px solid #333;
-            padding: 30px;
-            position: relative;
+
+        .print-billing {
+            margin: 24px auto;
         }
-        .bill-container::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: url('{{ asset('images/mawasa-logo.png') }}') center/60% no-repeat;
-            opacity: 0.06;
-            pointer-events: none;
-        }
-        .header {
-            display: grid;
-            grid-template-columns: auto 1fr;
-            align-items: center;
-            gap: 16px;
-            border-bottom: 2px solid #333;
-            padding-bottom: 14px;
-            margin-bottom: 24px;
-        }
-        .company-name { font-size: 22px; font-weight: bold; margin-bottom: 2px; }
-        .company-address {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 4px;
-        }
-        .bill-title { font-size: 22px; font-weight: bold; text-transform: uppercase; text-align: right; }
-        .logo { height: 70px; width: auto; }
-        .customer-info {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-        .info-section h3 {
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 10px;
-            border-bottom: 1px solid #ccc;
-            padding-bottom: 5px;
-        }
-        .info-section p {
-            margin: 5px 0;
-            font-size: 14px;
-        }
-        .readings {
-            margin-bottom: 18px;
-        }
-        .readings h3 {
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            border-bottom: 1px solid #ccc;
-            padding-bottom: 5px;
-        }
-        .reading-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-        }
-        .reading-item {
-            text-align: center;
-            border: 1px solid #ccc;
-            padding: 15px;
-            background: #f9f9f9;
-        }
-        .reading-label {
+
+        .totals .note {
             font-size: 12px;
-            color: #666;
-            margin-bottom: 5px;
+            color: var(--print-muted);
+            line-height: 1.6;
         }
-        .reading-value {
-            font-size: 18px;
-            font-weight: bold;
+
+        .contact strong {
+            font-weight: 600;
+            color: var(--print-primary);
         }
-        .totals-wrap { display: grid; grid-template-columns: 1fr 280px; gap: 20px; align-items: start; }
-        .totals-box { border: 1px solid #ccc; background: #fafafa; border-radius: 6px; padding: 10px 14px; }
-        .totals-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; }
-        .totals-row.total { border-top: 2px solid #333; margin-top: 8px; padding-top: 10px; font-weight: bold; font-size: 16px; }
-        .footer {
-            margin-top: 40px;
-            text-align: center;
-            font-size: 12px;
-            color: #666;
-            border-top: 1px solid #ccc;
-            padding-top: 20px;
-        }
-        .usage-chart { margin-top: 16px; }
-        .usage-chart h3 { font-size: 16px; font-weight: bold; margin: 0 0 8px; }
-        .bars { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; align-items: end; height: 140px; }
-        .bar { background: #3b82f6; position: relative; border-radius: 4px 4px 0 0; }
-        .bar span { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); font-size: 11px; color: #333; margin-bottom: 4px; }
-        .bar .label { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); font-size: 11px; color: #555; white-space: nowrap; }
+
         @media print {
-            body { margin: 0; }
-            .bill-container { border: none; }
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .print-billing {
+                margin: 0 auto;
+                box-shadow: none;
+                border-radius: 0;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="bill-container">
-        <!-- Header -->
-        <div class="header">
-            <img src="{{ asset('images/mawasa-logo.png') }}" alt="MAWASA Logo" class="logo">
-            <div>
-                <div class="company-name">MANAMBULAN WATERWORKS &amp; SANITATION ASSOCIATION, INC.</div>
-                <div class="company-address">Brgy. Manambulan, Tugbok District, Davao City</div>
-                <div class="company-address">E-mail: — | Phone: —</div>
-            </div>
+@php
+    $customer = optional($billingRecord->customer);
+    $invoiceNumber = $billingRecord->invoice_number ?? 'INV-' . str_pad($billingRecord->id, 4, '0', STR_PAD_LEFT);
+    $issuedDate = optional($billingRecord->issued_at ?? $billingRecord->created_at)->format('M d, Y');
+    $dueDate = $billingRecord->due_date ? $billingRecord->due_date->format('M d, Y') : '—';
+    $billingPeriod = $billingRecord->getBillingPeriod();
 
-        <!-- Usage Chart: Last 5 Months -->
-        @if(!empty($usageSeries ?? []))
-            @php $maxVal = max(array_map(fn($i) => $i['value'], $usageSeries)); $maxVal = $maxVal > 0 ? $maxVal : 1; @endphp
-            <div class="usage-chart">
-                <h3>Usage (Last 5 Months)</h3>
-                <div class="bars">
-                    @foreach($usageSeries as $pt)
-                        @php $h = (int) round(($pt['value'] / $maxVal) * 120); @endphp
-                        <div class="bar" style="height: {{ $h }}px">
-                            <span>{{ number_format($pt['value'], 1) }}</span>
-                            <div class="label">{{ $pt['label'] }}</div>
-                        </div>
-                    @endforeach
-                </div>
+    $consumptionCost = ($billingRecord->consumption_cu_m ?? 0) * ($billingRecord->base_rate ?? 0);
+    $maintenanceCharge = $billingRecord->maintenance_charge ?? 0;
+    $overduePenalty = $billingRecord->overdue_penalty ?? 0;
+    $advancePayment = $billingRecord->advance_payment ?? 0;
+    $subtotal = $consumptionCost + $maintenanceCharge;
+    $totalDue = $billingRecord->total_amount ?? ($subtotal + $overduePenalty - $advancePayment);
+    $overdueTotal = max(0, $overduePenalty);
+
+    $usageSeries = $usageSeries ?? [];
+    $graphCount = count($usageSeries);
+    $graphWidth = 220;
+    $graphHeight = 140;
+    $paddingX = 20;
+    $paddingY = 20;
+    $usableWidth = $graphWidth - ($paddingX * 2);
+    $usableHeight = $graphHeight - ($paddingY * 2);
+    $maxUsage = $graphCount ? max(array_map(fn($row) => $row['value'] ?? 0, $usageSeries)) : 0;
+    $maxUsage = $maxUsage > 0 ? $maxUsage : 1;
+    $step = $graphCount > 1 ? $usableWidth / ($graphCount - 1) : 0;
+    $polylinePoints = [];
+    $pointMeta = [];
+
+    foreach ($usageSeries as $index => $point) {
+        $x = $paddingX + ($graphCount > 1 ? $step * $index : $usableWidth / 2);
+        $value = $point['value'] ?? 0;
+        $y = $paddingY + $usableHeight - ($value / $maxUsage) * $usableHeight;
+        $polylinePoints[] = $x . ',' . $y;
+        $pointMeta[] = [
+            'x' => $x,
+            'y' => $y,
+            'value' => $value,
+            'label' => $point['label'] ?? ''
+        ];
+    }
+
+    $polylineString = implode(' ', $polylinePoints);
+    $areaPolygonString = null;
+    if ($graphCount > 1) {
+        $first = explode(',', $polylinePoints[0]);
+        $last = explode(',', $polylinePoints[count($polylinePoints) - 1]);
+        $baselineY = $paddingY + $usableHeight;
+        $areaPolygonString = $first[0] . ',' . $baselineY . ' ' . $polylineString . ' ' . $last[0] . ',' . $baselineY;
+    }
+@endphp
+
+<section class="print-billing">
+    <header class="invoice-header">
+        <div class="brand">
+            <div class="brand-logo">
+                <img src="{{ asset('images/mawasa-logo.png') }}" alt="MAWASA logo">
             </div>
-        @endif
-            <div class="bill-title">WATER BILL INVOICE</div>
+            <div class="brand-copy">
+                <h1>MAWASA</h1>
+                <p>Manambulan Waterworks &amp; Sanitation Inc.</p>
+                <span class="brand-site">service@mawasa.ph</span>
+            </div>
         </div>
-
-        <!-- Customer Information -->
-        <div class="customer-info">
-            <div class="info-section">
-                <h3>Customer Information</h3>
-                <p><strong>Name:</strong> {{ $billingRecord->customer->name }}</p>
-                <p><strong>Account No:</strong> {{ $billingRecord->account_no }}</p>
-                <p><strong>Address:</strong> {{ $billingRecord->customer->address }}</p>
-                <p><strong>Meter No:</strong> {{ $billingRecord->customer->meter_no }}</p>
-                <p><strong>Meter Size:</strong> {{ $billingRecord->customer->meter_size }}</p>
-            </div>
-            
-            <div class="info-section">
-                <h3>Billing Information</h3>
-                <p><strong>Billing Period:</strong> {{ $billingRecord->getBillingPeriod() }}</p>
-                <p><strong>Bill Date:</strong> {{ $billingRecord->created_at->format('M d, Y') }}</p>
-                <p><strong>Invoice #:</strong> {{ $billingRecord->id }}</p>
-                <p><strong>Due Date:</strong> {{ $billingRecord->due_date ? $billingRecord->due_date->format('M d, Y') : 'N/A' }}</p>
-            </div>
+        <div class="invoice-meta">
+            <span class="label">Invoice No.</span>
+            <span class="value">{{ $invoiceNumber }}</span>
+            <span class="label">Issued</span>
+            <span class="value">{{ $issuedDate }}</span>
         </div>
+    </header>
 
-        <!-- Reading Information and Totals -->
-        @php
-            $consumptionCost = $billingRecord->consumption_cu_m * $billingRecord->base_rate;
-            $chargesPlusPenalty = $consumptionCost + ($billingRecord->maintenance_charge ?? 0) + ($billingRecord->overdue_penalty ?? 0);
-            $discount = $billingRecord->advance_payment ?? 0; // treat advance payment as discount/credit
-            $subtotal = $chargesPlusPenalty; // no VAT; subtotal before discount/tax
-            $tax = 0.00;
-            $total = $billingRecord->total_amount;
-        @endphp
-        <div class="totals-wrap">
-            <div>
-                <div class="readings">
-                    <h3>Reading Information</h3>
-                    <div class="reading-grid">
-                        <div class="reading-item">
-                            <div class="reading-label">Previous Reading</div>
-                            <div class="reading-value">{{ number_format($billingRecord->previous_reading, 2) }}</div>
+    <div class="accent-bar"></div>
+
+    <section class="invoice-info">
+        <div class="info-block">
+            <h2>Bill To</h2>
+            <p class="name">{{ $customer->name ?? '—' }}</p>
+            <p>{{ $customer->address ?? 'Address unavailable' }}</p>
+            <p>{{ $billingRecord->account_no }}</p>
+        </div>
+        <div class="info-block">
+            <h2>Billing Details</h2>
+            <dl>
+                <div><dt>Status</dt><dd>{{ $billingRecord->bill_status }}</dd></div>
+                <div><dt>Billing Period</dt><dd>{{ $billingPeriod }}</dd></div>
+                <div><dt>Due Date</dt><dd>{{ $dueDate }}</dd></div>
+                <div><dt>Prepared By</dt><dd>{{ $billingRecord->prepared_by ?? '—' }}</dd></div>
+                <div><dt>Meter</dt><dd>{{ $customer->meter_no ?? '—' }} · {{ $customer->meter_size ?? '—' }}</dd></div>
+            </dl>
+        </div>
+    </section>
+
+    <table class="charge-table">
+        <thead>
+            <tr>
+                <th class="text-left">Description</th>
+                <th class="text-right">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Water Consumption</td>
+                <td class="text-right">₱{{ number_format($consumptionCost, 2) }}</td>
+            </tr>
+            <tr>
+                <td>Maintenance Charge</td>
+                <td class="text-right">₱{{ number_format($maintenanceCharge, 2) }}</td>
+            </tr>
+            <tr>
+                <td>Overdue Penalty</td>
+                <td class="text-right">₱{{ number_format($overduePenalty, 2) }}</td>
+            </tr>
+            @if($advancePayment > 0)
+            <tr>
+                <td>Advance Payment (Credit)</td>
+                <td class="text-right">-₱{{ number_format($advancePayment, 2) }}</td>
+            </tr>
+            @endif
+        </tbody>
+        <tfoot>
+            <tr>
+                <td class="text-right label">Subtotal</td>
+                <td class="text-right">₱{{ number_format($subtotal, 2) }}</td>
+            </tr>
+            <tr>
+                <td class="text-right label">Total Amount Due</td>
+                <td class="text-right total">₱{{ number_format($totalDue, 2) }}</td>
+            </tr>
+            <tr>
+                <td class="text-right label">Overdue Total</td>
+                <td class="text-right overdue">₱{{ number_format($overdueTotal, 2) }}</td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <section class="signature">
+        <div class="sign-line"></div>
+        <p class="name">{{ $billingRecord->prepared_by ?? 'MAWASA Billing Administrator' }}</p>
+        <p class="role">Authorized Signatory</p>
+    </section>
+
+    @if(!empty($usageSeries))
+    <section class="usage-section">
+        <h4>Usage (Last 5 Months)</h4>
+        <div class="usage-graph">
+            <div class="usage-bars">
+                @foreach($pointMeta as $meta)
+                    @php
+                        $barHeight = $maxUsage > 0 ? max(4, round(($meta['value'] / $maxUsage) * 100)) : 4;
+                    @endphp
+                    <div class="bar">
+                        <span class="bar-value">{{ number_format($meta['value'], 1) }}</span>
+                        <div class="bar-track">
+                            <div class="bar-fill" style="height: {{ $barHeight }}%;"></div>
                         </div>
-                        <div class="reading-item">
-                            <div class="reading-label">Current Reading</div>
-                            <div class="reading-value">{{ number_format($billingRecord->current_reading, 2) }}</div>
-                        </div>
-                        <div class="reading-item">
-                            <div class="reading-label">Consumption (m³)</div>
-                            <div class="reading-value">{{ number_format($billingRecord->consumption_cu_m, 2) }}</div>
-                        </div>
+                        <span class="bar-label">{{ $meta['label'] }}</span>
                     </div>
-                </div>
-                <div style="font-size:12px;color:#666;margin-top:6px;">
-                    Rate: ₱{{ number_format($billingRecord->base_rate, 2) }}/m³ • Maintenance: ₱{{ number_format($billingRecord->maintenance_charge, 2) }}
-                </div>
-            </div>
-            <div class="totals-box">
-                <div class="totals-row"><span>SUBTOTAL</span><span>₱{{ number_format($subtotal, 2) }}</span></div>
-                <div class="totals-row"><span>DISCOUNT (Advance)</span><span>-₱{{ number_format($discount, 2) }}</span></div>
-                <div class="totals-row"><span>TAX</span><span>₱{{ number_format($tax, 2) }}</span></div>
-                <div class="totals-row total"><span>TOTAL</span><span>₱{{ number_format($total, 2) }}</span></div>
+                @endforeach
             </div>
         </div>
+    </section>
+    @endif
 
-        <!-- Removed description table as requested; totals box covers summary -->
+    <footer class="footer-bar">
+        <span>Thank you for choosing MAWASA</span>
+        <span>See reverse for payment options &amp; terms</span>
+    </footer>
+</section>
 
-        <!-- Notes -->
-        @if($billingRecord->notes)
-        <div style="margin-bottom: 30px;">
-            <h3 style="font-size: 16px; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">Notes</h3>
-            <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px;">
-                <p style="margin: 0; font-size: 14px;">{{ $billingRecord->notes }}</p>
-            </div>
+<div class="page-break"></div>
+
+<section class="print-billing print-back">
+    <header class="back-header">
+        <h2>Payment &amp; Support Information</h2>
+        <p>Please present this page when settling your account.</p>
+    </header>
+
+    <section class="back-columns">
+        <div class="back-card">
+            <h3>Payment Methods</h3>
+            <ul>
+                <li><strong>Over-the-counter:</strong> MAWASA Main Office, Barangay Manambulan</li>
+                <li><strong>Bank Deposit:</strong> Mawasa Cooperative Bank</li>
+                <li><strong>Account Number:</strong> {{ $billingRecord->account_no }}</li>
+                <li><strong>Reference:</strong> {{ $invoiceNumber }}</li>
+            </ul>
         </div>
-        @endif
-
-        <!-- Footer -->
-        <div class="footer">
-            <p>Thank you for your business!</p>
-            <p>Payment is due within ____ days. For inquiries, please contact our office.</p>
-            <p>Printed on: {{ now()->format('M d, Y g:i A') }}</p>
+        <div class="back-card">
+            <h3>Contact Channels</h3>
+            <ul>
+                <li>(082) 297-4521</li>
+                <li>+63 917 555 2300</li>
+                <li>service@mawasa.ph</li>
+                <li>Barangay Manambulan, Tugbok District, Davao City</li>
+            </ul>
         </div>
-    </div>
+    </section>
 
-    <script>
-        // Auto-print when page loads
-        window.onload = function() {
-            window.print();
-        }
-    </script>
+    <section class="back-terms">
+        <h3>Terms &amp; Conditions</h3>
+        <p>Payments are due within ten (10) days from the billing date. Overdue accounts are assessed a surcharge per MAWASA policy. Disconnections may be executed for bills more than 30 days past due. Keep your proof of payment for validation.</p>
+        <p>Report discrepancies immediately through our hotline or email. Consumption is based on actual meter readings; estimated bills are reconciled within the next billing cycle.</p>
+    </section>
+
+    <footer class="back-footer">
+        <span>MAWASA • Reliable community water service since 1998</span>
+    </footer>
+</section>
+
+<script>
+    window.addEventListener('load', function () {
+        window.print();
+    });
+</script>
 </body>
 </html>

@@ -108,28 +108,52 @@
 
             <!-- Email -->
             <div>
-                <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                <input type="email" id="email" name="email" autocomplete="email" required
-                    class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
-                    value="{{ old('email') }}">
+                <label for="email" class="block mb-1 text-sm font-medium text-gray-700">Email</label>
+                <div class="flex shadow-sm rounded-md">
+                    <span class="inline-flex items-center px-3 text-sm text-gray-500 bg-gray-100 border border-r-0 border-gray-300 rounded-l-md">
+                        <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7.5 9.172 12.5a3 3 0 0 0 4.243 0L18.5 7.5M5 5h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/>
+                        </svg>
+                    </span>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        autocomplete="email"
+                        required
+                        class="rounded-none rounded-r-md block w-full px-3 py-2.5 bg-white border border-gray-300 text-gray-900 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                        value="{{ old('email') }}">
+                </div>
             </div>
 
             <!-- Password with Eye Icon -->
             <div class="relative">
-                <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                <input type="password" id="password" name="password" autocomplete="current-password" required
-                    class="w-full px-3 pr-10 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
-                <div class="eye-icon" id="togglePassword">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                        stroke-width="2" stroke="currentColor" class="w-5 h-5">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M2.458 12C3.732 7.943 7.523 5 12 5
-                            c4.478 0 8.268 2.943 9.542 7
-                            -1.274 4.057-5.064 7-9.542 7
-                            -4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
+                <label for="password" class="block mb-1 text-sm font-medium text-gray-700">Password</label>
+                <div class="flex shadow-sm rounded-md relative">
+                    <span class="inline-flex items-center px-3 text-sm text-gray-500 bg-gray-100 border border-r-0 border-gray-300 rounded-l-md">
+                        <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 11V7a5 5 0 0 0-10 0v4M6 11h12a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1Z"/>
+                        </svg>
+                    </span>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        autocomplete="current-password"
+                        required
+                        class="rounded-none rounded-r-md block w-full px-3 pr-10 py-2.5 bg-white border border-gray-300 text-gray-900 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none">
+                    <div class="eye-icon" id="togglePassword">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                            stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5
+                                c4.478 0 8.268 2.943 9.542 7
+                                -1.274 4.057-5.064 7-9.542 7
+                                -4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                    </div>
                 </div>
             </div>
 

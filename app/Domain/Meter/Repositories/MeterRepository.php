@@ -6,7 +6,14 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface MeterRepository
 {
-    public function paginateWithFilters(?string $q, ?string $status, ?string $type, ?string $barangay, int $perPage = 15): LengthAwarePaginator;
+    public function paginateWithFilters(
+        ?string $q,
+        ?string $status,
+        ?string $type,
+        ?string $barangay,
+        string $scope = 'eligible',
+        int $perPage = 15,
+    ): LengthAwarePaginator;
 
     public function statusCounts(): array;
 

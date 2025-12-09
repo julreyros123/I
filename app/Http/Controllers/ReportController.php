@@ -29,6 +29,8 @@ class ReportController extends Controller
             'message' => $request->message,
             'category' => $category,
             'other_problem' => $other,
+            'status' => 'open',
+            'is_priority' => false,
         ]);
 
         Mail::to('admin@example.com')->send(new ReportSubmitted($report));

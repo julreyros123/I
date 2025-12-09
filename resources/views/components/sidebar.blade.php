@@ -63,6 +63,17 @@
                 </a>
             </li>
 
+            {{-- Customer Issues Intake --}}
+            <li>
+                <a href="{{ route('staff.customer-issues.index') }}"
+                   class="flex items-center gap-3 px-3 py-2 rounded-lg 
+                          hover:bg-blue-700/60 dark:hover:bg-gray-800 
+                          transition-all duration-200 ease-in-out font-medium">
+                    <x-heroicon-o-chat-bubble-left-right class="w-5 h-5 text-blue-300 dark:text-gray-400" />
+                    <span>Customer Issues</span>
+                </a>
+            </li>
+
             {{-- Billing --}}
             <li>
                 <a href="{{ route('billing.management') }}"

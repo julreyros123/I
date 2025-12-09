@@ -19,6 +19,8 @@ class RecordController extends Controller
         $q = trim((string) $request->get('q', ''));
         $status = $request->get('status', '');
         $generated = $request->get('generated', ''); // '' | '0' | '1'
+        $issueFrom = $request->filled('issue_from') ? Carbon::parse($request->get('issue_from'))->startOfDay() : null;
+        $issueTo = $request->filled('issue_to') ? Carbon::parse($request->get('issue_to'))->endOfDay() : null;
         
         $records = BillingRecord::with('customer', 'paymentRecords')
             ->when($q, function($query) use ($q) {
@@ -33,6 +35,30 @@ class RecordController extends Controller
             })
             ->when($generated !== '' && \Schema::hasColumn('billing_records','is_generated'), function($query) use ($generated){
                 $query->where('is_generated', $generated === '1');
+            })
+            ->when($issueFrom, function($query) use ($issueFrom) {
+                if (Schema::hasColumn('billing_records', 'issued_at')) {
+                    $query->where(function($inner) use ($issueFrom) {
+                        $inner->whereNotNull('issued_at')->where('issued_at', '>=', $issueFrom)
+                            ->orWhere(function($fallback) use ($issueFrom) {
+                                $fallback->whereNull('issued_at')->where('created_at', '>=', $issueFrom);
+                            });
+                    });
+                } else {
+                    $query->where('created_at', '>=', $issueFrom);
+                }
+            })
+            ->when($issueTo, function($query) use ($issueTo) {
+                if (Schema::hasColumn('billing_records', 'issued_at')) {
+                    $query->where(function($inner) use ($issueTo) {
+                        $inner->whereNotNull('issued_at')->where('issued_at', '<=', $issueTo)
+                            ->orWhere(function($fallback) use ($issueTo) {
+                                $fallback->whereNull('issued_at')->where('created_at', '<=', $issueTo);
+                            });
+                    });
+                } else {
+                    $query->where('created_at', '<=', $issueTo);
+                }
             })
             ->orderByDesc('created_at')
             ->paginate(15)
@@ -51,7 +77,7 @@ class RecordController extends Controller
             ];
         }
 
-        return view('records.billing', compact('records', 'q', 'status', 'stats', 'generated'));
+        return view('records.billing', compact('records', 'q', 'status', 'stats', 'generated', 'issueFrom', 'issueTo'));
     }
 
     public function archive($id): RedirectResponse

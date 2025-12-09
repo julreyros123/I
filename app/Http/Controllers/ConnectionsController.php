@@ -5,9 +5,12 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use App\Models\CustomerApplication;
 use App\Models\Customer;
 use App\Models\BillingRecord;
+use App\Models\ApplicantPaymentRecord;
 
 class ConnectionsController extends Controller
 {
@@ -16,6 +19,16 @@ class ConnectionsController extends Controller
         $q = CustomerApplication::query()
             ->when($request->filled('status'), function($qq) use ($request){
                 $qq->where('status', $request->string('status'));
+            })
+            ->when($request->filled('application_id'), function($qq) use ($request) {
+                $qq->where('id', (int) $request->integer('application_id'));
+            })
+            ->when($request->filled('application_code'), function($qq) use ($request) {
+                $raw = trim((string) $request->string('application_code'));
+                $digits = preg_replace('/\D+/', '', $raw);
+                if ($digits !== '') {
+                    $qq->where('id', (int) $digits);
+                }
             })
             ->when(!$request->filled('status'), function($qq){
                 // By default, hide installed applications whose customer already has a meter assigned
@@ -159,19 +172,87 @@ class ConnectionsController extends Controller
     public function pay(Request $request, $id): JsonResponse
     {
         abort_unless(in_array($request->user()?->role, ['admin','cashier','staff'], true), 403);
-        $request->validate([
-            'payment_receipt_no' => ['required','string','max:100']
+
+        $data = $request->validate([
+            'amount_due' => ['required','numeric','min:0'],
+            'amount_tendered' => ['required','numeric','min:0'],
+            'change_given' => ['nullable','numeric','min:0'],
+            'fee_items' => ['required','array','min:1'],
+            'fee_items.*.code' => ['required','string','max:50'],
+            'fee_items.*.name' => ['required','string','max:150'],
+            'fee_items.*.amount' => ['required','numeric','min:0'],
         ]);
-        $app = CustomerApplication::findOrFail($id);
-        if (!in_array($app->status, ['approved', 'assessed'], true)) {
+
+        $application = CustomerApplication::findOrFail($id);
+
+        if (!in_array($application->status, ['approved', 'assessed', 'waiting_payment'], true)) {
             return response()->json(['ok' => false, 'message' => 'Invalid status for payment'], 422);
         }
-        $app->payment_receipt_no = $request->string('payment_receipt_no');
-        $app->paid_at = now();
-        $app->paid_by = $request->user()->id;
-        $app->status = 'paid';
-        $app->save();
-        return response()->json(['ok' => true, 'application' => $app]);
+
+        if ($application->status === 'paid') {
+            return response()->json(['ok' => false, 'message' => 'Application already marked as paid.'], 422);
+        }
+
+        $amountDue = round((float) $data['amount_due'], 2);
+        $amountTendered = round((float) $data['amount_tendered'], 2);
+        if ($amountTendered < $amountDue) {
+            return response()->json(['ok' => false, 'message' => 'Amount tendered is insufficient.'], 422);
+        }
+
+        $feeBreakdown = collect($data['fee_items'] ?? [])->map(function ($item) {
+            return [
+                'code' => (string) $item['code'],
+                'name' => (string) $item['name'],
+                'amount' => round((float) $item['amount'], 2),
+            ];
+        })->values();
+
+        $calculatedDue = round($feeBreakdown->sum('amount'), 2);
+        if ($calculatedDue <= 0) {
+            return response()->json(['ok' => false, 'message' => 'Fee totals must be greater than zero.'], 422);
+        }
+
+        if (abs($calculatedDue - $amountDue) > 0.01) {
+            return response()->json(['ok' => false, 'message' => 'Subtotal mismatch detected. Please refresh and try again.'], 422);
+        }
+
+        $change = max(0, round($amountTendered - $amountDue, 2));
+        if (isset($data['change_given']) && abs($change - round((float) $data['change_given'], 2)) > 0.01) {
+            return response()->json(['ok' => false, 'message' => 'Change computation mismatch.'], 422);
+        }
+
+        $invoiceNumber = sprintf('APP-%s-%s', now()->format('YmdHis'), Str::upper(Str::random(4)));
+
+        $record = DB::transaction(function () use ($application, $amountDue, $amountTendered, $change, $feeBreakdown, $invoiceNumber, $request) {
+            $application->fee_application = $amountDue;
+            $application->fee_inspection = 0.0;
+            $application->fee_total = $amountDue;
+            $application->payment_receipt_no = $invoiceNumber;
+            $application->paid_at = now();
+            $application->paid_by = optional($request->user())->id;
+            $application->status = 'paid';
+            $application->save();
+
+            return ApplicantPaymentRecord::create([
+                'customer_application_id' => $application->id,
+                'invoice_number' => $invoiceNumber,
+                'amount_due' => $amountDue,
+                'amount_tendered' => $amountTendered,
+                'change_given' => $change,
+                'fee_breakdown' => $feeBreakdown->toArray(),
+                'processed_by' => optional($request->user())->id,
+            ]);
+        });
+
+        $application->refresh();
+
+        return response()->json([
+            'ok' => true,
+            'application' => $application,
+            'invoice_number' => $invoiceNumber,
+            'change' => $change,
+            'applicant_payment_record_id' => $record->id,
+        ]);
     }
 
     // Staff: schedule installation
@@ -192,47 +273,119 @@ class ConnectionsController extends Controller
         return response()->json(['ok' => true, 'application' => $app]);
     }
 
+    // Staff: log meter details prior to installation
+    public function meterDetails(Request $request, $id): JsonResponse
+    {
+        abort_unless($request->user(), 401);
+        $data = $request->validate([
+            'meter_no' => ['required','string','max:100'],
+            'meter_size' => ['nullable','string','max:50'],
+            'notes' => ['nullable','string','max:1000'],
+        ]);
+
+        $app = CustomerApplication::with('customer')->findOrFail($id);
+        if (!in_array($app->status, ['scheduled', 'installing'], true)) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Meter details can only be logged for scheduled installations.',
+            ], 422);
+        }
+
+        $meterNo = trim($data['meter_no']);
+        $customer = $app->customer;
+        $duplicateMeter = Customer::query()
+            ->where('meter_no', $meterNo)
+            ->when($customer, function ($qb) use ($customer) {
+                $qb->where('id', '!=', $customer->id);
+            })
+            ->exists();
+        if ($duplicateMeter) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Meter number already assigned to another customer.',
+            ], 422);
+        }
+
+        $docs = $app->documents ?? [];
+        $docs['assigned_meter_no'] = $meterNo;
+        $docs['assigned_meter_size'] = $data['meter_size'] ?? null;
+        if (!empty($data['notes'])) {
+            $docs['installation_notes'] = $data['notes'];
+        }
+        $docs['meter_details_logged_at'] = now()->toISOString();
+
+        $app->documents = $docs;
+        $app->status = 'installing';
+        $app->save();
+
+        return response()->json(['ok' => true, 'application' => $app]);
+    }
+
     // Staff: mark installed
     public function install(Request $request, $id): JsonResponse
     {
         abort_unless($request->user(), 401);
-        $app = CustomerApplication::findOrFail($id);
-        if (!in_array($app->status, ['scheduled','installed'])) {
+        $app = CustomerApplication::with('customer')->findOrFail($id);
+        if (!in_array($app->status, ['installing', 'installed'], true)) {
             return response()->json(['ok' => false, 'message' => 'Invalid status for installation'], 422);
         }
-        $app->installed_at = now();
-        $app->installed_by = $request->user()->id;
-        $app->status = 'installed';
+        $docs = $app->documents ?? [];
+        $meterNo = $docs['assigned_meter_no'] ?? null;
+        $meterSize = $docs['assigned_meter_size'] ?? null;
 
-        // Ensure application is linked to a Customer so installed applicants can be assigned meters
-        if (!$app->customer_id) {
-            // Try to find an existing customer by name + address
-            $customer = Customer::query()
-                ->where('name', $app->applicant_name)
-                ->where('address', $app->address)
-                ->first();
+        if (!$meterNo) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Meter details must be recorded before marking installation complete.',
+            ], 422);
+        }
+
+        $customer = $app->customer;
+
+        DB::transaction(function () use ($app, $request, $meterNo, $meterSize, &$customer, &$docs) {
+            $app->installed_at = now();
+            $app->installed_by = $request->user()->id;
+            $app->status = 'installed';
+            $docs['installation_completed_at'] = $app->installed_at->toISOString();
+            $app->documents = $docs;
 
             if (!$customer) {
-                // Generate an account number and create a new customer record
-                $generator = new \App\Services\AccountNumberGenerator();
-                $accountNo = $generator->next();
+                $customer = Customer::query()
+                    ->where('name', $app->applicant_name)
+                    ->where('address', $app->address)
+                    ->first();
 
-                $customer = Customer::create([
-                    'account_no' => $accountNo,
-                    'name' => $app->applicant_name,
-                    'address' => $app->address,
-                    'contact_no' => $app->contact_no,
-                    'status' => 'Pending',
-                    'previous_reading' => 0,
-                ]);
+                if (!$customer) {
+                    $generator = new \App\Services\AccountNumberGenerator();
+                    $accountNo = $generator->next();
+
+                    $customer = Customer::create([
+                        'account_no' => $accountNo,
+                        'name' => $app->applicant_name,
+                        'address' => $app->address,
+                        'contact_no' => $app->contact_no,
+                        'status' => 'Pending',
+                        'previous_reading' => 0,
+                    ]);
+                }
+
+                if ($customer) {
+                    $app->customer_id = $customer->id;
+                }
             }
 
             if ($customer) {
-                $app->customer_id = $customer->id;
+                $customer->meter_no = $meterNo;
+                if (!empty($meterSize)) {
+                    $customer->meter_size = $meterSize;
+                }
+                $customer->status = 'Active';
+                $customer->save();
             }
-        }
 
-        $app->save();
-        return response()->json(['ok' => true, 'application' => $app]);
+            $app->save();
+        });
+
+        return response()->json(['ok' => true, 'application' => $app->fresh('customer')]);
     }
 }

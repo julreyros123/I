@@ -14,6 +14,7 @@ class BillingRecord extends Model
     protected $fillable = [
         'customer_id',
         'account_no',
+        'invoice_number',
         'previous_reading',
         'current_reading',
         'consumption_cu_m',
@@ -30,6 +31,8 @@ class BillingRecord extends Model
         'date_from',
         'date_to',
         'due_date',
+        'prepared_by',
+        'issued_at',
     ];
 
     protected $casts = [
@@ -47,6 +50,7 @@ class BillingRecord extends Model
         'date_from' => 'date',
         'date_to' => 'date',
         'due_date' => 'date',
+        'issued_at' => 'datetime',
     ];
 
     public function customer()

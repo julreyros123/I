@@ -5,18 +5,62 @@
 @section('content')
 <div class="max-w-7xl mx-auto p-8 space-y-8 font-sans">
     
-    <!-- Success/Error Messages -->
-    @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
-            <span class="block sm:inline">{{ session('success') }}</span>
-        </div>
-    @endif
+    <!-- Success/Error Messages handled via modal -->
+    @php
+        $feedbackType = null;
+        $feedbackMessage = null;
+        $feedbackDetails = [];
+        $feedbackAccount = session('register_account_no');
 
-    @if(session('error'))
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-            <span class="block sm:inline">{{ session('error') }}</span>
+        if ($errors->any()) {
+            $feedbackType = 'error';
+            $feedbackMessage = 'Please review the highlighted fields before resubmitting.';
+            $feedbackDetails = $errors->all();
+        } elseif (session('error')) {
+            $feedbackType = 'error';
+            $feedbackMessage = session('error');
+        } elseif (session('success')) {
+            $feedbackType = 'success';
+            $feedbackMessage = session('success');
+            if ($feedbackAccount) {
+                $feedbackDetails[] = 'Temporary account number: ' . $feedbackAccount;
+            }
+        }
+    @endphp
+
+    <div id="register-feedback-data"
+         data-type="{{ $feedbackType ?? '' }}"
+         data-message="{{ $feedbackMessage ?? '' }}"
+         data-account="{{ $feedbackAccount ?? '' }}"
+         data-details='@json($feedbackDetails ?? [])'></div>
+
+    <div id="register-feedback-modal" class="fixed inset-0 z-50 hidden print:hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm px-4">
+        <div class="w-full max-w-md rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-2xl p-6 space-y-4">
+            <div class="flex items-start gap-3">
+                <div data-feedback-icon class="flex h-11 w-11 items-center justify-center rounded-full bg-blue-500/15 text-blue-600 dark:bg-blue-400/15 dark:text-blue-200">
+                    <x-heroicon-o-information-circle data-icon="info" class="w-6 h-6" />
+                    <x-heroicon-o-check-circle data-icon="success" class="w-6 h-6 hidden" />
+                    <x-heroicon-o-exclamation-triangle data-icon="error" class="w-6 h-6 hidden" />
+                </div>
+                <div class="space-y-2 flex-1">
+                    <div class="flex items-start justify-between gap-3">
+                        <h3 data-feedback-title class="text-base font-semibold text-gray-800 dark:text-gray-100"></h3>
+                        <button type="button" id="registerFeedbackClose" class="rounded-full p-1 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300">
+                            <x-heroicon-o-x-mark class="w-5 h-5" />
+                        </button>
+                    </div>
+                    <p data-feedback-message class="text-sm text-gray-600 dark:text-gray-300"></p>
+                    <ul data-feedback-details class="space-y-1 text-xs text-gray-500 dark:text-gray-400"></ul>
+                </div>
+            </div>
+            <div class="flex justify-end">
+                <button type="button" id="registerFeedbackPrimary" class="inline-flex items-center gap-1 rounded-lg bg-blue-600 text-white px-4 py-2 text-sm font-semibold hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <x-heroicon-o-check class="w-4 h-4" />
+                    <span>Okay</span>
+                </button>
+            </div>
         </div>
-    @endif
+    </div>
 
     <!-- New Connection Wizard -->
     <div class="flex justify-between items-center">
@@ -36,79 +80,165 @@
             <form id="newCustomerForm" method="POST" action="{{ route('register.store') }}" enctype="multipart/form-data" class="space-y-8">
                 @csrf
                 <!-- Step 1: Personal Info + Address & Contact -->
-                <section data-step="1" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">First Name</label>
-                        <x-ui.input name="first_name" :value="old('first_name')" required />
-                        <p class="text-red-500 text-xs mt-1 hidden" data-err="first_name">First name is required</p>
+                <section data-step="1" class="space-y-6">
+                    <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-900/40 shadow-sm p-6">
+                        <div class="flex flex-wrap items-start justify-between gap-4">
+                            <div>
+                                <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100 tracking-wide uppercase">Applicant Details</h3>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Basic information for identifying the new customer.</p>
+                            </div>
+                            <span class="inline-flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-blue-600 dark:text-blue-300">
+                                <span class="w-2 h-2 rounded-full bg-blue-500 dark:bg-blue-400 animate-pulse"></span> Required Section
+                            </span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-4">
+                            <div>
+                                <label class="block text-xs font-semibold mb-1 text-gray-700 dark:text-gray-300">First Name</label>
+                                <x-ui.input name="first_name" :value="old('first_name')" required />
+                                <p class="text-red-500 text-xs mt-1 hidden" data-err="first_name">First name is required</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold mb-1 text-gray-700 dark:text-gray-300">Last Name</label>
+                                <x-ui.input name="last_name" :value="old('last_name')" required />
+                                <p class="text-red-500 text-xs mt-1 hidden" data-err="last_name">Last name is required</p>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Last Name</label>
-                        <x-ui.input name="last_name" :value="old('last_name')" required />
-                        <p class="text-red-500 text-xs mt-1 hidden" data-err="last_name">Last name is required</p>
+
+                    <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-900/40 shadow-sm p-6">
+                        <div class="flex flex-wrap items-start justify-between gap-4">
+                            <div>
+                                <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100 tracking-wide uppercase">Service Address</h3>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Provide the full location where the service will be installed.</p>
+                            </div>
+                            <span class="text-[11px] text-gray-400 dark:text-gray-500">Optional fields help us locate the property faster.</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mt-4">
+                            <div>
+                                <label class="block text-xs font-semibold mb-1 text-gray-700 dark:text-gray-300">Barangay</label>
+                                <x-ui.input name="barangay" :value="old('barangay')" required />
+                                <p class="text-red-500 text-xs mt-1 hidden" data-err="barangay">Barangay is required</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold mb-1 text-gray-700 dark:text-gray-300">City / Municipality</label>
+                                <x-ui.input name="city" :value="old('city')" required />
+                                <p class="text-red-500 text-xs mt-1 hidden" data-err="city">City is required</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold mb-1 text-gray-700 dark:text-gray-300">Province</label>
+                                <x-ui.input name="province" :value="old('province')" required />
+                                <p class="text-red-500 text-xs mt-1 hidden" data-err="province">Province is required</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold mb-1 text-gray-700 dark:text-gray-300">Street / Block &amp; Lot <span class="font-normal text-gray-400">(optional)</span></label>
+                                <x-ui.input name="street_block_lot" :value="old('street_block_lot')" placeholder="e.g., Mabini St., Blk 3 Lot 12" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold mb-1 text-gray-700 dark:text-gray-300">Purok</label>
+                                <select name="zone_purok" class="w-full h-[42px] rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-100">
+                                    <option value="">Select Purok</option>
+                                    <option value="Purok 1 - Sto. Niño" @selected(old('zone_purok') === 'Purok 1 - Sto. Niño')>Purok 1 - Sto. Niño</option>
+                                    <option value="Purok 2 - Shanghai" @selected(old('zone_purok') === 'Purok 2 - Shanghai')>Purok 2 - Shanghai</option>
+                                    <option value="Purok 3 - Maligaya" @selected(old('zone_purok') === 'Purok 3 - Maligaya')>Purok 3 - Maligaya</option>
+                                    <option value="Purok 4 - New Bohol" @selected(old('zone_purok') === 'Purok 4 - New Bohol')>Purok 4 - New Bohol</option>
+                                    <option value="Purok 5 - Kawayan" @selected(old('zone_purok') === 'Purok 5 - Kawayan')>Purok 5 - Kawayan</option>
+                                    <option value="Purok 6 - Talisay" @selected(old('zone_purok') === 'Purok 6 - Talisay')>Purok 6 - Talisay</option>
+                                </select>
+                                <p class="text-red-500 text-xs mt-1 hidden" data-err="zone_purok">Please select a purok</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold mb-1 text-gray-700 dark:text-gray-300">Postal Code <span class="font-normal text-gray-400">(optional)</span></label>
+                                <x-ui.input name="postal_code" :value="old('postal_code')" placeholder="e.g., 4217" />
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Barangay</label>
-                        <x-ui.input name="barangay" :value="old('barangay')" required />
-                        <p class="text-red-500 text-xs mt-1 hidden" data-err="barangay">Barangay is required</p>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">City/Municipality</label>
-                        <x-ui.input name="city" :value="old('city')" required />
-                        <p class="text-red-500 text-xs mt-1 hidden" data-err="city">City is required</p>
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Province</label>
-                        <x-ui.input name="province" :value="old('province')" required />
-                        <p class="text-red-500 text-xs mt-1 hidden" data-err="province">Province is required</p>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Contact Number</label>
-                        <x-ui.input name="contact_number" :value="old('contact_number')" />
+
+                    <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-900/40 shadow-sm p-6">
+                        <div class="flex flex-wrap items-start justify-between gap-4">
+                            <div>
+                                <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100 tracking-wide uppercase">Contact Details</h3>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">We’ll reach out using this information for updates and verification.</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-4">
+                            <div>
+                                <label class="block text-xs font-semibold mb-1 text-gray-700 dark:text-gray-300">Contact Number <span class="font-normal text-gray-400">(optional)</span></label>
+                                <x-ui.input name="contact_number" :value="old('contact_number')" placeholder="e.g., 09XX-XXX-XXXX" />
+                            </div>
+                        </div>
                     </div>
                 </section>
 
-                <!-- Step 3: ID Verification (KYC) -->
-                <section data-step="2" class="grid grid-cols-1 md:grid-cols-2 gap-6 hidden">
-                    <div>
-                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">ID Type</label>
-                        <select name="id_type" class="w-full border rounded px-3 h-[40px] bg-white dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600" required>
-                            <option value="">Select ID Type</option>
-                            <option>PhilSys</option>
-                            <option>Driver's License</option>
-                            <option>Passport</option>
-                            <option>SSS</option>
-                            <option>UMID</option>
-                            <option>PRC</option>
-                        </select>
-                        <p class="text-red-500 text-xs mt-1 hidden" data-err="id_type">ID Type is required</p>
+                <!-- Step 2: ID Verification (KYC) -->
+                <section data-step="2" class="space-y-6 hidden">
+                    <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-900/40 shadow-sm p-6">
+                        <div class="flex flex-wrap items-start justify-between gap-4">
+                            <div>
+                                <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100 tracking-wide uppercase">Primary Identification</h3>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Submit the ID that the applicant will present during installation.</p>
+                            </div>
+                            <span class="text-[11px] font-medium text-amber-600 dark:text-amber-300">Ensure the ID is valid and clearly readable.</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-4">
+                            <div>
+                                <label class="block text-xs font-semibold mb-1 text-gray-700 dark:text-gray-300">ID Type</label>
+                                <select name="id_type" class="w-full border rounded-lg px-3 h-[42px] bg-white dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600" required>
+                                    <option value="">Select ID Type</option>
+                                    <option>PhilSys</option>
+                                    <option>Driver's License</option>
+                                    <option>Passport</option>
+                                    <option>SSS</option>
+                                    <option>UMID</option>
+                                    <option>PRC</option>
+                                </select>
+                                <p class="text-red-500 text-xs mt-1 hidden" data-err="id_type">ID Type is required</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold mb-1 text-gray-700 dark:text-gray-300">ID Number</label>
+                                <x-ui.input name="id_number" :value="old('id_number')" required />
+                                <p class="text-red-500 text-xs mt-1 hidden" data-err="id_number">ID Number is required</p>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">ID Number</label>
-                        <x-ui.input name="id_number" :value="old('id_number')" required />
-                        <p class="text-red-500 text-xs mt-1 hidden" data-err="id_number">ID Number is required</p>
+
+                    <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-900/40 shadow-sm p-6">
+                        <div class="flex flex-wrap items-start justify-between gap-4">
+                            <div>
+                                <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100 tracking-wide uppercase">Supporting Images</h3>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Upload clear, well-lit photos. Optional uploads greatly speed up verification.</p>
+                            </div>
+                            <span class="text-[11px] text-gray-400 dark:text-gray-500">Accepted formats: JPG, PNG, WEBP (max 5MB each)</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-4">
+                            <div>
+                                <label class="block text-xs font-semibold mb-2 text-gray-700 dark:text-gray-300">ID Front <span class="font-normal text-gray-400">(optional)</span></label>
+                                <input type="file" name="id_front" accept="image/*" class="w-full text-xs file:mr-3 file:px-3 file:py-2 file:rounded-md file:border-0 file:bg-blue-50 file:text-blue-700 dark:file:bg-blue-900/30 dark:file:text-blue-200" />
+                                <img alt="Preview" data-preview="id_front" class="mt-2 w-40 h-28 object-cover rounded border border-gray-200 dark:border-gray-700 hidden" />
+                                <p class="text-red-500 text-xs mt-1 hidden" data-err="id_front">ID Front is required</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold mb-2 text-gray-700 dark:text-gray-300">ID Back <span class="font-normal text-gray-400">(optional)</span></label>
+                                <input type="file" name="id_back" accept="image/*" class="w-full text-xs file:mr-3 file:px-3 file:py-2 file:rounded-md file:border-0 file:bg-blue-50 file:text-blue-700 dark:file:bg-blue-900/30 dark:file:text-blue-200" />
+                                <img alt="Preview" data-preview="id_back" class="mt-2 w-40 h-28 object-cover rounded border border-gray-200 dark:border-gray-700 hidden" />
+                                <p class="text-red-500 text-xs mt-1 hidden" data-err="id_back">ID Back is required</p>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-semibold mb-2 text-gray-700 dark:text-gray-300">Selfie holding ID <span class="font-normal text-gray-400">(optional)</span></label>
+                                <input type="file" name="selfie" accept="image/*" class="w-full text-xs file:mr-3 file:px-3 file:py-2 file:rounded-md file:border-0 file:bg-blue-50 file:text-blue-700 dark:file:bg-blue-900/30 dark:file:text-blue-200" />
+                                <img alt="Preview" data-preview="selfie" class="mt-2 w-40 h-28 object-cover rounded border border-gray-200 dark:border-gray-700 hidden" />
+                                <p class="text-red-500 text-xs mt-1 hidden" data-err="selfie">Selfie is required</p>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">ID Front (optional, jpg/png/webp, max 5MB)</label>
-                        <input type="file" name="id_front" accept="image/*" class="w-full text-sm" />
-                        <img alt="Preview" data-preview="id_front" class="mt-2 w-40 h-28 object-cover rounded border hidden" />
-                        <p class="text-red-500 text-xs mt-1 hidden" data-err="id_front">ID Front is required</p>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">ID Back (optional, jpg/png/webp, max 5MB)</label>
-                        <input type="file" name="id_back" accept="image/*" class="w-full text-sm" />
-                        <img alt="Preview" data-preview="id_back" class="mt-2 w-40 h-28 object-cover rounded border hidden" />
-                        <p class="text-red-500 text-xs mt-1 hidden" data-err="id_back">ID Back is required</p>
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Selfie holding ID (optional, jpg/png/webp, max 5MB)</label>
-                        <input type="file" name="selfie" accept="image/*" class="w-full text-sm" />
-                        <img alt="Preview" data-preview="selfie" class="mt-2 w-40 h-28 object-cover rounded border hidden" />
-                        <p class="text-red-500 text-xs mt-1 hidden" data-err="selfie">Selfie is required</p>
-                    </div>
-                    <div class="md:col-span-2 flex items-start gap-2">
-                        <input type="checkbox" name="consent" value="1" class="mt-1" required />
-                        <span class="text-xs text-gray-600 dark:text-gray-300">I confirm that provided information and documents are authentic.</span>
+
+                    <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-900/40 shadow-sm p-6">
+                        <div class="flex flex-wrap items-start gap-3">
+                            <input type="checkbox" name="consent" value="1" class="mt-1" required />
+                            <div>
+                                <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100">Compliance Confirmation</h3>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">I confirm that all provided information and documents are authentic and may be verified by the utility.</p>
+                            </div>
+                        </div>
                     </div>
                 </section>
 
@@ -382,6 +512,80 @@
 <!-- Wizard Script -->
 <script>
     (function(){
+        const dataHost = document.getElementById('register-feedback-data');
+        const modal = document.getElementById('register-feedback-modal');
+        const primaryBtn = document.getElementById('registerFeedbackPrimary');
+        const closeBtn = document.getElementById('registerFeedbackClose');
+        const titleEl = modal?.querySelector('[data-feedback-title]');
+        const messageEl = modal?.querySelector('[data-feedback-message]');
+        const detailsEl = modal?.querySelector('[data-feedback-details]');
+        const iconHost = modal?.querySelector('[data-feedback-icon]');
+
+        function setIcon(type){
+            if (!iconHost) return;
+            iconHost.querySelectorAll('[data-icon]').forEach(el => el.classList.add('hidden'));
+            const iconMap = {
+                success: 'success',
+                error: 'error',
+                info: 'info'
+            };
+            const key = iconMap[type] || 'info';
+            const target = iconHost.querySelector(`[data-icon="${key}"]`);
+            if (target) target.classList.remove('hidden');
+            iconHost.className = 'flex h-11 w-11 items-center justify-center rounded-full ' + (
+                type === 'success' ? 'bg-emerald-500/15 text-emerald-600 dark:bg-emerald-400/15 dark:text-emerald-200'
+                : type === 'error' ? 'bg-rose-500/15 text-rose-600 dark:bg-rose-400/15 dark:text-rose-200'
+                : 'bg-blue-500/15 text-blue-600 dark:bg-blue-400/15 dark:text-blue-200'
+            );
+        }
+
+        function openFeedbackModal(){
+            if (!modal || !dataHost) return;
+            const type = dataHost.dataset.type;
+            const message = dataHost.dataset.message || '';
+            if (!type || !message) return;
+            const details = (() => {
+                try { return JSON.parse(dataHost.dataset.details || '[]'); }
+                catch (e) { return []; }
+            })();
+
+            const titles = {
+                success: 'Registration submitted',
+                error: 'Action required',
+                info: 'Notice'
+            };
+
+            if (titleEl) titleEl.textContent = titles[type] || 'Notice';
+            if (messageEl) messageEl.textContent = message;
+            if (detailsEl) {
+                detailsEl.innerHTML = '';
+                details.forEach(text => {
+                    const li = document.createElement('li');
+                    li.textContent = text;
+                    detailsEl.appendChild(li);
+                });
+                detailsEl.classList.toggle('hidden', details.length === 0);
+            }
+            setIcon(type);
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            primaryBtn?.focus();
+        }
+
+        function closeFeedbackModal(){
+            if (!modal) return;
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        primaryBtn?.addEventListener('click', closeFeedbackModal);
+        closeBtn?.addEventListener('click', closeFeedbackModal);
+        modal?.addEventListener('click', (event) => {
+            if (event.target === modal) closeFeedbackModal();
+        });
+
+        openFeedbackModal();
+
         const sections = Array.from(document.querySelectorAll('[data-step]'));
         const stepNo = document.getElementById('wizStepNo');
         const stepTotal = document.getElementById('wizStepTotal');

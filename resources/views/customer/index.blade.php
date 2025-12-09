@@ -16,24 +16,56 @@
         </div>
 
         <!-- Search + Filters -->
-        <form method="GET" class="mb-3 flex flex-col md:flex-row gap-3">
-            <div class="flex-1">
-                <x-ui.input id="searchCustomer" name="q" :value="$q ?? ''" placeholder="Search by name, address, or account no." />
+        <form method="GET" class="mb-3 space-y-2">
+            <div class="flex flex-col lg:flex-row lg:items-center gap-2">
+                <div class="w-full md:w-2/3 lg:w-5/12">
+                    <div class="flex rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/60">
+                        <div class="flex items-center px-3 text-gray-400">
+                            <x-heroicon-o-magnifying-glass class="w-4 h-4" />
+                        </div>
+                        <input id="searchCustomer" name="q" value="{{ $q ?? '' }}"
+                               class="flex-1 px-3 py-2 bg-transparent text-sm text-gray-900 dark:text-gray-100 focus:outline-none"
+                               placeholder="Search by name, address, or account no.">
+                        <button type="submit" class="px-4 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white">
+                            Search
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex items-center lg:ml-2">
+                    <div class="md:w-48">
+                        <select name="status" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-xs 
+                                                    focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white dark:bg-gray-900 
+                                                    text-gray-800 dark:text-gray-200">
+                            <option value="">All Status</option>
+                            <option value="Active" {{ ($status ?? '') === 'Active' ? 'selected' : '' }}>Active</option>
+                            <option value="Inactive" {{ ($status ?? '') === 'Inactive' ? 'selected' : '' }}>Inactive</option>
+                            <option value="Disconnected" {{ ($status ?? '') === 'Disconnected' ? 'selected' : '' }}>Disconnected</option>
+                        </select>
+                    </div>
+                </div>
             </div>
-            <div class="md:w-56">
-                <select name="status" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm 
-                                            focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white dark:bg-gray-900 
-                                            text-gray-800 dark:text-gray-200">
-                    <option value="">All Status</option>
-                    <option value="Active" {{ ($status ?? '') === 'Active' ? 'selected' : '' }}>Active</option>
-                    <option value="Inactive" {{ ($status ?? '') === 'Inactive' ? 'selected' : '' }}>Inactive</option>
-                    <option value="Disconnected" {{ ($status ?? '') === 'Disconnected' ? 'selected' : '' }}>Disconnected</option>
-                </select>
+
+            <!-- Show only pills (mirror status options) -->
+            <div class="flex flex-wrap items-center gap-3 text-xs text-gray-600 dark:text-gray-300">
+                <span class="font-medium">Show only:</span>
+                <label class="inline-flex items-center gap-1 cursor-pointer">
+                    <input type="radio" name="statusPill" value="" class="w-3 h-3 text-blue-600 border-gray-300 focus:ring-blue-500" {{ empty($status) ? 'checked' : '' }}>
+                    <span>All</span>
+                </label>
+                <label class="inline-flex items-center gap-1 cursor-pointer">
+                    <input type="radio" name="statusPill" value="Active" class="w-3 h-3 text-blue-600 border-gray-300 focus:ring-blue-500" {{ ($status ?? '') === 'Active' ? 'checked' : '' }}>
+                    <span>Active</span>
+                </label>
+                <label class="inline-flex items-center gap-1 cursor-pointer">
+                    <input type="radio" name="statusPill" value="Inactive" class="w-3 h-3 text-blue-600 border-gray-300 focus:ring-blue-500" {{ ($status ?? '') === 'Inactive' ? 'checked' : '' }}>
+                    <span>Inactive</span>
+                </label>
+                <label class="inline-flex items-center gap-1 cursor-pointer">
+                    <input type="radio" name="statusPill" value="Disconnected" class="w-3 h-3 text-blue-600 border-gray-300 focus:ring-blue-500" {{ ($status ?? '') === 'Disconnected' ? 'checked' : '' }}>
+                    <span>Disconnected</span>
+                </label>
             </div>
-            <x-secondary-button type="submit">
-                <x-heroicon-o-magnifying-glass class="w-4 h-4" />
-                Apply
-            </x-secondary-button>
         </form>
 
         <!-- Table -->
@@ -265,10 +297,20 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderBadges(host, app){
         if (!host) return;
         if (!app){ host.innerHTML = '<span class="text-gray-400">No application</span>'; return; }
-        const sBadge = `<span class="px-2 py-0.5 rounded-full ${app.status==='approved'?'bg-emerald-100 text-emerald-700':(app.status==='registered'?'bg-gray-100 text-gray-700':'bg-blue-100 text-blue-700')}">${app.status}</span>`;
-        const scoreBadge = (typeof app.score==='number') ? `<span class="px-2 py-0.5 rounded ${app.score>=80?'bg-green-100 text-green-700':(app.score>=60?'bg-yellow-100 text-yellow-700':'bg-red-100 text-red-700')}">Score ${app.score}</span>` : '';
-        const riskBadge = app.risk_level ? `<span class="px-2 py-0.5 rounded ${app.risk_level==='low'?'bg-green-100 text-green-700':(app.risk_level==='medium'?'bg-yellow-100 text-yellow-700':'bg-red-100 text-red-700')}">${app.risk_level}</span>` : '';
-        host.innerHTML = [sBadge, scoreBadge, riskBadge].filter(Boolean).join(' ');
+        const palettes = {
+            registered: 'bg-gray-100 text-gray-700',
+            pending: 'bg-gray-100 text-gray-700',
+            approved: 'bg-emerald-100 text-emerald-700',
+            assessed: 'bg-amber-100 text-amber-700',
+            waiting_payment: 'bg-orange-100 text-orange-700',
+            paid: 'bg-indigo-100 text-indigo-700',
+            scheduled: 'bg-sky-100 text-sky-700',
+            installing: 'bg-purple-100 text-purple-700',
+            installed: 'bg-green-100 text-green-700',
+            rejected: 'bg-rose-100 text-rose-700'
+        };
+        const tone = palettes[app.status] || 'bg-gray-100 text-gray-700';
+        host.innerHTML = `<span class="px-2 py-0.5 rounded-full ${tone}">${app.status}</span>`;
     }
     function attachAppActions(row, app){
         const rescore = row.querySelector('.app-rescore-btn');
@@ -277,13 +319,45 @@ document.addEventListener('DOMContentLoaded', () => {
         const viewkyc = row.querySelector('.app-viewkyc-link');
         const verifyBtn = row.querySelector('.verify-customer-btn');
         if (!app){
-            // Leave buttons disabled as rendered
             return;
         }
-        // Enable app actions
-        if (rescore){ rescore.dataset.appId = app.id; rescore.classList.remove('opacity-50','cursor-not-allowed'); rescore.removeAttribute('title'); }
-        if (approve){ approve.dataset.appId = app.id; approve.classList.remove('opacity-50','cursor-not-allowed'); approve.removeAttribute('title'); }
-        if (reject){ reject.dataset.appId = app.id; reject.classList.remove('opacity-50','cursor-not-allowed'); reject.removeAttribute('title'); }
+        const locked = ['approved','assessed','waiting_payment','paid','scheduled','installing','installed'].includes(String(app.status || '').toLowerCase());
+        if (rescore){
+            rescore.dataset.appId = app.id;
+            if (locked){
+                rescore.classList.add('opacity-50','cursor-not-allowed');
+                rescore.dataset.disabled = 'true';
+                rescore.title = 'Actions disabled after approval';
+            } else {
+                rescore.classList.remove('opacity-50','cursor-not-allowed');
+                delete rescore.dataset.disabled;
+                rescore.removeAttribute('title');
+            }
+        }
+        if (approve){
+            approve.dataset.appId = app.id;
+            if (locked){
+                approve.classList.add('opacity-50','cursor-not-allowed');
+                approve.dataset.disabled = 'true';
+                approve.title = 'Already approved';
+            } else {
+                approve.classList.remove('opacity-50','cursor-not-allowed');
+                delete approve.dataset.disabled;
+                approve.removeAttribute('title');
+            }
+        }
+        if (reject){
+            reject.dataset.appId = app.id;
+            if (locked){
+                reject.classList.add('opacity-50','cursor-not-allowed');
+                reject.dataset.disabled = 'true';
+                reject.title = 'Already approved';
+            } else {
+                reject.classList.remove('opacity-50','cursor-not-allowed');
+                delete reject.dataset.disabled;
+                reject.removeAttribute('title');
+            }
+        }
         if (viewkyc){ viewkyc.href = `/applications/${app.id}`; viewkyc.classList.remove('opacity-50','cursor-not-allowed'); viewkyc.removeAttribute('title'); }
         // Verify button visibility stays based on customer status in blade
     }

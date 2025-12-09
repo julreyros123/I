@@ -37,9 +37,9 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // Intentionally not seeding customers; keep register page empty by default.
-        // $this->call([
-        //     CustomerSeeder::class,
-        // ]);
+        // Intentionally not seeding customers by default; enable if required.
+        // $this->call(CustomerSeeder::class);
+
+        $this->call(BillingRecordSeeder::class);
     }
 }

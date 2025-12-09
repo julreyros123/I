@@ -12,11 +12,15 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Admin\MeterController;
+use App\Http\Controllers\Admin\MeterServiceTicketController;
+use App\Http\Controllers\Staff\MeterTicketController as StaffMeterTicketController;
+use App\Http\Controllers\Staff\CustomerIssueController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\StaffProgressController;
 use App\Http\Controllers\BillEventController;
 use App\Http\Controllers\ConnectionsController;
+use App\Http\Controllers\ApplicationsController;
 
 
 Route::get('/', function () {
@@ -47,9 +51,17 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/meters/api', [MeterController::class, 'apiIndex'])->name('admin.meters.api');
     Route::get('/admin/meters/current', [MeterController::class, 'apiCurrentByAccount'])->name('admin.meters.current');
     Route::get('/admin/meters/export', [MeterController::class, 'export'])->name('admin.meters.export');
-    Route::post('/admin/meters/bulk-status', [MeterController::class, 'bulkStatus'])->name('admin.meters.bulk-status');
-    Route::post('/admin/meters/import', [MeterController::class, 'import'])->name('admin.meters.import');
-    Route::get('/admin/meters/template', [MeterController::class, 'template'])->name('admin.meters.template');
+    Route::get('/admin/meter-service-tickets', [MeterServiceTicketController::class, 'index'])->name('admin.meter-service-tickets.index');
+    Route::post('/admin/meter-service-tickets', [MeterServiceTicketController::class, 'store'])->name('admin.meter-service-tickets.store');
+    Route::put('/admin/meter-service-tickets/{ticket}', [MeterServiceTicketController::class, 'update'])->name('admin.meter-service-tickets.update');
+
+    Route::get('/staff/meter-tickets', [StaffMeterTicketController::class, 'index'])->name('staff.meter-tickets.index');
+    Route::put('/staff/meter-tickets/{ticket}', [StaffMeterTicketController::class, 'update'])->name('staff.meter-tickets.update');
+
+    Route::get('/staff/customer-issues', [CustomerIssueController::class, 'index'])->name('staff.customer-issues.index');
+    Route::get('/api/staff/customer-issues/accounts', [CustomerIssueController::class, 'searchAccounts'])->name('api.staff.customer-issues.search');
+    Route::get('/api/staff/customer-issues/snapshot', [CustomerIssueController::class, 'accountSnapshot'])->name('api.staff.customer-issues.snapshot');
+    Route::post('/api/staff/customer-issues', [CustomerIssueController::class, 'store'])->name('api.staff.customer-issues.store');
 });
 
 // Billing Management Routes
@@ -57,6 +69,7 @@ Route::get('/admin/billing', [AdminController::class, 'billing'])->middleware('a
 
 // Use StaffPortalController for the dashboard (staff portal)
 Route::get('/dashboard', [StaffPortalController::class, 'index'])->name('dashboard')->middleware(['auth', 'verified']);
+Route::get('/staff/activity-log', [StaffPortalController::class, 'activityLog'])->name('staff.activity-log')->middleware(['auth', 'verified']);
 
 // Optional: Redirect /staff-portal to /dashboard to maintain existing links
 Route::get('/staff-portal', function () {
@@ -65,6 +78,7 @@ Route::get('/staff-portal', function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
+    Route::post('/settings/password', [SettingsController::class, 'updatePassword'])->name('settings.password.update');
 });
 
 Route::middleware('auth')->group(function () {
@@ -137,9 +151,10 @@ Route::put('/api/customer/{id}/verify', [CustomerController::class, 'verify'])->
 Route::get('/api/customer/duplicates', [CustomerController::class, 'duplicates'])->middleware('auth')->name('customer.duplicates');
 
 // Applications scoring and decisions
+Route::middleware('auth')->get('/admin/applicants', [ApplicationsController::class, 'index'])->name('admin.applicants.index');
+Route::middleware('auth')->get('/admin/applicants/{id}', [ApplicationsController::class, 'show'])->name('admin.applicants.show');
+
 Route::middleware('auth')->group(function(){
-    Route::get('/applications', [ApplicationsController::class, 'index'])->name('applications.index');
-    Route::get('/applications/{id}', [ApplicationsController::class, 'show'])->name('applications.show');
     Route::get('/api/applications/latest', [ApplicationsController::class, 'latest'])->name('api.applications.latest');
     Route::post('/api/applications/{id}/score', [ApplicationsController::class, 'score'])->name('api.applications.score');
     Route::put('/api/applications/{id}/approve', [ApplicationsController::class, 'approve'])->name('api.applications.approve');

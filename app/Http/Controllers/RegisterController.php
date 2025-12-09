@@ -69,6 +69,9 @@ class RegisterController extends Controller
             'barangay' => 'required|string|max:255',
             'city' => 'required|string|max:255',
             'province' => 'required|string|max:255',
+            'street_block_lot' => 'nullable|string|max:255',
+            'zone_purok' => 'nullable|string|max:255',
+            'postal_code' => 'nullable|string|max:20',
             'contact_number' => 'nullable|string|max:50',
             // KYC
             'id_type' => 'required|string|max:50',
@@ -105,9 +108,12 @@ class RegisterController extends Controller
 
             // Compose full address from components
             $address = trim(implode(', ', array_filter([
+                trim((string)$request->street_block_lot),
+                trim((string)$request->zone_purok),
                 trim((string)$request->barangay),
                 trim((string)$request->city),
                 trim((string)$request->province),
+                trim((string)$request->postal_code),
             ])));
 
             // Create customer record (meter fields deferred until after verification)
@@ -144,8 +150,8 @@ class RegisterController extends Controller
                 'contact_no' => $request->contact_number ? trim($request->contact_number) : null,
                 'status' => 'registered',
                 'documents' => [
-                    'id_type' => $request->string('id_type'),
-                    'id_number' => $request->string('id_number'),
+                    'id_type' => trim((string) $request->input('id_type')),
+                    'id_number' => trim((string) $request->input('id_number')),
                     'id_front' => $frontPath,
                     'id_back' => $backPath,
                     'selfie' => $selfiePath,
@@ -176,7 +182,8 @@ class RegisterController extends Controller
             DB::commit();
 
             return redirect()->route('register.index')
-                ->with('success', 'Customer registered successfully with account number: ' . $accountNo);
+                ->with('success', 'Registration submitted. Please wait for validation.')
+                ->with('register_account_no', $accountNo);
 
         } catch (\Exception $e) {
             DB::rollBack();

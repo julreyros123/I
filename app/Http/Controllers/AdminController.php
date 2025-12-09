@@ -6,9 +6,15 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Customer;
 use App\Models\BillingRecord;
+use App\Models\MeterAudit;
 use App\Models\Report;
 use App\Models\PaymentRecord;
 use App\Models\ActivityLog;
+use App\Models\CustomerApplication;
+use App\Models\Register;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Carbon;
+use App\Models\TransferReconnectAudit;
 
 class AdminController extends Controller
 {
@@ -54,6 +60,74 @@ class AdminController extends Controller
                 ->get();
         }
 
+        // Admin task insights (applications awaiting approval/installation)
+        $pendingApprovalQuery = CustomerApplication::query()
+            ->with('customer')
+            ->whereIn('status', ['registered', 'pending', 'inspected'])
+            ->orderByDesc('created_at');
+
+        $pendingInstallQuery = CustomerApplication::query()
+            ->with('customer')
+            ->whereIn('status', ['scheduled', 'installing'])
+            ->orderByRaw('schedule_date is null')
+            ->orderBy('schedule_date')
+            ->orderByDesc('created_at');
+
+        $applicationsPendingApprovalCount = (int) (clone $pendingApprovalQuery)->count();
+        $applicationsPendingInstallationCount = (int) (clone $pendingInstallQuery)->count();
+
+        $applicationsPendingApprovalList = (clone $pendingApprovalQuery)
+            ->take(6)
+            ->get(['id', 'customer_id', 'applicant_name', 'address', 'status', 'created_at']);
+
+        $applicationsPendingInstallationList = (clone $pendingInstallQuery)
+            ->take(6)
+            ->get(['id', 'customer_id', 'applicant_name', 'address', 'status', 'schedule_date', 'created_at']);
+
+        // Connection analytics (classification mix)
+        $connectionBreakdown = Register::query()
+            ->select('connection_classification', DB::raw('COUNT(*) as total'))
+            ->groupBy('connection_classification')
+            ->orderByDesc('total')
+            ->get();
+
+        if ($connectionBreakdown->isEmpty()) {
+            $connectionBreakdown = collect([
+                (object) ['connection_classification' => 'Residential', 'total' => 0],
+                (object) ['connection_classification' => 'Commercial', 'total' => 0],
+                (object) ['connection_classification' => 'Industrial', 'total' => 0],
+            ]);
+        }
+
+        $connectionAnalyticsTotal = (int) $connectionBreakdown->sum('total');
+
+        $connectionAnalytics = $connectionBreakdown->map(function ($row) use ($connectionAnalyticsTotal) {
+            $label = $row->connection_classification ?: 'Unspecified';
+            $count = (int) $row->total;
+            $percentage = $connectionAnalyticsTotal > 0
+                ? round(($count / $connectionAnalyticsTotal) * 100, 1)
+                : 0;
+
+            return [
+                'label' => $label,
+                'count' => $count,
+                'percentage' => $percentage,
+            ];
+        })->values();
+
+        if ($connectionAnalytics->sum('count') <= 0) {
+            $connectionAnalytics = collect([
+                ['label' => 'Residential', 'count' => 0, 'percentage' => 0],
+                ['label' => 'Commercial', 'count' => 0, 'percentage' => 0],
+                ['label' => 'Industrial', 'count' => 0, 'percentage' => 0],
+            ]);
+            $connectionAnalyticsTotal = 0;
+        }
+
+        $connectionAnalyticsLabels = $connectionAnalytics->pluck('label')->toArray();
+        $connectionAnalyticsCounts = $connectionAnalytics->pluck('count')->toArray();
+        $connectionColorPalette = ['#2563eb', '#38bdf8', '#1e3a8a', '#0ea5e9', '#22d3ee', '#3b82f6'];
+
         // Monthly revenue (current year, 12 points)
         $byMonth = BillingRecord::selectRaw('MONTH(created_at) as m, SUM(total_amount) as total')
             ->whereYear('created_at', now()->year)
@@ -96,7 +170,16 @@ class AdminController extends Controller
             'yearlyRevenue',
             'pendingGenerationCount',
             'pendingGenerationAmount',
-            'pendingGenerationList'
+            'pendingGenerationList',
+            'applicationsPendingApprovalCount',
+            'applicationsPendingInstallationCount',
+            'applicationsPendingApprovalList',
+            'applicationsPendingInstallationList',
+            'connectionAnalytics',
+            'connectionAnalyticsLabels',
+            'connectionAnalyticsCounts',
+            'connectionAnalyticsTotal',
+            'connectionColorPalette'
         ));
     }
 
@@ -104,6 +187,128 @@ class AdminController extends Controller
     {
         abort_unless(auth()->check() && auth()->user()->role === 'admin', 403);
         return view('admin.notices');
+    }
+
+    public function customerDataReport(Request $request)
+    {
+        abort_unless(auth()->check() && auth()->user()->role === 'admin', 403);
+
+        $fromInput = $request->input('from');
+        $toInput = $request->input('to');
+
+        $from = $fromInput ? Carbon::parse($fromInput)->startOfDay() : now()->copy()->subDays(89)->startOfDay();
+        $to = $toInput ? Carbon::parse($toInput)->endOfDay() : now()->endOfDay();
+
+        $filters = [
+            'from' => $from->toDateString(),
+            'to' => $to->toDateString(),
+        ];
+
+        $overallCounts = [
+            'total' => Customer::count(),
+            'active' => Customer::where('status', 'Active')->count(),
+            'inactive' => Customer::where('status', 'Inactive')->count(),
+            'disconnected' => Customer::where('status', 'Disconnected')->count(),
+        ];
+
+        $newCustomers = Customer::whereBetween('created_at', [$from, $to])->count();
+
+        $statusBreakdown = Customer::select('status', DB::raw('COUNT(*) as total'))
+            ->groupBy('status')
+            ->orderByDesc('total')
+            ->get();
+
+        $classificationBreakdown = Customer::select('classification', DB::raw('COUNT(*) as total'))
+            ->groupBy('classification')
+            ->orderByDesc('total')
+            ->get();
+
+        $recentCustomers = Customer::orderByDesc('created_at')
+            ->take(20)
+            ->get(['id', 'name', 'account_no', 'status', 'classification', 'created_at']);
+
+        $trendWindow = $from->clone()->subDays(29);
+        $trendRows = Customer::selectRaw('DATE(created_at) as date_key, COUNT(*) as total')
+            ->whereBetween('created_at', [$trendWindow->startOfDay(), $to])
+            ->groupBy('date_key')
+            ->orderBy('date_key')
+            ->get();
+
+        $trendMap = $trendRows->keyBy('date_key');
+        $trendLabels = [];
+        $trendCounts = [];
+        $cursor = $trendWindow->copy();
+        while ($cursor->lte($to)) {
+            $dateKey = $cursor->format('Y-m-d');
+            $trendLabels[] = $cursor->format('M d');
+            $trendCounts[] = (int) optional($trendMap->get($dateKey))->total ?? 0;
+            $cursor->addDay();
+        }
+
+        return view('admin.reports.customers', [
+            'filters' => $filters,
+            'overallCounts' => $overallCounts,
+            'newCustomers' => $newCustomers,
+            'statusBreakdown' => $statusBreakdown,
+            'classificationBreakdown' => $classificationBreakdown,
+            'recentCustomers' => $recentCustomers,
+            'trendLabels' => $trendLabels,
+            'trendCounts' => $trendCounts,
+        ]);
+    }
+
+    public function paymentReport(Request $request)
+    {
+        abort_unless(auth()->check() && auth()->user()->role === 'admin', 403);
+
+        $fromInput = $request->input('from');
+        $toInput = $request->input('to');
+
+        $from = $fromInput ? Carbon::parse($fromInput)->startOfDay() : now()->copy()->subDays(29)->startOfDay();
+        $to = $toInput ? Carbon::parse($toInput)->endOfDay() : now()->endOfDay();
+
+        $filters = [
+            'from' => $from->toDateString(),
+            'to' => $to->toDateString(),
+        ];
+
+        $paymentsBase = PaymentRecord::with('customer')
+            ->whereBetween('created_at', [$from, $to]);
+
+        $totalCollected = (float) (clone $paymentsBase)->sum('amount_paid');
+        $transactionCount = (int) (clone $paymentsBase)->count();
+        $averagePayment = $transactionCount > 0 ? $totalCollected / $transactionCount : 0.0;
+        $largestPayment = (float) (clone $paymentsBase)->max('amount_paid');
+
+        $methodBreakdown = (clone $paymentsBase)
+            ->select('payment_method', DB::raw('COUNT(*) as transactions'), DB::raw('SUM(amount_paid) as total_amount'))
+            ->groupBy('payment_method')
+            ->orderByDesc('total_amount')
+            ->get();
+
+        $dailyBreakdown = (clone $paymentsBase)
+            ->selectRaw('DATE(created_at) as date_key, COUNT(*) as transactions, SUM(amount_paid) as total_amount')
+            ->groupBy('date_key')
+            ->orderBy('date_key')
+            ->get();
+
+        $recentPayments = (clone $paymentsBase)
+            ->orderByDesc('created_at')
+            ->take(20)
+            ->get(['id', 'account_no', 'amount_paid', 'payment_method', 'reference_number', 'created_at']);
+
+        return view('admin.reports.payments', [
+            'filters' => $filters,
+            'summary' => [
+                'total_collected' => $totalCollected,
+                'transactions' => $transactionCount,
+                'average_payment' => $averagePayment,
+                'largest_payment' => $largestPayment,
+            ],
+            'methodBreakdown' => $methodBreakdown,
+            'dailyBreakdown' => $dailyBreakdown,
+            'recentPayments' => $recentPayments,
+        ]);
     }
 
     public function reports()
@@ -147,11 +352,119 @@ class AdminController extends Controller
         return redirect()->route('admin.reports')->with('status', 'Report status updated.');
     }
 
-    public function customers()
+    public function customers(Request $request)
     {
         abort_unless(auth()->check() && auth()->user()->role === 'admin', 403);
-        $customers = Customer::orderByDesc('created_at')->paginate(20)->withQueryString();
-        return view('admin.customers', compact('customers'));
+
+        $statusOptions = ['Active', 'Inactive', 'Disconnected'];
+        $classificationOptions = ['Residential', 'Commercial', 'Industrial'];
+
+        $search = trim((string) $request->get('search', ''));
+        $status = $request->get('status');
+        $classification = $request->get('classification');
+        $created = $request->get('created');
+
+        if (!in_array($status, $statusOptions, true)) {
+            $status = null;
+        }
+
+        if (!in_array($classification, $classificationOptions, true)) {
+            $classification = null;
+        }
+
+        if ($created && !strtotime($created)) {
+            $created = null;
+        }
+
+        $query = Customer::query();
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $like = "%{$search}%";
+                $q->where('name', 'like', $like)
+                    ->orWhere('account_no', 'like', $like)
+                    ->orWhere('address', 'like', $like)
+                    ->orWhere('contact_no', 'like', $like);
+            });
+        }
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        if ($classification) {
+            $query->where('classification', $classification);
+        }
+
+        if ($created) {
+            $query->whereDate('created_at', $created);
+        }
+
+        if ($request->get('export') === 'csv') {
+            return $this->exportCustomersCsv(clone $query);
+        }
+
+        $customers = $query->orderByDesc('created_at')->paginate(20)->withQueryString();
+
+        $auditLog = TransferReconnectAudit::with('performedByUser')
+            ->orderByDesc('performed_at')
+            ->orderByDesc('created_at')
+            ->limit(25)
+            ->get();
+
+        return view('admin.customers', [
+            'customers' => $customers,
+            'filters' => [
+                'search' => $search,
+                'status' => $status,
+                'classification' => $classification,
+                'created' => $created,
+            ],
+            'statusOptions' => $statusOptions,
+            'classificationOptions' => $classificationOptions,
+            'auditLog' => $auditLog,
+        ]);
+    }
+
+    protected function exportCustomersCsv($query)
+    {
+        $filename = 'customers_' . now()->format('Ymd_His') . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+
+        $columns = [
+            'account_no',
+            'name',
+            'contact_no',
+            'classification',
+            'status',
+            'created_at',
+        ];
+
+        $callback = function () use ($query, $columns) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, ['Account No.', 'Name', 'Contact', 'Connection', 'Status', 'Created At']);
+
+            $query->orderBy('account_no')->chunk(200, function ($rows) use ($handle, $columns) {
+                foreach ($rows as $row) {
+                    $data = [];
+                    foreach ($columns as $col) {
+                        $value = data_get($row, $col);
+                        if ($col === 'created_at' && $value) {
+                            $value = $row->created_at?->format('Y-m-d H:i');
+                        }
+                        $data[] = $value;
+                    }
+                    fputcsv($handle, $data);
+                }
+            });
+
+            fclose($handle);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
     public function meters()
@@ -197,6 +510,79 @@ class AdminController extends Controller
         $totalPaid = (float) (clone $payBase)->sum('amount_paid');
         $unpaid = 0.0; // revenue report focuses on paid collections
 
+        $billsCreated = (int) (clone $billBase)->count();
+
+        // Operational metrics
+        $registeredCustomers = Customer::query()
+            ->when($customer, fn($q) => $q->where('name', 'like', "%{$customer}%"))
+            ->whereBetween('created_at', [$from, $to])
+            ->count();
+
+        $issueBase = Report::query()->with('user')
+            ->whereBetween('created_at', [$from, $to]);
+
+        $issueTotal = (clone $issueBase)->count();
+        $issueByStatus = (clone $issueBase)
+            ->select('status', DB::raw('COUNT(*) as total'))
+            ->groupBy('status')
+            ->orderByDesc('total')
+            ->get()
+            ->map(fn ($row) => [
+                'label' => $row->status ?: 'Unspecified',
+                'total' => (int) ($row->total ?? 0),
+            ])->all();
+
+        $issueByCategory = (clone $issueBase)
+            ->select('category', DB::raw('COUNT(*) as total'))
+            ->groupBy('category')
+            ->orderByDesc('total')
+            ->get()
+            ->map(fn ($row) => [
+                'label' => $row->category ?: 'Unspecified',
+                'total' => (int) ($row->total ?? 0),
+            ])->all();
+
+        $recentIssues = (clone $issueBase)
+            ->orderByDesc('created_at')
+            ->limit(6)
+            ->get(['id', 'category', 'status', 'created_at', 'other_problem']);
+
+        $meterAuditBase = MeterAudit::with('meter')
+            ->whereBetween('created_at', [$from, $to]);
+
+        $meterIncidents = (clone $meterAuditBase)
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->get(['meter_id','action','reason','created_at']);
+
+        $meterReplacementCount = (clone $meterAuditBase)
+            ->where(function ($q) {
+                $q->where('reason', 'like', '%replac%')
+                  ->orWhere('action', 'like', '%replac%');
+            })->count();
+
+        $meterDamageCount = (clone $meterAuditBase)
+            ->where(function ($q) {
+                $q->where('reason', 'like', '%damag%')
+                  ->orWhere('action', 'like', '%damag%');
+            })->count();
+
+        $disconnectedCustomers = Customer::where('status', 'Disconnected')->count();
+        $disconnectionEvents = TransferReconnectAudit::query()
+            ->where('action', 'disconnect')
+            ->whereBetween('performed_at', [$from, $to])
+            ->count();
+        $reconnectionEvents = TransferReconnectAudit::query()
+            ->where('action', 'reconnect')
+            ->whereBetween('performed_at', [$from, $to])
+            ->count();
+
+        $recentDisconnections = TransferReconnectAudit::query()
+            ->whereBetween('performed_at', [$from, $to])
+            ->orderByDesc('performed_at')
+            ->limit(10)
+            ->get(['account_no', 'action', 'performed_at', 'notes']);
+
         // Breakdown
         $format = match($groupBy){
             'day' => '%Y-%m-%d',
@@ -236,6 +622,21 @@ class AdminController extends Controller
                 'unpaid' => $unpaid,
             ],
             'breakdown' => $breakdown,
+            'operationalMetrics' => [
+                'registered_customers' => $registeredCustomers,
+                'bills_created' => $billsCreated,
+                'issue_reports' => $issueTotal,
+                'meter_replacements' => $meterReplacementCount,
+                'meter_damages' => $meterDamageCount,
+                'disconnected_customers' => $disconnectedCustomers,
+                'disconnection_events' => $disconnectionEvents,
+                'reconnection_events' => $reconnectionEvents,
+            ],
+            'issueByStatus' => $issueByStatus,
+            'issueByCategory' => $issueByCategory,
+            'recentIssues' => $recentIssues,
+            'meterIncidents' => $meterIncidents,
+            'recentDisconnections' => $recentDisconnections,
         ]);
     }
 

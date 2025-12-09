@@ -9,6 +9,7 @@ class ListMetersQuery
         public readonly ?string $status = null,
         public readonly ?string $type = null,
         public readonly ?string $barangay = null,
-        public readonly int $perPage = 15
+        public readonly int $perPage = 15,
+        public readonly string $scope = 'eligible',
     ) {}
 }

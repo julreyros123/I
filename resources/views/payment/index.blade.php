@@ -14,78 +14,123 @@
     </div>
 
 <!-- Applicant Fees Tab -->
-<div id="tabApplicant" class="hidden">
-    <div id="applicantHeader" class="hidden bg-white dark:bg-gray-800 rounded-xl shadow p-4 space-y-3">
-        <div class="grid md:grid-cols-3 gap-4">
-            <div>
-                <label class="block text-sm text-gray-600 dark:text-gray-400">Application No.</label>
-                <x-ui.input id="app_no" />
-            </div>
-            <div>
-                <label class="block text-sm text-gray-600 dark:text-gray-400">Applicant Name</label>
-                <x-ui.input id="applicant_name" readonly />
-            </div>
-            <div>
-                <label class="block text-sm text-gray-600 dark:text-gray-400">Status</label>
-                <x-ui.input id="app_status" readonly />
+<div id="tabApplicant" class="hidden space-y-6">
+    <div class="grid lg:grid-cols-3 gap-6 items-start">
+        <!-- Applicant Directory -->
+        <div class="lg:col-span-2 space-y-4">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-200 dark:border-gray-700 p-5 space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+                    <div class="w-full sm:max-w-sm">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Applicant Directory</label>
+                        <x-ui.input id="applicantSearchInput" class="w-full h-11 text-sm" />
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Results update instantly. Displaying up to 10 matches.</p>
+                </div>
+                <div class="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
+                    <table class="min-w-full text-sm text-left">
+                        <thead class="bg-gray-100 dark:bg-gray-900/60 text-gray-600 dark:text-gray-300">
+                            <tr>
+                                <th scope="col" class="px-4 py-3 font-semibold">Application</th>
+                                <th scope="col" class="px-4 py-3 font-semibold">Applicant</th>
+                                <th scope="col" class="px-4 py-3 font-semibold">Address</th>
+                                <th scope="col" class="px-4 py-3 font-semibold">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="applicantDirectoryBody" class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Fees List -->
-    <div id="feesCard" class="hidden bg-white dark:bg-gray-800 rounded-xl shadow p-4 space-y-3">
-        <div class="flex items-center justify-between">
-            <p class="text-xs text-gray-500 dark:text-gray-400">Select fees to include. You can adjust partial amounts where allowed.</p>
-            <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                <input type="checkbox" id="selectAllFees" class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                <span>Select All</span>
-            </label>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="min-w-full text-sm text-left text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-lg">
-                <thead class="bg-gray-100 dark:bg-gray-700">
-                    <tr>
-                        <th class="px-4 py-2"></th>
-                        <th class="px-4 py-2">Fee</th>
-                        <th class="px-4 py-2 text-right">Amount</th>
-                        <th class="px-4 py-2 text-right">Pay Now</th>
-                        <th class="px-4 py-2">Status</th>
-                    </tr>
-                </thead>
-                <tbody id="feesTbody" class="divide-y divide-gray-200 dark:divide-gray-700"></tbody>
-            </table>
-        </div>
-    </div>
+        <!-- Fee & Payment Summary -->
+        <div class="space-y-4">
+            <div id="feesCard" class="hidden bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-200 dark:border-gray-700 p-5 space-y-4">
+                <div class="space-y-1">
+                    <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">Applicant Fee Details</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Review the assessed amounts before collecting payment.</p>
+                </div>
+                <ul id="feesDetailsList" class="space-y-2 text-sm text-gray-700 dark:text-gray-200">
+                    <li class="text-gray-400 dark:text-gray-500">Select an applicant to preview fees.</li>
+                </ul>
+            </div>
 
-    <!-- Fees Payment Panel -->
-    <div id="feesPayment" class="hidden bg-white dark:bg-gray-800 rounded-xl shadow p-4 space-y-4">
-        <div class="grid md:grid-cols-4 gap-4">
-            <div>
-                <label class="block text-sm text-gray-600 dark:text-gray-400">Subtotal</label>
-                <x-ui.input id="feesSubtotal" :value="'₱0.00'" readonly class="font-semibold" />
-            </div>
-            <div>
-                <label class="block text-sm text-gray-600 dark:text-gray-400">Amount Tendered</label>
-                <x-ui.input type="number" id="feesAmountPaid" placeholder="Enter amount" />
-            </div>
-            <div>
-                <label class="block text-sm text-gray-600 dark:text-gray-400">Change</label>
-                <x-ui.input id="feesChange" :value="'₱0.00'" readonly class="font-semibold" />
-            </div>
-            <div class="flex items-end">
-                <x-primary-button type="button" id="feesProcessBtn" class="w-full justify-center">
+            <div id="feesPayment" class="hidden bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-200 dark:border-gray-700 p-5 space-y-5">
+                <div class="space-y-1">
+                    <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">Payment Summary</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Enter the amount tendered to compute change automatically.</p>
+                </div>
+                <div class="grid sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">Application No.</label>
+                        <x-ui.input id="app_no" :value="'—'" readonly class="w-full h-10 text-sm" />
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">Applicant Name</label>
+                        <x-ui.input id="applicant_name" :value="'—'" readonly class="w-full h-10 text-sm" />
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">Overall Status</label>
+                        <x-ui.input id="app_status" :value="'—'" readonly class="w-full h-10 text-sm" />
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">Subtotal</label>
+                        <x-ui.input id="feesSubtotal" :value="'₱0.00'" readonly class="h-11 text-base font-semibold" />
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">Amount Tendered</label>
+                        <x-ui.input type="number" id="feesAmountPaid" placeholder="Enter amount received" class="h-11 text-base" />
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-600 dark:text-gray-400 mb-1">Change</label>
+                        <x-ui.input id="feesChange" :value="'₱0.00'" readonly class="h-11 text-base font-semibold" />
+                    </div>
+                </div>
+                <div id="feesLiveSummary" class="border border-blue-100 dark:border-blue-900/40 rounded-xl bg-blue-50/60 dark:bg-blue-900/20 p-4 space-y-4">
+                    <div class="flex flex-col gap-2">
+                        <p class="text-[11px] uppercase tracking-wide text-blue-600 dark:text-blue-300">Live Summary</p>
+                        <p id="feesSummaryStatus" class="text-sm font-semibold text-blue-900 dark:text-blue-200">Select a fee to begin</p>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-[11px] text-gray-600 dark:text-gray-400">Invoice No.</p>
+                            <p id="feesInvoiceDisplay" class="font-mono text-sm text-gray-900 dark:text-gray-100">—</p>
+                        </div>
+                        <div class="grid grid-cols-3 gap-3 text-right">
+                            <div>
+                                <p class="text-[11px] uppercase text-gray-500 dark:text-gray-400">Due</p>
+                                <p id="feesSummaryDue" class="text-base font-semibold text-gray-900 dark:text-gray-100">₱0.00</p>
+                            </div>
+                            <div>
+                                <p class="text-[11px] uppercase text-gray-500 dark:text-gray-400">Tendered</p>
+                                <p id="feesSummaryTender" class="text-base font-semibold text-gray-900 dark:text-gray-100">₱0.00</p>
+                            </div>
+                            <div>
+                                <p class="text-[11px] uppercase text-gray-500 dark:text-gray-400">Change</p>
+                                <p id="feesSummaryChange" class="text-base font-semibold text-gray-900 dark:text-gray-100">₱0.00</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-[11px] uppercase text-gray-500 dark:text-gray-400 mb-1">Selected Fees</p>
+                        <ul id="feesSummaryList" class="text-xs text-gray-700 dark:text-gray-200 space-y-1">
+                            <li class="text-gray-400 dark:text-gray-500">No fees selected yet.</li>
+                        </ul>
+                    </div>
+                </div>
+                <x-primary-button type="button" id="feesProcessBtn" class="w-full justify-center h-11 text-sm font-semibold">
                     <x-heroicon-o-credit-card class="w-5 h-5" />
-                    <span>Process Fees</span>
+                    <span>Record Applicant Payment</span>
                 </x-primary-button>
             </div>
         </div>
-        <p class="text-xs text-gray-500">Note: Applicant fees processing is currently a demo flow. Integrate with connections API to persist payments.</p>
     </div>
 </div>
 
     <!-- Customer Payments Tab -->
     <div id="tabCustomer">
-    <!-- Quick actions -->
+    <!-- Quick actions / helper text -->
     <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
         <p class="text-sm text-gray-600 dark:text-gray-400">Guide: Search an account, review unpaid bills, then process payment.</p>
     </div>
@@ -95,23 +140,105 @@
 
     <!-- Search Customer (Account No.) -->
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-4 space-y-3">
-        <div class="grid md:grid-cols-[1fr_auto] gap-3 items-end">
-            <div>
+        <div class="flex flex-col md:flex-row md:items-end md:gap-3">
+            <div class="w-full md:w-auto md:max-w-xs">
                 <label class="block text-sm text-gray-600 dark:text-gray-400">Account No.</label>
                 <div class="relative">
-                    <x-ui.input id="searchAccount" placeholder="e.g. 22-123456-7" />
+                    <x-ui.input id="searchAccount" placeholder="e.g. 22-123456-7" class="w-full" />
                     <div id="quickSuggest" class="hidden absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow"></div>
                 </div>
             </div>
-            <div class="flex gap-2">
+            <div class="mt-3 md:mt-0 md:ml-3 flex gap-2">
                 <x-primary-button type="button" id="searchBtn" class="h-[42px]">Search</x-primary-button>
             </div>
         </div>
         <p class="text-xs text-gray-500">Tip: Type at least 2 characters to see quick suggestions.</p>
     </div>
 
-    <!-- Customer Info & Detailed Billing Panel -->
-    <div id="customerInfo" class="bg-white dark:bg-gray-800 rounded-xl shadow p-4 space-y-4">
+    <!-- Payment Summary Layout: Current Bill + Quick Links + Recent Activity -->
+    <div id="paymentSummary" class="mt-4 bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-200 dark:border-gray-700 p-5 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 flex items-center justify-center">
+                    <x-heroicon-o-credit-card class="w-5 h-5" />
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Current bill for</p>
+                    <p id="summaryCustomerName" class="text-sm font-semibold text-gray-900 dark:text-gray-100">—</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-6 sm:text-right">
+                <div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Unpaid bills</p>
+                    <p id="unpaidCount" class="text-lg font-semibold text-gray-900 dark:text-gray-100">0</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Latest bill</p>
+                    <p id="latestBillAmount" class="text-lg font-semibold text-gray-900 dark:text-gray-100">₱0.00</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-[2fr_1fr] gap-4 mt-2">
+            <!-- Current Bill Panel -->
+            <div class="border border-dashed border-gray-200 dark:border-gray-700 rounded-lg p-4 flex flex-col justify-between bg-gray-50/80 dark:bg-gray-900/30">
+                <div>
+                    <p class="text-xs tracking-wide uppercase text-gray-500 dark:text-gray-400 mb-1">Current Balance</p>
+                    <p id="totalOutstanding" class="text-3xl font-semibold text-gray-900 dark:text-gray-50">₱0.00</p>
+                    <p class="mt-3 text-xs text-gray-600 dark:text-gray-300">
+                        Due Date: <span id="currentDueDate">—</span>
+                    </p>
+                </div>
+                <div class="mt-4">
+                    <button type="button" onclick="document.getElementById('paymentSection')?.scrollIntoView({ behavior: 'smooth' });" class="inline-flex items-center px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm shadow-sm">
+                        <x-heroicon-o-banknotes class="w-4 h-4 mr-1.5" />
+                        <span>Pay Now</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- At-a-glance Metrics -->
+            <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex flex-col justify-between">
+                <div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Overview</p>
+                    <p class="mt-1 text-sm text-gray-700 dark:text-gray-200">Summary based on the latest billing record and unpaid balance.</p>
+                </div>
+                <p class="mt-3 text-[11px] text-gray-500 dark:text-gray-400">Details below let you inspect consumption, select specific months, and process payments with change computation.</p>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4 pt-2">
+            <!-- Quick Links -->
+            <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <p class="text-xs font-semibold text-gray-700 dark:text-gray-200 mb-2">Quick Links</p>
+                <ul class="space-y-1.5 text-sm text-gray-700 dark:text-gray-200">
+                    <li class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                        <button type="button" class="hover:underline text-blue-600 dark:text-blue-400" id="qlViewHistory">View Payment History (coming soon)</button>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        <button type="button" class="hover:underline text-blue-600 dark:text-blue-400" id="qlManageMethods">Manage Payment Methods (coming soon)</button>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                        <button type="button" class="hover:underline text-blue-600 dark:text-blue-400" id="qlUpdateContact">Update Contact Info (coming soon)</button>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Recent Activity (placeholder wired later if needed) -->
+            <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <p class="text-xs font-semibold text-gray-700 dark:text-gray-200 mb-2">Recent Activity</p>
+                <ul id="recentPaymentActivity" class="space-y-1.5 text-sm text-gray-700 dark:text-gray-200">
+                    <li class="text-xs text-gray-500 dark:text-gray-400">Recent invoices and payments for this account can be surfaced here in a future update.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Info & Detailed Billing Panel (kept for logic, hidden from UI) -->
+    <div id="customerInfo" class="bg-white dark:bg-gray-800 rounded-xl shadow p-4 space-y-4 hidden">
         <div class="grid md:grid-cols-4 gap-4">
             <div>
                 <label class="block text-sm text-gray-600 dark:text-gray-400">Delivery Date</label>
@@ -310,6 +437,10 @@ async function searchByAccount(account){
         var latestBillAmountEl = document.getElementById('latestBillAmount');
         if (latestBillAmountEl) latestBillAmountEl.innerText = `₱${latestAmount.toFixed(2)}`;
 
+        // Update summary header (customer name)
+        var summaryNameEl = document.getElementById('summaryCustomerName');
+        if (summaryNameEl) summaryNameEl.textContent = data.customer.name || data.customer.account_no || '—';
+
         // Delivery date and readings
         document.getElementById('delivery_date').value = latestBill && latestBill.delivery_date ? latestBill.delivery_date : '';
         document.getElementById('previous_reading').value = (latestBill && latestBill.previous_reading != null)
@@ -332,6 +463,16 @@ async function searchByAccount(account){
             const msInDay = 24*60*60*1000;
             const daysLate = Math.floor((today.setHours(0,0,0,0) - new Date(due).setHours(0,0,0,0)) / msInDay);
             if (daysLate >= 1) lateFee = overduePenalty;
+        }
+
+        // Show due date label in summary card
+        var dueLabelEl = document.getElementById('currentDueDate');
+        if (dueLabelEl) {
+            if (due && !isNaN(due.getTime())) {
+                dueLabelEl.textContent = due.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' });
+            } else {
+                dueLabelEl.textContent = '—';
+            }
         }
 
         const lblMaint = document.getElementById('lblMaintenanceAmount');
@@ -369,6 +510,10 @@ async function searchByAccount(account){
         processBtn.disabled = totalOutstanding <= 0;
         partialWarning.classList.add('hidden');
 
+        // Reveal payment summary card once data is loaded
+        var paymentSummary = document.getElementById('paymentSummary');
+        if (paymentSummary) paymentSummary.classList.remove('hidden');
+
         // Build unpaid bills list
         const listCard = document.getElementById('unpaidListCard');
         const tbody = document.getElementById('unpaidTbody');
@@ -398,6 +543,8 @@ async function searchByAccount(account){
         try { loadApplicantFeesForAccount(data.customer.account_no || '', data.customer.name || ''); } catch(_){}
     } catch (e) {
         showAlert('Customer not found.', 'error');
+        var paymentSummary = document.getElementById('paymentSummary');
+        if (paymentSummary) paymentSummary.classList.add('hidden');
     }
 }
 
@@ -622,111 +769,309 @@ function showTab(which){
     }
 }
  if (tabBtnCustomer && tabBtnApplicant){
-     tabBtnCustomer.onclick = function(){ showTab('cust'); };
-     tabBtnApplicant.onclick = function(){
-        showTab('app');
-        try { history.replaceState(null, '', '#applicant-fees'); } catch(_) { location.hash = '#applicant-fees'; }
-        // Show placeholder immediately to avoid blank UI
-        try {
-            var acct = document.getElementById('account_no')?.value || '';
-            var name = document.getElementById('customer_name')?.value || '';
-            loadApplicantFeesForAccount(acct, name);
-        } catch(_){}
-        var _feesCard = document.getElementById('feesCard');
-        if (_feesCard && _feesCard.classList.contains('hidden')){ try { loadApplicantFeesFromApi(); } catch(_){} }
-     };
- }
+    tabBtnCustomer.onclick = function(){ showTab('cust'); };
+    tabBtnApplicant.onclick = function(){
+       showTab('app');
+       try { history.replaceState(null, '', '#applicant-fees'); } catch(_) { location.hash = '#applicant-fees'; }
+        ensureApplicantDirectoryLoaded().then(() => {
+            refreshApplicantDirectory();
+            if (!__currentApplication && __applicantDirectoryCache.length){
+                selectApplicantFromDirectory(__applicantDirectoryCache[0].id);
+            }
+        });
+    };
+}
 
 // Initialize tab from URL (?tab=app) or hash (#applicant-fees)
  function initTabFromUrl(){
      try {
          var params = new URLSearchParams(window.location.search);
-         var hash = window.location.hash || '';
-         if ((params.get('tab')||'') === 'app' || hash === '#applicant-fees') {
-            showTab('app');
-            // Show placeholder immediately
-            try {
-                var acct2 = document.getElementById('account_no')?.value || '';
-                var name2 = document.getElementById('customer_name')?.value || '';
-                loadApplicantFeesForAccount(acct2, name2);
-            } catch(_){}
-            var _feesCard2 = document.getElementById('feesCard');
-            if (_feesCard2 && _feesCard2.classList.contains('hidden')){ try { loadApplicantFeesFromApi(); } catch(_){} }
-         } else {
-             showTab('cust');
-         }
-     } catch(_) { showTab('cust'); }
- }
+        var hash = window.location.hash || '';
+        if ((params.get('tab')||'') === 'app' || hash === '#applicant-fees') {
+           showTab('app');
+           ensureApplicantDirectoryLoaded().then(() => {
+               refreshApplicantDirectory();
+               if (!__currentApplication && __applicantDirectoryCache.length){
+                   selectApplicantFromDirectory(__applicantDirectoryCache[0].id);
+               }
+           });
+        } else {
+            showTab('cust');
+        }
+    } catch(_) { showTab('cust'); }
+}
 initTabFromUrl();
 window.addEventListener('hashchange', initTabFromUrl);
 window.addEventListener('popstate', initTabFromUrl);
 
-// --- Applicant fees placeholder logic ---
-const feesTbody = document.getElementById('feesTbody');
+// --- Applicant fee directory & payment flow ---
 const feesCard = document.getElementById('feesCard');
 const feesPanel = document.getElementById('feesPayment');
-const applicantHeader = document.getElementById('applicantHeader');
-const selectAllFees = document.getElementById('selectAllFees');
+const applicantSearchInput = document.getElementById('applicantSearchInput');
+const applicantDirectoryBody = document.getElementById('applicantDirectoryBody');
+const feesDetailsList = document.getElementById('feesDetailsList');
+const feesSummaryList = document.getElementById('feesSummaryList');
+const feesSubtotalInput = document.getElementById('feesSubtotal');
+const feesAmountPaidInput = document.getElementById('feesAmountPaid');
+const feesChangeInput = document.getElementById('feesChange');
+
 let __currentApplication = null;
-function peso(n){ return '₱'+(Number(n||0)).toFixed(2); }
-function renderFees(rows){
-    if (!rows || !rows.length){
-        feesTbody.innerHTML = `<tr><td class="px-4 py-6 text-center text-gray-500 dark:text-gray-400" colspan="5">No fees to display.</td></tr>`;
+let __currentInvoice = null;
+let __lastSavedInvoice = null;
+let __selectedFeeItems = [];
+let __currentAmountDue = 0;
+let __currentTender = 0;
+let __currentChange = 0;
+let __applicantDirectoryCache = [];
+let __activeApplicantId = null;
+
+function peso(n){
+    return '₱' + (Number(n || 0)).toFixed(2);
+}
+
+function escapeHtml(value){
+    return String(value ?? '').replace(/[&<>"']/g, ch => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+    })[ch]);
+}
+
+function debounce(fn, delay = 200){
+    let timer;
+    return function(...args){
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(this, args), delay);
+    };
+}
+
+function markActiveApplicantRow(){
+    if (!applicantDirectoryBody) return;
+    applicantDirectoryBody.querySelectorAll('tr[data-applicant-row]').forEach(row => {
+        const same = Number(row.dataset.applicantRow) === Number(__activeApplicantId);
+        row.classList.toggle('bg-blue-50', same);
+        row.classList.toggle('dark:bg-blue-900/40', same);
+        row.setAttribute('aria-selected', same ? 'true' : 'false');
+    });
+}
+
+function renderApplicantDirectory(rows){
+    if (!applicantDirectoryBody) return;
+    if (!rows.length){
+        let blanks = '';
+        for (let i = 0; i < 10; i++){
+            blanks += '<tr class="h-12"><td colspan="4" class="px-4 py-2"><div class="h-6"></div></td></tr>';
+        }
+        applicantDirectoryBody.innerHTML = blanks;
         return;
     }
-    feesTbody.innerHTML = rows.map(r => `
-        <tr>
-            <td class="px-4 py-2"><input type="checkbox" class="fee-check w-4 h-4" data-id="${r.code}" data-due="${r.amount}" ${r.status==='paid'?'disabled':''}></td>
-            <td class="px-4 py-2">${r.name}</td>
-            <td class="px-4 py-2 text-right">${peso(r.amount)}</td>
-            <td class="px-4 py-2 text-right"><input ${r.partial?'' : 'readonly'} type="number" step="0.01" min="0" class="fee-pay-now w-28 border rounded px-2 py-1 text-right" value="${r.status==='paid'?0:r.amount}"></td>
-            <td class="px-4 py-2">${r.status}</td>
-        </tr>
-    `).join('');
+
+    const html = rows.map(item => {
+        const status = (item.status || '—').toString().replace(/_/g, ' ');
+        return `
+            <tr data-applicant-row="${item.id}" tabindex="0" class="cursor-pointer transition hover:bg-blue-50 dark:hover:bg-blue-900/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400">
+                <td class="px-4 py-3">
+                    <div class="font-semibold text-gray-900 dark:text-gray-100">${escapeHtml(item.application_code || `APP-${item.id || 'NEW'}`)}</div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">#${escapeHtml(item.id ?? '—')}</p>
+                </td>
+                <td class="px-4 py-3">
+                    <p class="font-medium text-gray-900 dark:text-gray-100">${escapeHtml(item.applicant_name || '—')}</p>
+                    ${item.contact_no ? `<p class="text-xs text-gray-500 dark:text-gray-400">${escapeHtml(item.contact_no)}</p>` : ''}
+                </td>
+                <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">${escapeHtml(item.address || '—')}</td>
+                <td class="px-4 py-3">
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">${escapeHtml(status)}</span>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    let fillers = '';
+    if (rows.length < 10){
+        for (let i = rows.length; i < 10; i++){
+            fillers += '<tr class="h-12"><td colspan="4" class="px-4 py-2"><div class="h-6"></div></td></tr>';
+        }
+    }
+
+    applicantDirectoryBody.innerHTML = html + fillers;
+    markActiveApplicantRow();
 }
-function calcFeesSubtotal(){
-    const checks = Array.from(document.querySelectorAll('.fee-check'));
-    let sum = 0;
-    checks.forEach((ch, i) => {
-        if (!ch.checked) return;
-        const row = ch.closest('tr');
-        const input = row.querySelector('.fee-pay-now');
-        sum += Number(input && input.value ? input.value : 0);
+
+function filterApplicants(list, term){
+    const normalized = term.trim().toLowerCase();
+    if (!normalized) return list;
+    return list.filter(item => {
+        const fields = [
+            item.application_code,
+            item.applicant_name,
+            item.address,
+            item.contact_no,
+            item.id ? String(item.id) : '',
+        ];
+        return fields.some(value => value && value.toString().toLowerCase().includes(normalized));
     });
-    document.getElementById('feesSubtotal').value = peso(sum);
-    const tender = Number(document.getElementById('feesAmountPaid').value||0);
-    document.getElementById('feesChange').value = peso(Math.max(0, tender - sum));
 }
-function hookFeeHandlers(){
-    const checks = Array.from(document.querySelectorAll('.fee-check'));
-    checks.forEach(ch => ch.addEventListener('change', calcFeesSubtotal));
-    document.querySelectorAll('.fee-pay-now').forEach(inp => inp.addEventListener('input', calcFeesSubtotal));
-    if (selectAllFees){
-        selectAllFees.checked = false; selectAllFees.indeterminate = false;
-        selectAllFees.onchange = () => {
-            checks.forEach(c => { if (!c.disabled) c.checked = selectAllFees.checked; });
-            calcFeesSubtotal();
-        };
-    }
+
+function normalizeApplication(item){
+    if (!item) return null;
+    const id = Number(item.id || item.ID || 0);
+    return {
+        ...item,
+        id,
+        application_code: item.application_code || (id ? `APP-${String(id).padStart(6, '0')}` : 'APP-NEW'),
+    };
 }
-function loadApplicantFeesForAccount(accountNo, applicantName){
-    // Backward-compatible placeholder when no backend data is available yet
-    applicantHeader.classList.remove('hidden');
-    const appNoInput = document.getElementById('app_no');
-    if (appNoInput && !appNoInput.value) {
-        appNoInput.value = (accountNo ? ('APP-'+ String(accountNo).replace(/\W+/g,'') ) : '');
+
+async function ensureApplicantDirectoryLoaded(force = false){
+    if (__applicantDirectoryCache.length && !force) return __applicantDirectoryCache;
+    try {
+        const url = new URL('{{ route('connections.index') }}', window.location.origin);
+        url.searchParams.set('per_page', '100');
+        const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } });
+        if (!res.ok) throw new Error('Failed to fetch applicants');
+        const payload = await res.json();
+        let list = [];
+        if (payload && payload.items){
+            if (Array.isArray(payload.items)) {
+                list = payload.items;
+            } else if (payload.items && Array.isArray(payload.items.data)) {
+                list = payload.items.data;
+            }
+        }
+        __applicantDirectoryCache = list.map(normalizeApplication).filter(Boolean);
+    } catch (error) {
+        console.error(error);
+        __applicantDirectoryCache = [];
     }
-    document.getElementById('applicant_name').value = applicantName || '—';
-    document.getElementById('app_status').value = 'Pending Fees';
-    const rows = [
-        { code:'APP', name:'Application Fee', amount:300, partial:false, status:'unpaid' },
-        { code:'INSP', name:'Inspection Fee', amount:200, partial:true, status:'unpaid' },
-    ];
-    renderFees(rows);
-    feesCard.classList.remove('hidden');
-    feesPanel.classList.remove('hidden');
-    hookFeeHandlers();
+    return __applicantDirectoryCache;
+}
+
+async function refreshApplicantDirectory(force = false){
+    await ensureApplicantDirectoryLoaded(force);
+    const term = (applicantSearchInput?.value || '').trim();
+    const matches = filterApplicants(__applicantDirectoryCache, term).slice(0, 10);
+    renderApplicantDirectory(matches);
+}
+
+async function selectApplicantFromDirectory(id){
+    if (!id) return;
+    __activeApplicantId = id;
+    markActiveApplicantRow();
+    await loadApplicantFeesById(id);
+}
+
+function setFeeDetails(feeItems, status){
+    const sourceItems = Array.isArray(feeItems) && feeItems.length ? feeItems : [{ code: 'APPF', name: 'Applicant Fee', amount: 300 }];
+    __selectedFeeItems = sourceItems.filter(item => Number(item.amount || 0) > 0).map(item => ({
+        code: item.code || 'APPF',
+        name: item.name || 'Applicant Fee',
+        amount: Number(item.amount || 0),
+    }));
+
+    if (feesDetailsList){
+        if (!__selectedFeeItems.length){
+            feesDetailsList.innerHTML = '<li class="text-gray-400 dark:text-gray-500">Applicant fee not assessed yet.</li>';
+        } else {
+            const statusLine = status ? `<li class="text-xs text-gray-500 dark:text-gray-400 pt-1">Current status: ${escapeHtml(status.toString().replace(/_/g, ' '))}</li>` : '';
+            feesDetailsList.innerHTML = __selectedFeeItems.map(item => `
+                <li class="flex items-center justify-between">
+                    <span>${escapeHtml(item.name)}</span>
+                    <span class="font-semibold">${peso(item.amount)}</span>
+                </li>
+            `).join('') + statusLine;
+        }
+    }
+
+    if (feesCard) feesCard.classList.remove('hidden');
+    if (feesPanel) feesPanel.classList.remove('hidden');
+
     calcFeesSubtotal();
+}
+
+function calcFeesSubtotal(){
+    const subtotal = __selectedFeeItems.reduce((total, item) => total + Number(item.amount || 0), 0);
+    __currentAmountDue = subtotal;
+    if (feesSubtotalInput) feesSubtotalInput.value = peso(subtotal);
+
+    const tender = Number(feesAmountPaidInput?.value || 0);
+    __currentTender = tender;
+    __currentChange = Math.max(0, tender - subtotal);
+    if (feesChangeInput) feesChangeInput.value = peso(__currentChange);
+
+    updateLiveSummary(subtotal, tender);
+}
+
+function updateLiveSummary(amountDue, tendered){
+    const statusEl = document.getElementById('feesSummaryStatus');
+    const dueEl = document.getElementById('feesSummaryDue');
+    const tenderEl = document.getElementById('feesSummaryTender');
+    const changeEl = document.getElementById('feesSummaryChange');
+    const invoiceEl = document.getElementById('feesInvoiceDisplay');
+
+    if (dueEl) dueEl.textContent = peso(amountDue || 0);
+    if (tenderEl) tenderEl.textContent = peso(tendered || 0);
+    if (changeEl) changeEl.textContent = peso(Math.max(0, tendered - amountDue));
+
+    if (!__selectedFeeItems.length){
+        if (feesSummaryList) feesSummaryList.innerHTML = '<li class="text-gray-400 dark:text-gray-500">No fees selected yet.</li>';
+        if (statusEl) statusEl.textContent = __lastSavedInvoice ? `Last invoice: ${__lastSavedInvoice}` : 'Awaiting assessed fees';
+        __currentInvoice = null;
+        if (invoiceEl) invoiceEl.textContent = __lastSavedInvoice || '—';
+        return;
+    }
+
+    if (!__currentInvoice){
+        __currentInvoice = generateApplicantInvoice();
+    }
+
+    if (feesSummaryList){
+        feesSummaryList.innerHTML = __selectedFeeItems.map(item => `
+            <li class="flex items-center justify-between">
+                <span>${escapeHtml(item.name)}</span>
+                <span class="font-semibold">${peso(item.amount)}</span>
+            </li>
+        `).join('');
+    }
+
+    if (invoiceEl) invoiceEl.textContent = __currentInvoice;
+    if (statusEl){
+        if (tendered + 0.01 < amountDue){
+            const remaining = peso(amountDue - tendered);
+            statusEl.textContent = `Need ${remaining} more to proceed`;
+        } else {
+            statusEl.textContent = 'Ready to process payment';
+        }
+    }
+}
+
+function generateApplicantInvoice(){
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const stamp = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+    const suffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `APP-${stamp}-${suffix}`;
+}
+
+function hydrateApplicantPayment(app){
+    __currentApplication = app;
+    __activeApplicantId = Number(app.id || 0);
+    const codeInput = document.getElementById('app_no');
+    const nameInput = document.getElementById('applicant_name');
+    const statusInput = document.getElementById('app_status');
+    const code = app.application_code || (app.id ? `APP-${String(app.id)}` : 'APP-NEW');
+    if (codeInput) codeInput.value = code;
+    if (nameInput) nameInput.value = app.applicant_name || '—';
+    if (statusInput) statusInput.value = (app.status || '').toString();
+
+    __lastSavedInvoice = app.payment_receipt_no || __lastSavedInvoice || null;
+    __currentInvoice = null;
+
+    const amount = Number(app.fee_application ?? app.fee_inspection ?? 0) || 0;
+    const feeItems = amount > 0 ? [{ code: 'APPF', name: 'Applicant Fee', amount }] : [];
+    setFeeDetails(feeItems, app.status || '');
+    markActiveApplicantRow();
 }
 
 async function loadApplicantFeesById(id){
@@ -735,133 +1080,133 @@ async function loadApplicantFeesById(id){
         const res = await fetch(`/api/connections/${id}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
         const data = await res.json();
         if (!res.ok || !data.ok || !data.application) throw new Error('Application not found');
-        const app = data.application;
-        __currentApplication = app;
-        applicantHeader.classList.remove('hidden');
-        document.getElementById('app_no').value = 'APP-' + String(app.id);
-        document.getElementById('applicant_name').value = app.applicant_name || '—';
-        document.getElementById('app_status').value = (app.status || '').toString();
+        const app = normalizeApplication(data.application);
+        if (!app) return;
 
-        const rows = [];
-        const pushFee = (code, name, amount, partial=false) => {
-            const amt = Number(amount||0);
-            if (isNaN(amt) || amt <= 0) return;
-            rows.push({ code, name, amount: amt, partial, status: (app.status === 'paid') ? 'paid' : 'unpaid' });
-        };
-        pushFee('APP', 'Application Fee', app.fee_application, false);
-        pushFee('INSP', 'Inspection Fee', app.fee_inspection, true);
-
-        // If no assessed fees are stored yet, fall back to defaults for required payments
-        if (rows.length === 0){
-            const fallbackRows = [
-                { code:'APP', name:'Application Fee', amount:300, partial:false, status:'unpaid' },
-                { code:'INSP', name:'Inspection Fee', amount:200, partial:true, status:'unpaid' },
-            ];
-            renderFees(fallbackRows);
+        const existingIndex = __applicantDirectoryCache.findIndex(item => Number(item.id) === Number(app.id));
+        if (existingIndex >= 0){
+            __applicantDirectoryCache[existingIndex] = app;
         } else {
-            renderFees(rows);
+            __applicantDirectoryCache.unshift(app);
         }
-        hookFeeHandlers();
-        calcFeesSubtotal();
-        feesCard.classList.remove('hidden');
-        feesPanel.classList.remove('hidden');
-    } catch (e) {
+        refreshApplicantDirectory();
+        hydrateApplicantPayment(app);
+    } catch (error) {
         alert('Unable to load applicant fees for that application number.');
     }
 }
 
-async function loadApplicantFeesFromApi(){
-    try {
-        const url = new URL('{{ route('connections.index') }}', window.location.origin);
-        url.searchParams.set('status', 'assessed');
-        const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-        if (!res.ok) throw new Error('Failed to load applications');
-        const data = await res.json();
-        const list = (data && data.items && (data.items.data || data.items)) || [];
-        if (!Array.isArray(list) || list.length === 0){
-            // Fallback to placeholder if nothing to show
-            loadApplicantFeesForAccount('', '');
-            return;
-        }
-        const app = list[0];
-        __currentApplication = app;
-        applicantHeader.classList.remove('hidden');
-        document.getElementById('app_no').value = 'APP-' + String(app.id);
-        document.getElementById('applicant_name').value = app.applicant_name || '—';
-        document.getElementById('app_status').value = (app.status || '').toString();
-        const rows = [];
-        const pushFee = (code, name, amount, partial=false) => {
-            const amt = Number(amount||0);
-            if (isNaN(amt) || amt <= 0) return;
-            rows.push({ code, name, amount: amt, partial, status: (app.status === 'paid') ? 'paid' : 'unpaid' });
-        };
-        pushFee('APP', 'Application Fee', app.fee_application, false);
-        pushFee('INSP', 'Inspection Fee', app.fee_inspection, true);
-        if (rows.length === 0){
-            feesTbody.innerHTML = `<tr><td class="px-4 py-6 text-center text-gray-500 dark:text-gray-400" colspan="5">No fees assessed for this application.</td></tr>`;
-        } else {
-            renderFees(rows);
-            hookFeeHandlers();
-            calcFeesSubtotal();
-        }
-        feesCard.classList.remove('hidden');
-        feesPanel.classList.remove('hidden');
-    } catch (e) {
-        // Fallback to placeholder on error
-        loadApplicantFeesForAccount('', '');
-    }
-}
-document.getElementById('feesAmountPaid').addEventListener('input', calcFeesSubtotal);
-document.getElementById('feesProcessBtn').addEventListener('click', async function(){
-    try {
-        if (!__currentApplication || !__currentApplication.id){
-            alert('No application selected.');
-            return;
-        }
-        const subtotalText = document.getElementById('feesSubtotal').value || '₱0.00';
-        const subtotal = parseFloat(subtotalText.replace(/[^0-9.\-]+/g, '')) || 0;
-        if (subtotal <= 0){
-            alert('Please select at least one fee to pay.');
-            return;
-        }
-        // Auto-generate receipt number: OR-YYYYMMDDHHMMSS
-        const now = new Date();
-        const pad = n => String(n).padStart(2, '0');
-        const receipt = `OR-${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
-        const res = await fetch(`/api/connections/${__currentApplication.id}/pay`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            },
-            body: JSON.stringify({ payment_receipt_no: receipt })
-        });
-        let data;
-        try {
-            data = await res.json();
-        } catch(_) {
-            const text = await res.text();
-            throw new Error(`HTTP ${res.status} - ${text.slice(0,200)}`);
-        }
-        if (!res.ok || !data.ok){
-            const serverMsg = data.message || data.error || (data.errors ? JSON.stringify(data.errors) : '');
-            throw new Error(serverMsg || `Failed to process applicant fees payment (HTTP ${res.status})`);
-        }
-        alert('Applicant fees paid successfully.');
-        // Reload details for the same application so status and fees update
-        if (__currentApplication && __currentApplication.id){
-            loadApplicantFeesById(__currentApplication.id);
-        } else {
-            loadApplicantFeesFromApi();
-        }
-    } catch (err){
-        alert(String(err.message || err));
-    }
-});
+if (applicantDirectoryBody){
+    applicantDirectoryBody.addEventListener('click', (event) => {
+        const row = event.target.closest('[data-applicant-row]');
+        if (!row) return;
+        const id = Number(row.dataset.applicantRow);
+        if (!id || isNaN(id)) return;
+        selectApplicantFromDirectory(id);
+    });
 
-// Applicant search by Application No. (press Enter)
+    applicantDirectoryBody.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' '){
+            const row = event.target.closest('[data-applicant-row]');
+            if (!row) return;
+            event.preventDefault();
+            const id = Number(row.dataset.applicantRow);
+            if (!id || isNaN(id)) return;
+            selectApplicantFromDirectory(id);
+        }
+    });
+}
+
+if (applicantSearchInput){
+    applicantSearchInput.addEventListener('focus', () => { refreshApplicantDirectory(); }, { once: true });
+    applicantSearchInput.addEventListener('input', debounce(() => { refreshApplicantDirectory(); }, 200));
+}
+
+if (feesAmountPaidInput){
+    feesAmountPaidInput.addEventListener('input', calcFeesSubtotal);
+}
+
+const feesProcessBtn = document.getElementById('feesProcessBtn');
+if (feesProcessBtn){
+    feesProcessBtn.addEventListener('click', async function(){
+        try {
+            if (!__currentApplication || !__currentApplication.id){
+                alert('No application selected.');
+                return;
+            }
+            if (!__selectedFeeItems.length){
+                alert('No assessed fees available for this applicant.');
+                return;
+            }
+
+            const amountDue = Number(__currentAmountDue || 0);
+            if (amountDue <= 0){
+                alert('Subtotal must be greater than zero.');
+                return;
+            }
+
+            const amountTendered = Number(feesAmountPaidInput?.value || 0);
+            if (!amountTendered){
+                alert('Enter the amount tendered by the applicant.');
+                return;
+            }
+            if (amountTendered + 0.01 < amountDue){
+                alert('Amount tendered is insufficient to cover the applicant fee.');
+                return;
+            }
+
+            const change = Math.max(0, amountTendered - amountDue);
+            const payload = {
+                amount_due: Number(amountDue.toFixed(2)),
+                amount_tendered: Number(amountTendered.toFixed(2)),
+                change_given: Number(change.toFixed(2)),
+                fee_items: __selectedFeeItems.map(item => ({
+                    code: item.code,
+                    name: item.name,
+                    amount: Number(Number(item.amount || 0).toFixed(2)),
+                })),
+            };
+
+            feesProcessBtn.disabled = true;
+            feesProcessBtn.classList.add('opacity-60', 'pointer-events-none');
+
+            const res = await fetch(`/api/connections/${__currentApplication.id}/pay`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (!res.ok || !data.ok){
+                const serverMsg = data.message || data.error || (data.errors ? JSON.stringify(data.errors) : '');
+                throw new Error(serverMsg || `Failed to process applicant fees payment (HTTP ${res.status})`);
+            }
+
+            __lastSavedInvoice = data.invoice_number || __currentInvoice || __lastSavedInvoice;
+            __currentInvoice = null;
+            alert(`Applicant fee captured. Invoice ${__lastSavedInvoice}.`);
+
+            if (feesAmountPaidInput) feesAmountPaidInput.value = '';
+            if (feesChangeInput) feesChangeInput.value = '₱0.00';
+
+            await ensureApplicantDirectoryLoaded(true);
+            await refreshApplicantDirectory();
+            if (__currentApplication && __currentApplication.id){
+                await loadApplicantFeesById(__currentApplication.id);
+            }
+        } catch (err){
+            alert(String(err.message || err));
+        } finally {
+            feesProcessBtn.disabled = false;
+            feesProcessBtn.classList.remove('opacity-60', 'pointer-events-none');
+        }
+    });
+}
+
 const appNoInputEl = document.getElementById('app_no');
 if (appNoInputEl){
     appNoInputEl.addEventListener('keydown', function(e){
@@ -875,7 +1220,7 @@ if (appNoInputEl){
                 alert('Please enter a valid application number (e.g. APP-5).');
                 return;
             }
-            loadApplicantFeesById(id);
+            selectApplicantFromDirectory(id);
         }
     });
 }

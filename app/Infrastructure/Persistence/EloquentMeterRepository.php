@@ -9,9 +9,12 @@ use Illuminate\Support\Facades\DB;
 
 class EloquentMeterRepository implements MeterRepository
 {
-    public function paginateWithFilters(?string $q, ?string $status, ?string $type, ?string $barangay, int $perPage = 15): LengthAwarePaginator
+    public function paginateWithFilters(?string $q, ?string $status, ?string $type, ?string $barangay, string $scope = 'eligible', int $perPage = 15): LengthAwarePaginator
     {
-        $query = Meter::query();
+        $query = Meter::query()->with(['currentCustomer.latestApplication']);
+        if ($scope === 'eligible') {
+            $query->whereIn('status', ['inventory', 'installed', 'active']);
+        }
         if ($q) {
             $query->where(function($qq) use ($q) {
                 $qq->where('serial','like','%'.$q.'%')

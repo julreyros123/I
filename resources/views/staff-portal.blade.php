@@ -6,47 +6,82 @@
 
     <!-- Main Portal Content -->
     <div class="flex-1 p-8 font-[Poppins] transition-colors duration-300">
-        <div id="portalContent" class="p-2 max-w-6xl mx-auto space-y-6">
+        <div id="portalContent" class="p-2 w-full space-y-6">
 
             <!-- Title removed to save space -->
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-5">
-                    <div class="flex items-center">
-                        <div class="shrink-0 kpi-icon rounded-full flex items-center justify-center bg-transparent text-blue-600 dark:text-blue-300 mr-3" style="--kpi-icon-size: 1.5rem;">
-                            <x-heroicon-o-clock class="w-5 h-5" />
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6">
+                <a href="{{ route('records.billing') }}" class="group relative overflow-hidden rounded-2xl shadow-lg p-4 lg:p-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 bg-blue-600 text-white">
+                    <div class="relative flex h-full flex-col justify-between">
+                        <div class="flex items-start gap-3">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20">
+                                <x-heroicon-o-clock class="w-6 h-6" />
+                            </div>
+                            <div class="space-y-1">
+                                <p class="text-[11px] uppercase tracking-[0.2em] text-white/70">Pending queue</p>
+                                <p class="text-sm font-semibold text-white">Bills to generate</p>
+                            </div>
                         </div>
-                        <div class="ml-4 min-w-0 flex-1">
-                            <p class="text-xs font-medium text-gray-600 dark:text-gray-400">Pending to Generate</p>
-                            <p id="portalPendingCount" class="text-xl font-bold text-gray-900 dark:text-white mt-0.5 text-right">{{ $stats['pending_generate'] ?? 0 }}</p>
-                            <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">Bills still waiting to be generated</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-green-50 dark:bg-green-950 rounded-xl shadow p-5">
-                    <div class="flex items-center">
-                        <div class="shrink-0 kpi-icon rounded-full flex items-center justify-center bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300 mr-3" style="--kpi-icon-size: 1.5rem;">
-                            <x-heroicon-o-check-circle class="w-5 h-5" />
-                        </div>
-                        <div class="ml-4 min-w-0 flex-1">
-                            <p class="text-xs font-medium text-gray-600 dark:text-gray-400">Total Generated Bills</p>
-                            <p id="portalGeneratedCount" class="text-xl font-bold text-gray-900 dark:text-white mt-0.5 text-right">{{ $stats['generated_total'] ?? ($stats['generated'] ?? 0) }}</p>
-                            <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">Today: {{ $stats['generated_today'] ?? 0 }} · This month: {{ $stats['generated_month'] ?? 0 }}</p>
+                        <div class="text-right space-y-1 pt-6">
+                            <p class="text-3xl font-semibold" id="portalPendingCount">{{ $stats['pending_generate'] ?? 0 }}</p>
+                            <p class="text-[11px] text-white/70">Awaiting generation</p>
                         </div>
                     </div>
-                </div>
-                <div class="bg-blue-50 dark:bg-blue-950 rounded-xl shadow p-5">
-                    <div class="flex items-center">
-                        <div class="shrink-0 kpi-icon rounded-full flex items-center justify-center bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300 mr-3" style="--kpi-icon-size: 1.5rem;">
-                            <x-heroicon-o-user-plus class="w-5 h-5" />
+                </a>
+
+                <a href="{{ route('records.billing') }}" class="group relative overflow-hidden rounded-2xl shadow-lg p-4 lg:p-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 bg-blue-600 text-white">
+                    <div class="relative flex h-full flex-col justify-between">
+                        <div class="flex items-start gap-3">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20">
+                                <x-heroicon-o-check-circle class="w-6 h-6" />
+                            </div>
+                            <div class="space-y-1">
+                                <p class="text-[11px] uppercase tracking-[0.2em] text-white/70">Generated bills</p>
+                                <p class="text-sm font-semibold text-white">Total processed</p>
+                            </div>
                         </div>
-                        <div class="ml-4 min-w-0 flex-1">
-                            <p class="text-xs font-medium text-gray-600 dark:text-gray-400">Newly Registered</p>
-                            <p class="text-xl font-bold text-gray-900 dark:text-white mt-0.5 text-right">{{ $stats['new_customers_today'] ?? 0 }}</p>
-                            <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">Today · This month: {{ $stats['new_customers_month'] ?? 0 }}</p>
+                        <div class="text-right space-y-1 pt-6">
+                            <p class="text-3xl font-semibold" id="portalGeneratedCount">{{ $stats['generated_total'] ?? ($stats['generated'] ?? 0) }}</p>
+                            <p class="text-[11px] text-white/70">Today {{ $stats['generated_today'] ?? 0 }} · Month {{ $stats['generated_month'] ?? 0 }}</p>
                         </div>
                     </div>
-                </div>
+                </a>
+
+                <a href="{{ route('register.index') }}" class="group relative overflow-hidden rounded-2xl shadow-lg p-4 lg:p-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 bg-blue-600 text-white">
+                    <div class="relative flex h-full flex-col justify-between">
+                        <div class="flex items-start gap-3">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20">
+                                <x-heroicon-o-user-plus class="w-6 h-6" />
+                            </div>
+                            <div class="space-y-1">
+                                <p class="text-[11px] uppercase tracking-[0.2em] text-white/70">New registrations</p>
+                                <p class="text-sm font-semibold text-white">Customers added</p>
+                            </div>
+                        </div>
+                        <div class="text-right space-y-1 pt-6">
+                            <p class="text-3xl font-semibold">{{ $stats['new_customers_today'] ?? 0 }}</p>
+                            <p class="text-[11px] text-white/70">This month {{ $stats['new_customers_month'] ?? 0 }}</p>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="{{ route('records.billing') }}" class="group relative overflow-hidden rounded-2xl shadow-lg p-4 lg:p-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 bg-blue-600 text-white">
+                    <div class="relative flex h-full flex-col justify-between">
+                        <div class="flex items-start gap-3">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20">
+                                <x-heroicon-o-exclamation-triangle class="w-6 h-6" />
+                            </div>
+                            <div class="space-y-1">
+                                <p class="text-[11px] uppercase tracking-[0.2em] text-white/70">Disconnection risk</p>
+                                <p class="text-sm font-semibold text-white">Notice issued accounts</p>
+                            </div>
+                        </div>
+                        <div class="text-right space-y-1 pt-6">
+                            <p class="text-3xl font-semibold">{{ $stats['overdue'] ?? 0 }}</p>
+                            <p class="text-[11px] text-white/70">Flagged with "Notice of Disconnection"</p>
+                        </div>
+                    </div>
+                </a>
             </div>
             <div class="flex flex-wrap items-center gap-4 -mt-2 text-sm">
                 <a href="{{ route('billing.generation') }}" class="inline-flex items-center gap-1.5 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100/70 dark:hover:bg-gray-700/60 px-2 py-1 rounded">
@@ -201,8 +236,8 @@
 
                             var mo = new MutationObserver(function(){
                                 chart.updateOptions({
-                                    theme: { mode: isDark() ? 'dark' : 'light' },
-                                    xaxis: { labels: { style: { colors: isDark() ? '#cbd5e1' : '#6b7280' } } },
+                                theme: { mode: isDark() ? 'dark' : 'light' },
+                                xaxis: { labels: { style: { colors: isDark() ? '#cbd5e1' : '#6b7280' } } },
                                     yaxis: { labels: { style: { colors: isDark() ? '#cbd5e1' : '#6b7280' } } },
                                     grid: { borderColor: isDark() ? 'rgba(148,163,184,0.35)' : '#e5e7eb' },
                                     legend: { labels: { colors: isDark() ? '#e5e7eb' : '#4b5563' } }
@@ -214,69 +249,95 @@
                 </div>
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-5">
                     <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Newly Added Customers</h3>
+                        <div class="flex items-center gap-2">
+                            <x-heroicon-o-information-circle class="w-5 h-5 text-blue-500 dark:text-blue-300" />
+                            <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Newly Added Customers</h3>
+                        </div>
                     </div>
-                    <div class="space-y-3">
+                    <div class="border-t border-gray-200 dark:border-gray-700 mb-3"></div>
+                    <div class="divide-y divide-gray-200 dark:divide-gray-700">
                         @php($__nc = (isset($newCustomers) && is_array($newCustomers) && count($newCustomers) > 0) ? $newCustomers : [
                             ['name'=>'Demo Customer A','account_no'=>'22-000001-1','created_at'=>'Today 09:15'],
                             ['name'=>'Demo Customer B','account_no'=>'22-000002-1','created_at'=>'Today 10:02'],
                             ['name'=>'Demo Customer C','account_no'=>'22-000003-1','created_at'=>'Yesterday 16:41'],
                         ])
                         @foreach($__nc as $c)
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <div class="text-sm font-medium text-gray-800 dark:text-gray-100">{{ $c['name'] ?? '' }}</div>
+                            <div class="flex items-start gap-3 py-2 first:pt-0 last:pb-0">
+                                <div class="flex-1 min-w-0">
+                                    <div class="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{{ $c['name'] ?? '' }}</div>
                                     <div class="text-xs text-gray-500 dark:text-gray-400">{{ $c['account_no'] ?? '' }}</div>
                                 </div>
-                                <span class="text-xs text-gray-400">{{ $c['created_at'] ?? '' }}</span>
+                                <span class="text-xs text-gray-400 whitespace-nowrap">{{ $c['created_at'] ?? '' }}</span>
                             </div>
                         @endforeach
                     </div>
                 </div>
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-5">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Upcoming Activities</h3>
-                        <button type="button" id="staffAddActivityToggle" class="text-[11px] px-2 py-1 rounded border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Add Activity</button>
-                    </div>
-                    <div class="space-y-2 text-xs text-gray-700 dark:text-gray-200">
-                        <div class="flex items-center justify-between">
-                            <div class="flex flex-col">
-                                <span class="font-medium">Meter Reading</span>
-                                <span class="text-[11px] text-gray-500 dark:text-gray-400">Scheduled every 4th week of the month</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                <section class="bg-white dark:bg-gray-800 rounded-xl shadow p-5 flex flex-col h-full">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-2">
+                                <x-heroicon-o-information-circle class="w-5 h-5 text-blue-500 dark:text-blue-300" />
+                                <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Upcoming Activities</h3>
                             </div>
-                            <span class="text-[11px] text-gray-500 dark:text-gray-400">
-                                {{ \Carbon\Carbon::now()->copy()->startOfMonth()->addWeeks(3)->format('M d') }}
-                                –
-                                {{ \Carbon\Carbon::now()->copy()->startOfMonth()->addWeeks(3)->addDays(6)->format('M d') }}
-                            </span>
+                            <button type="button" id="staffAddActivityToggle" class="text-[11px] px-2 py-1 rounded border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover-bg-gray-700">Add Activity</button>
                         </div>
-                        <div class="flex items-center justify-between">
-                            <div class="flex flex-col">
-                                <span class="font-medium">Billing Generation</span>
-                                <span class="text-[11px] text-gray-500 dark:text-gray-400">Prepare and review bills (monthly)</span>
+                        <div class="border-t border-gray-200 dark:border-gray-700 mb-3"></div>
+                        <div class="divide-y divide-gray-200 dark:divide-gray-700 text-xs text-gray-700 dark:text-gray-200">
+                            <div class="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
+                                        <div class="flex flex-col">
+                                            <span class="font-medium">Meter Reading</span>
+                                            <span class="text-[11px] text-gray-500 dark:text-gray-400">Scheduled every 4th week of the month</span>
+                                        </div>
+                                        <span class="text-[11px] text-gray-500 dark:text-gray-400 sm:text-right">
+                                            {{ \Carbon\Carbon::now()->copy()->startOfMonth()->addWeeks(3)->format('M d') }}
+                                            –
+                                            {{ \Carbon\Carbon::now()->copy()->startOfMonth()->addWeeks(3)->addDays(6)->format('M d') }}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
-                            <span class="text-[11px] text-gray-500 dark:text-gray-400">
-                                {{ \Carbon\Carbon::now()->copy()->startOfMonth()->format('M d') }}
-                                –
-                                {{ \Carbon\Carbon::now()->copy()->startOfMonth()->addDays(6)->format('M d') }}
-                            </span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <div class="flex flex-col">
-                                <span class="font-medium">Delivery of Billing Statements</span>
-                                <span class="text-[11px] text-gray-500 dark:text-gray-400">Distribution to customers (aligned with billing generation)</span>
+                            <div class="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+                                <x-heroicon-o-information-circle class="w-4 h-4 text-blue-500 dark:text-blue-300 mt-0.5" />
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
+                                        <div class="flex flex-col">
+                                            <span class="font-medium">Billing Generation</span>
+                                            <span class="text-[11px] text-gray-500 dark:text-gray-400">Prepare and review bills (monthly)</span>
+                                        </div>
+                                        <span class="text-[11px] text-gray-500 dark:text-gray-400 sm:text-right">
+                                            {{ \Carbon\Carbon::now()->copy()->startOfMonth()->format('M d') }}
+                                            –
+                                            {{ \Carbon\Carbon::now()->copy()->startOfMonth()->addDays(6)->format('M d') }}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
-                            <span class="text-[11px] text-gray-500 dark:text-gray-400">
-                                {{ \Carbon\Carbon::now()->copy()->startOfMonth()->format('M d') }}
-                                –
-                                {{ \Carbon\Carbon::now()->copy()->startOfMonth()->addDays(6)->format('M d') }}
-                            </span>
+                            <div class="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+                                <x-heroicon-o-information-circle class="w-4 h-4 text-blue-500 dark:text-blue-300 mt-0.5" />
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
+                                        <div class="flex flex-col">
+                                            <span class="font-medium">Delivery of Billing Statements</span>
+                                            <span class="text-[11px] text-gray-500 dark:text-gray-400">Distribution to customers (aligned with billing generation)</span>
+                                        </div>
+                                        <span class="text-[11px] text-gray-500 dark:text-gray-400 sm:text-right">
+                                            {{ \Carbon\Carbon::now()->copy()->startOfMonth()->format('M d') }}
+                                            –
+                                            {{ \Carbon\Carbon::now()->copy()->startOfMonth()->addDays(6)->format('M d') }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="pt-3 mt-3 border-t border-gray-200 dark:border-gray-700 space-y-2">
                             <div class="flex items-center justify-between gap-2">
                                 <h4 class="text-[11px] font-semibold text-gray-700 dark:text-gray-200">My Activities</h4>
                             </div>
-                            <form id="staffActivityForm" class="flex flex-col gap-2 sm:flex-row sm:items-center">
+                            <form id="staffActivityForm" class="flex flex-col gap-2 sm:flex-row sm:items-center hidden">
                                 <input type="date" id="staffActivityDate" class="flex-none w-full sm:w-auto border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-[11px] bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">
                                 <input type="text" id="staffActivityDesc" placeholder="Description" class="flex-1 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-[11px] bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">
                                 <button type="submit" class="flex-none px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white text-[11px]">Save</button>
@@ -284,185 +345,22 @@
                             <div id="staffActivityEmpty" class="text-[11px] text-gray-400">No personal activities yet.</div>
                             <div id="staffActivityList" class="space-y-1"></div>
                         </div>
-                    </div>
-                </div>
-            </div>
+                </section>
 
-            <!-- Recent Activity: Staff login/logout -->
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-5">
-                <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Recent Activity</h3>
-                </div>
-                <div class="divide-y divide-gray-200 dark:divide-gray-700">
-                    @forelse(($recentActivity ?? []) as $act)
-                        <div class="flex items-center gap-3 py-2">
-                            @if(($act['type'] ?? '') === 'login')
-                                <x-heroicon-o-arrow-right-on-rectangle class="w-4 h-4 text-green-600" />
-                            @elseif(($act['type'] ?? '') === 'logout')
-                                <x-heroicon-o-arrow-left-on-rectangle class="w-4 h-4 text-gray-500" />
-                            @else
-                                <x-heroicon-o-bell class="w-4 h-4 text-blue-600" />
-                            @endif
-                            <div class="flex-1 min-w-0">
-                                <p class="text-sm text-gray-800 dark:text-gray-200 truncate">{{ $act['message'] ?? 'Activity' }}</p>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">{{ $act['time'] ?? '' }}</p>
-                            </div>
-                            @if(!empty($act['user']))
-                                <span class="text-xs text-gray-500 dark:text-gray-400">{{ $act['user'] }}</span>
-                            @endif
+                <section class="bg-white dark:bg-gray-800 rounded-xl shadow p-5 flex flex-col h-full" id="remediationTicketsPanel">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <x-heroicon-o-lifebuoy class="w-5 h-5 text-amber-500 dark:text-amber-300" />
+                            <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Remediation tickets</h3>
                         </div>
-                    @empty
-                        <div class="py-4 text-sm text-gray-500 dark:text-gray-400">No recent activity.</div>
-                    @endforelse
-                </div>
-            </div>
+                        <button type="button" id="refreshTickets" class="text-[11px] px-2 py-1 rounded border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Refresh</button>
+                    </div>
+                    <div class="border-t border-gray-200 dark:border-gray-700 mb-3"></div>
+                    <div id="ticketsContainer" class="flex-1 space-y-2 overflow-y-auto">
+                        <div class="rounded-lg border border-dashed border-gray-300 dark:border-gray-700 px-3 py-4 text-sm text-gray-500 dark:text-gray-400">No tickets assigned yet.</div>
+                    </div>
+                </section>
 
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 hidden">
-                <h5 class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-6">Customer Information</h5>
-
-                <div class="mb-6">
-                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                        Search by Account No.
-                    </label>
-                    <div class="relative">
-                        <input type="text" id="search"
-                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-500 rounded-lg
-                                bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-100
-                                focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                            placeholder="Type account number to see suggestions..."
-                            autocomplete="off">
-                        
-                        <!-- Suggestions Dropdown -->
-                        <div id="suggestions" class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto hidden">
-                            <!-- Suggestions will be populated here -->
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-semibold mb-2">Account No.</label>
-                    <input type="text" id="account_no"
-                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-500 rounded-lg bg-gray-100 dark:bg-gray-700 
-                                text-sm text-gray-900 dark:text-gray-200"
-                            value="" readonly>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold mb-2">Customer Name</label>
-                        <input type="text" id="customer_name"
-                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-500 rounded-lg
-                                bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-100"
-                            value="">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold mb-2">Address</label>
-                        <input type="text" id="customer_address"
-                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-500 rounded-lg
-                                bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-100"
-                            value="">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold mb-2">Meter No.</label>
-                        <input type="text" id="meter_no"
-                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-500 rounded-lg
-                                bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-100"
-                            value="">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold mb-2">Meter Size</label>
-                        <select id="meter_size"
-                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-500 rounded-lg
-                                bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-100">
-                            <option value="">Select Size</option>
-                            <option value="1/2\"">1/2"</option>
-                            <option value="3/4\"">3/4"</option>
-                            <option value="1\"">1"</option>
-                            <option value="2\"">2"</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 hidden">
-                <h5 class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-6">Billing Computation</h5>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-semibold mb-2">Previous Reading</label>
-                        <input type="number" id="prev_reading"
-                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-500 rounded-lg
-                                bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-100"
-                            value="0">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold mb-2">Current Reading</label>
-                        <input type="number" id="current_reading"
-                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-500 rounded-lg
-                                bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-100"
-                            value="0">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold mb-2">Billing Date From</label>
-                        <input type="date" id="date_from"
-                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-500 rounded-lg
-                                bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-100"
-                            value="">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold mb-2">Billing Date To</label>
-                        <input type="date" id="date_to"
-                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-500 rounded-lg
-                                bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-100"
-                            value="">
-                    </div>
-                </div>
-
-                <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-sm font-semibold mb-2">Consumption (m³) <span class="text-xs text-gray-500">(Auto-calculated)</span></label>
-                        <input type="text" id="consumption"
-                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-500 rounded-lg
-                                bg-gray-50 dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-200"
-                            readonly placeholder="Enter both readings to auto-calculate">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold mb-2">Subtotal</label>
-                        <input type="text" id="subtotal"
-                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-500 rounded-lg
-                                bg-gray-50 dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-200"
-                            readonly>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold mb-2">Maintenance Charge (₱)</label>
-                        <input type="number" id="maintenance_charge"
-                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-500 rounded-lg
-                                bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-100"
-                            value="0" min="0" step="0.01">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold mb-2">Advance Payment (₱)</label>
-                        <input type="text" id="advance_payment"
-                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-500 rounded-lg
-                                bg-gray-50 dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-200"
-                            readonly placeholder="Auto-calculated from previous excess">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold mb-2">Overdue Penalty (₱)</label>
-                        <input type="number" id="overdue_penalty"
-                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-500 rounded-lg
-                                bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-100"
-                            value="0" min="0" step="0.01">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold mb-2">Total Amount Due</label>
-                        <input type="text" id="total_amount"
-                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-500 rounded-lg
-                                bg-gray-50 dark:bg-gray-700 text-green-700 dark:text-green-400 font-semibold text-sm"
-                            readonly>
-                    </div>
-                </div>
-
-                <!-- Charges removed -->
             </div>
 
             <!-- Payment Status Section -->
@@ -473,6 +371,241 @@
                     <!-- Payment status will be populated here -->
                 </div>
             </div>
+
+            <script>
+            (function(){
+              const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+              const $ = id => document.getElementById(id);
+              const alertBox = $('alertBox');
+
+              const fields = ['previous_reading','current_reading','base_rate','maintenance_charge','overdue_penalty','account_no','date_from','date_to','prepared_by','issued_at'];
+
+              const state = {
+                accountPreview: $('accountPreview'),
+                issuedAtPreview: $('issuedAtPreview'),
+                preparedByPreview: $('preparedByPreview'),
+                dueDatePreview: $('dueDatePreview'),
+                consumptionInput: $('consumption'),
+                subtotalInput: $('subtotal_value'),
+                totalInput: $('total_value'),
+                consumptionDisplay: $('consumptionDisplay'),
+                subtotalDisplay: $('subtotalDisplay'),
+                maintenanceDisplay: $('maintenanceDisplay'),
+                penaltyDisplay: $('penaltyDisplay'),
+                totalDisplay: $('totalDisplay'),
+              };
+
+              function showAlert(message, type = 'success') {
+                if (!alertBox) return;
+                alertBox.classList.remove('hidden');
+                alertBox.textContent = message;
+                alertBox.className = '';
+                alertBox.classList.add('rounded-xl','px-4','py-3','text-sm','font-medium','transition','duration-200');
+                if (type === 'error') {
+                  alertBox.classList.add('bg-red-50','border-red-200','text-red-700','dark:bg-red-900/30','dark:border-red-800','dark:text-red-100');
+                } else {
+                  alertBox.classList.add('bg-emerald-50','border-emerald-200','text-emerald-700','dark:bg-emerald-900/30','dark:border-emerald-800','dark:text-emerald-100');
+                }
+                setTimeout(() => alertBox.classList.add('hidden'), 3500);
+              }
+
+              function formatCurrency(value) {
+                return '₱' + Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+              }
+
+              function sanitizeNumber(value, fallback = 0) {
+                const parsed = parseFloat(value);
+                return Number.isFinite(parsed) ? parsed : fallback;
+              }
+
+              function isValidAccount(value) {
+                return /^22-[0-9]{6}-[0-9]$/i.test(value || '');
+              }
+
+              function pad(num) {
+                return num.toString().padStart(2, '0');
+              }
+
+              function generateInvoiceNumber() {
+                const now = new Date();
+                const base = `INV-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
+                const random = Math.floor(1000 + Math.random() * 9000);
+                return `${base}-${random}`;
+              }
+
+              function updateDueDate() {
+                if (!state.dueDatePreview) return;
+                const dateToEl = $('date_to');
+                const dateTo = dateToEl ? dateToEl.value : '';
+                if (!dateTo) {
+                  state.dueDatePreview.textContent = 'End of month';
+                  return;
+                }
+                try {
+                  const due = new Date(dateTo);
+                  if (Number.isNaN(due.getTime())) throw new Error('Invalid date');
+                  state.dueDatePreview.textContent = due.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+                } catch (_) {
+                  state.dueDatePreview.textContent = '—';
+                }
+              }
+
+              function calculate() {
+                const previousEl = $('previous_reading');
+                const currentEl = $('current_reading');
+                const baseRateEl = $('base_rate');
+                const maintenanceEl = $('maintenance_charge');
+                const penaltyEl = $('overdue_penalty');
+
+                const previous = sanitizeNumber(previousEl ? previousEl.value : 0);
+                const current = sanitizeNumber(currentEl ? currentEl.value : 0);
+                const baseRate = sanitizeNumber(baseRateEl ? baseRateEl.value : 25, 25);
+                const maintenance = sanitizeNumber(maintenanceEl ? maintenanceEl.value : 0);
+                const penalty = sanitizeNumber(penaltyEl ? penaltyEl.value : 0);
+
+                const consumption = Math.max(0, current - previous);
+                const subtotal = consumption * baseRate;
+                const total = subtotal + maintenance + penalty;
+
+                if (state.consumptionInput) state.consumptionInput.value = consumption.toFixed(2);
+                if (state.subtotalInput) state.subtotalInput.value = subtotal.toFixed(2);
+                if (state.totalInput) state.totalInput.value = total.toFixed(2);
+
+                if (state.consumptionDisplay) state.consumptionDisplay.textContent = `${consumption.toFixed(2)} m³`;
+                if (state.subtotalDisplay) state.subtotalDisplay.textContent = formatCurrency(subtotal);
+                if (state.maintenanceDisplay) state.maintenanceDisplay.textContent = formatCurrency(maintenance);
+                if (state.penaltyDisplay) state.penaltyDisplay.textContent = formatCurrency(penalty);
+                if (state.totalDisplay) state.totalDisplay.textContent = formatCurrency(total);
+
+                const accountEl = $('account_no');
+                const account = (accountEl && accountEl.value ? accountEl.value : '').trim().toUpperCase();
+                if (state.accountPreview) state.accountPreview.textContent = account || '—';
+
+                const preparedEl = $('prepared_by');
+                if (state.preparedByPreview && preparedEl) {
+                  state.preparedByPreview.textContent = (preparedEl.value || '—').trim();
+                }
+
+                const issuedEl = $('issued_at');
+                if (state.issuedAtPreview && issuedEl && issuedEl.value) {
+                  const displayDate = new Date(issuedEl.value);
+                  state.issuedAtPreview.textContent = displayDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+                }
+
+                updateDueDate();
+              }
+
+              function hydrateDefaults() {
+                const invoiceField = $('invoice_number');
+                if (invoiceField && !invoiceField.value) {
+                  invoiceField.value = generateInvoiceNumber();
+                }
+                calculate();
+              }
+
+              const refreshBtn = $('refreshInvoice');
+              if (refreshBtn) {
+                refreshBtn.addEventListener('click', () => {
+                  const invoiceField = $('invoice_number');
+                  if (!invoiceField) return;
+                  invoiceField.value = generateInvoiceNumber();
+                  showAlert('Generated a fresh invoice number.');
+                });
+              }
+
+              fields.forEach(id => {
+                const el = $(id);
+                if (!el) return;
+                el.addEventListener('input', calculate);
+                el.addEventListener('change', calculate);
+              });
+
+              const saveBtn = $('saveBillBtn');
+              if (saveBtn) {
+                saveBtn.addEventListener('click', async () => {
+                  const accountEl = $('account_no');
+                  const accountNo = (accountEl && accountEl.value ? accountEl.value : '').trim().toUpperCase();
+                  if (!isValidAccount(accountNo)) {
+                    return showAlert('Invalid account number. Expected format is 22-123456-1.', 'error');
+                  }
+
+                  const previousEl = $('previous_reading');
+                  const currentEl = $('current_reading');
+                  const previous = sanitizeNumber(previousEl ? previousEl.value : 0);
+                  const current = sanitizeNumber(currentEl ? currentEl.value : 0);
+                  if (!(current > previous)) {
+                    return showAlert('Current reading must be higher than the previous reading.', 'error');
+                  }
+
+                  const invoiceField = $('invoice_number');
+                  const preparedEl = $('prepared_by');
+                  const issuedEl = $('issued_at');
+
+                  const invoiceNumber = (invoiceField && invoiceField.value ? invoiceField.value : '').trim().toUpperCase();
+                  const preparedBy = (preparedEl && preparedEl.value ? preparedEl.value : '').trim();
+                  const issuedAt = issuedEl && issuedEl.value ? new Date(issuedEl.value) : null;
+
+                  const payload = {
+                    invoice_number: invoiceNumber,
+                    prepared_by: preparedBy,
+                    issued_at: issuedAt ? issuedAt.toISOString() : null,
+                    account_no: accountNo,
+                    previous_reading: previous,
+                    current_reading: current,
+                    consumption_cu_m: sanitizeNumber(state.consumptionInput ? state.consumptionInput.value : 0),
+                    base_rate: sanitizeNumber(($('base_rate') || {}).value, 25),
+                    maintenance_charge: sanitizeNumber(($('maintenance_charge') || {}).value),
+                    overdue_penalty: sanitizeNumber(($('overdue_penalty') || {}).value),
+                    vat: 0,
+                    total_amount: sanitizeNumber(state.totalInput ? state.totalInput.value : 0),
+                    date_from: ($('date_from') || {}).value || null,
+                    date_to: ($('date_to') || {}).value || null,
+                  };
+
+                  const btn = saveBtn;
+                  const originalText = btn.textContent;
+                  btn.disabled = true;
+                  btn.textContent = 'Saving…';
+
+                  try {
+                    const response = await fetch('{{ route('api.billing.store') }}', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': token,
+                        'Accept': 'application/json',
+                      },
+                      body: JSON.stringify(payload),
+                    });
+
+                    const data = await response.json();
+                    if (!response.ok || !data.ok) {
+                      throw new Error(data.error || 'Unable to save bill');
+                    }
+
+                    showAlert(`Bill saved successfully. Invoice ${data.invoice_number || invoiceNumber} is now pending.`, 'success');
+                  } catch (error) {
+                    showAlert(error.message || 'Failed to save the bill.', 'error');
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                    return;
+                  }
+
+                  btn.textContent = originalText;
+                  btn.disabled = false;
+                });
+              }
+
+              const loadPrevBtn = $('loadPrev');
+              if (loadPrevBtn) {
+                loadPrevBtn.addEventListener('click', () => {
+                  showAlert('Previous readings lookup will be enabled soon. For now, enter values manually.', 'success');
+                });
+              }
+
+              hydrateDefaults();
+            })();
+            </script>
 
             <!-- Action Buttons -->
             <div class="flex flex-wrap items-center justify-end gap-3">
