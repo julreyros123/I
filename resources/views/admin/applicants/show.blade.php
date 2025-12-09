@@ -3,6 +3,10 @@
 @section('title', 'Applicant Details')
 
 @section('content')
+@php
+    $approvedStatuses = ['approved', 'waiting_payment', 'paid', 'scheduled', 'installing', 'installed'];
+    $isApproved = in_array($app->status, $approvedStatuses, true) || $app->decision === 'approve';
+@endphp
 <div class="w-full mx-auto px-4 sm:px-6 py-5 lg:py-8 font-[Poppins] space-y-6">
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div class="space-y-1">
@@ -200,11 +204,11 @@
                 <div class="pt-4 border-t border-gray-100 dark:border-gray-800">
                     <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Finalize outcome once duplicate and billing checks are cleared.</p>
                     <div class="flex flex-wrap items-center gap-2">
-                        <button class="approve-btn inline-flex items-center gap-2 rounded-lg bg-emerald-600 text-white px-4 py-2 hover:bg-emerald-500" data-id="{{ $app->id }}">
+                        <button class="approve-btn inline-flex items-center gap-2 rounded-lg bg-emerald-600 text-white px-4 py-2 hover:bg-emerald-500 {{ $isApproved ? 'opacity-60 cursor-not-allowed pointer-events-none' : '' }}" data-id="{{ $app->id }}" @if($isApproved) disabled @endif>
                             <x-heroicon-o-check class="w-5 h-5" />
                             <span class="text-sm font-semibold">Approve</span>
                         </button>
-                        <button class="reject-btn inline-flex items-center gap-2 rounded-lg bg-rose-600 text-white px-4 py-2 hover:bg-rose-500" data-id="{{ $app->id }}">
+                        <button class="reject-btn inline-flex items-center gap-2 rounded-lg px-4 py-2 {{ $isApproved ? 'bg-gray-300 text-gray-500 cursor-not-allowed pointer-events-none' : 'bg-rose-600 text-white hover:bg-rose-500' }}" data-id="{{ $app->id }}" @if($isApproved) data-disabled="true" disabled title="Already approved" @endif>
                             <x-heroicon-o-no-symbol class="w-5 h-5" />
                             <span class="text-sm font-semibold">Reject</span>
                         </button>
@@ -287,6 +291,9 @@
                 await send(`/api/applications/${approve.dataset.id}/approve`, 'PUT', { auto_verify: false });
             }
             if (reject) {
+                if (reject.dataset.disabled || reject.hasAttribute('disabled')) {
+                    return;
+                }
                 const reason = window.prompt('Optional reason for rejection:');
                 await send(`/api/applications/${reject.dataset.id}/reject`, 'PUT', { reason });
             }

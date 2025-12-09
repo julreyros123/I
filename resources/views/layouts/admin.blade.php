@@ -44,6 +44,8 @@
         </div>
     </main>
 
+    @stack('modals')
+
     <div id="toast-container" class="fixed top-6 right-6 z-50 space-y-2 pointer-events-none"></div>
 
     <div class="fixed inset-0 bg-black bg-opacity-50 z-10 md:hidden" 
@@ -66,6 +68,106 @@
         if (window.innerWidth < 768){ closeSidebar(); } else { sidebar.style.transform = ''; if (overlay){ overlay.style.display = 'none'; overlay.style.left = '0'; } }
         document.querySelectorAll('table').forEach(function(tbl){ if (tbl.closest('.table-responsive-wrapper')) return; var wrapper = document.createElement('div'); wrapper.className = 'table-responsive-wrapper overflow-x-auto -mx-4 md:mx-0 relative'; tbl.classList.add('min-w-max'); tbl.parentNode.insertBefore(wrapper, tbl); wrapper.appendChild(tbl); var hint = document.createElement('div'); hint.className = 'scroll-hint pointer-events-none absolute right-2 top-2 text-[11px] bg-black/50 text-white px-2 py-1 rounded md:hidden'; hint.textContent = 'Scroll →'; wrapper.appendChild(hint); function updateHint(){ var canScroll = wrapper.scrollWidth > wrapper.clientWidth; var atEnd = (wrapper.scrollLeft + wrapper.clientWidth) >= (wrapper.scrollWidth - 1); hint.style.display = (canScroll && !atEnd) ? 'block' : 'none'; } wrapper.addEventListener('scroll', updateHint); window.addEventListener('resize', updateHint); updateHint(); });
     });
+    </script>
+
+    <script>
+    (function(){
+        function openModal(modal){
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            modal.setAttribute('aria-hidden', 'false');
+            const autofocus = modal.querySelector('[data-modal-autofocus] input, [data-modal-autofocus] select, [data-modal-autofocus] textarea');
+            if (autofocus) {
+                setTimeout(() => autofocus.focus(), 50);
+            }
+        }
+
+        function closeModal(modal){
+            if (!modal) return;
+            modal.classList.add('hidden');
+            modal.setAttribute('aria-hidden', 'true');
+        }
+
+        document.addEventListener('click', function(event){
+            const trigger = event.target.closest('[data-open-modal]');
+            if (trigger) {
+                const targetId = trigger.getAttribute('data-open-modal');
+                const modal = document.getElementById(targetId);
+                openModal(modal);
+                event.preventDefault();
+                return;
+            }
+
+            const dismiss = event.target.closest('[data-modal-dismiss]');
+            if (dismiss) {
+                const modal = dismiss.closest('[data-modal]');
+                closeModal(modal);
+                event.preventDefault();
+                return;
+            }
+        });
+
+        document.addEventListener('click', function(event){
+            const backdrop = event.target.closest('[data-modal-backdrop]');
+            if (backdrop) {
+                const modal = backdrop.closest('[data-modal]');
+                closeModal(modal);
+            }
+        });
+
+        document.addEventListener('keydown', function(event){
+            if (event.key !== 'Escape') return;
+            document.querySelectorAll('[data-modal]:not(.hidden)').forEach(closeModal);
+        });
+
+        document.addEventListener('change', function(event){
+            const select = event.target;
+            if (!(select instanceof HTMLSelectElement)) return;
+
+            if (select.hasAttribute('data-app-select')) {
+                const accountTarget = select.dataset.accountTarget;
+                const applicationTarget = select.dataset.applicationTarget;
+                const fallbackReset = select.dataset.fallbackReset;
+
+                const accountInput = accountTarget ? document.querySelector(accountTarget) : null;
+                const applicationInput = applicationTarget ? document.querySelector(applicationTarget) : null;
+                const selectedOption = select.selectedOptions[0];
+
+                if (accountInput) {
+                    accountInput.value = select.value || '';
+                }
+                if (applicationInput) {
+                    applicationInput.value = selectedOption ? selectedOption.getAttribute('data-application-id') || '' : '';
+                }
+                if (fallbackReset) {
+                    const fallbackSelect = document.querySelector(fallbackReset);
+                    if (fallbackSelect instanceof HTMLSelectElement) {
+                        fallbackSelect.selectedIndex = 0;
+                    }
+                }
+            } else if (select.hasAttribute('data-fallback-select')) {
+                const accountTarget = select.dataset.accountTarget;
+                const applicationTarget = select.dataset.applicationTarget;
+                const scheduledReset = select.dataset.scheduledReset;
+
+                const accountInput = accountTarget ? document.querySelector(accountTarget) : null;
+                const applicationInput = applicationTarget ? document.querySelector(applicationTarget) : null;
+
+                if (accountInput) {
+                    accountInput.value = select.value || '';
+                }
+                if (applicationInput) {
+                    applicationInput.value = '';
+                }
+                if (scheduledReset) {
+                    const scheduledSelect = document.querySelector(scheduledReset);
+                    if (scheduledSelect instanceof HTMLSelectElement) {
+                        scheduledSelect.selectedIndex = 0;
+                    }
+                }
+            }
+        });
+    })();
     </script>
 
     <script>

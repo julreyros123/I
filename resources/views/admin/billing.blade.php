@@ -68,7 +68,11 @@
                     </thead>
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700 text-gray-800 dark:text-gray-100">
                         @forelse($records as $r)
-                        <tr>
+                        <tr
+                            data-customer-name="{{ $r->customer->name ?? '' }}"
+                            data-customer-email="{{ $r->customer->email ?? '' }}"
+                            data-meter-no="{{ $r->customer->meter_no ?? '' }}"
+                        >
                             <td class="px-4 py-2 whitespace-nowrap text-sm">{{ optional($r->created_at)->format('Y-m-d') }}</td>
                             <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{{ $r->account_no }}</td>
                             <td class="px-4 py-2 whitespace-nowrap text-sm">{{ $r->customer->name ?? '—' }}</td>
@@ -207,12 +211,15 @@
             <script>
               document.addEventListener('DOMContentLoaded', function(){
                 function parseRow(tr){
-                  var tds = tr.querySelectorAll('td');
+                  const dataName = tr.getAttribute('data-customer-name');
+                  const dataEmail = tr.getAttribute('data-customer-email');
+                  const dataMeter = tr.getAttribute('data-meter-no');
+                  const tds = tr.querySelectorAll('td');
                   return {
                     billId: tds[0]?.textContent.trim(),
-                    name: tds[1]?.querySelector('div:nth-child(1)')?.textContent.trim() || '',
-                    email: tds[1]?.querySelector('div:nth-child(2)')?.textContent.trim() || '',
-                    meter: tds[2]?.textContent.trim(),
+                    name: dataName || tds[2]?.textContent.trim() || '',
+                    email: dataEmail || '',
+                    meter: dataMeter || tds[1]?.textContent.trim() || '',
                     period: tds[3]?.textContent.trim(),
                     amount: tds[4]?.textContent.trim(),
                     indicator: tds[5]?.textContent.trim() || '',

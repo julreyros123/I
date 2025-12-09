@@ -477,13 +477,14 @@ class AdminController extends Controller
     {
         abort_unless(auth()->check() && auth()->user()->role === 'admin', 403);
 
-        $groupBy = in_array($request->get('group_by'), ['day','month','year']) ? $request->get('group_by') : 'month';
-        $from = $request->get('from');
-        $to = $request->get('to');
-        $customer = trim((string) $request->get('customer', ''));
+        $viewParam = $request->get('view');
+        $activeView = in_array($viewParam, ['payments', 'issues', 'print'], true) ? $viewParam : 'payments';
+        $groupBy = in_array($request->get('group_by'), ['day', 'month', 'year'], true) ? $request->get('group_by') : 'month';
 
-        // Default range: this year if grouping by month/year; last 30 days if by day
-        if (!$from || !$to) {
+        $fromInput = $request->get('from');
+        $toInput = $request->get('to');
+
+        if (!$fromInput || !$toInput) {
             if ($groupBy === 'day') {
                 $from = now()->copy()->subDays(29)->startOfDay();
                 $to = now()->endOfDay();
@@ -492,149 +493,190 @@ class AdminController extends Controller
                 $to = now()->endOfYear();
             }
         } else {
-            $from = now()->parse($from)->startOfDay();
-            $to = now()->parse($to)->endOfDay();
+            $from = now()->parse($fromInput)->startOfDay();
+            $to = now()->parse($toInput)->endOfDay();
         }
 
-        // Base queries with filters
-        $billBase = BillingRecord::with('customer')
-            ->whereBetween('created_at', [$from, $to])
-            ->when($customer, fn($q)=>$q->whereHas('customer', fn($s)=>$s->where('name','like',"%{$customer}%")));
+        $customer = $activeView === 'payments' ? trim((string) $request->get('customer', '')) : null;
 
-        $payBase = PaymentRecord::with(['customer','billingRecord'])
-            ->whereBetween('created_at', [$from, $to])
-            ->when($customer, fn($q)=>$q->whereHas('customer', fn($s)=>$s->where('name','like',"%{$customer}%")));
+        $filters = [
+            'from' => $from->toDateString(),
+            'to' => $to->toDateString(),
+        ];
 
-        // Summary (revenue focuses on paid bills)
-        $totalBilled = (float) (clone $billBase)->sum('total_amount');
-        $totalPaid = (float) (clone $payBase)->sum('amount_paid');
-        $unpaid = 0.0; // revenue report focuses on paid collections
+        if ($activeView === 'payments') {
+            $filters['group_by'] = $groupBy;
+            $filters['customer'] = $customer;
+        }
 
-        $billsCreated = (int) (clone $billBase)->count();
+        $summary = [
+            'total_billed' => 0.0,
+            'total_paid' => 0.0,
+            'unpaid' => 0.0,
+        ];
 
-        // Operational metrics
-        $registeredCustomers = Customer::query()
-            ->when($customer, fn($q) => $q->where('name', 'like', "%{$customer}%"))
-            ->whereBetween('created_at', [$from, $to])
-            ->count();
+        $breakdown = [];
+        $operationalMetrics = [
+            'registered_customers' => 0,
+            'bills_created' => 0,
+            'issue_reports' => 0,
+            'meter_replacements' => 0,
+            'meter_damages' => 0,
+            'disconnected_customers' => 0,
+            'disconnection_events' => 0,
+            'reconnection_events' => 0,
+        ];
 
-        $issueBase = Report::query()->with('user')
-            ->whereBetween('created_at', [$from, $to]);
+        $meterIncidents = [];
+        $recentDisconnections = [];
 
-        $issueTotal = (clone $issueBase)->count();
-        $issueByStatus = (clone $issueBase)
-            ->select('status', DB::raw('COUNT(*) as total'))
-            ->groupBy('status')
-            ->orderByDesc('total')
-            ->get()
-            ->map(fn ($row) => [
-                'label' => $row->status ?: 'Unspecified',
-                'total' => (int) ($row->total ?? 0),
-            ])->all();
+        $issueSummary = [
+            'total' => 0,
+            'priority' => 0,
+            'completed' => 0,
+        ];
 
-        $issueByCategory = (clone $issueBase)
-            ->select('category', DB::raw('COUNT(*) as total'))
-            ->groupBy('category')
-            ->orderByDesc('total')
-            ->get()
-            ->map(fn ($row) => [
-                'label' => $row->category ?: 'Unspecified',
-                'total' => (int) ($row->total ?? 0),
-            ])->all();
+        $issueByStatus = [];
+        $issueByCategory = [];
+        $recentIssues = [];
+        $issueTimeline = [];
 
-        $recentIssues = (clone $issueBase)
-            ->orderByDesc('created_at')
-            ->limit(6)
-            ->get(['id', 'category', 'status', 'created_at', 'other_problem']);
+        if (in_array($activeView, ['payments', 'print'], true)) {
+            $billBase = BillingRecord::with('customer')
+                ->whereBetween('created_at', [$from, $to])
+                ->when($customer, fn ($q) => $q->whereHas('customer', fn ($s) => $s->where('name', 'like', "%{$customer}%")));
 
-        $meterAuditBase = MeterAudit::with('meter')
-            ->whereBetween('created_at', [$from, $to]);
+            $payBase = PaymentRecord::with(['customer', 'billingRecord'])
+                ->whereBetween('created_at', [$from, $to])
+                ->when($customer, fn ($q) => $q->whereHas('customer', fn ($s) => $s->where('name', 'like', "%{$customer}%")));
 
-        $meterIncidents = (clone $meterAuditBase)
-            ->orderByDesc('created_at')
-            ->limit(10)
-            ->get(['meter_id','action','reason','created_at']);
+            $summary['total_billed'] = (float) (clone $billBase)->sum('total_amount');
+            $summary['total_paid'] = (float) (clone $payBase)->sum('amount_paid');
 
-        $meterReplacementCount = (clone $meterAuditBase)
-            ->where(function ($q) {
-                $q->where('reason', 'like', '%replac%')
-                  ->orWhere('action', 'like', '%replac%');
-            })->count();
+            $operationalMetrics['bills_created'] = (int) (clone $billBase)->count();
+            $operationalMetrics['registered_customers'] = Customer::query()
+                ->when($customer, fn ($q) => $q->where('name', 'like', "%{$customer}%"))
+                ->whereBetween('created_at', [$from, $to])
+                ->count();
 
-        $meterDamageCount = (clone $meterAuditBase)
-            ->where(function ($q) {
-                $q->where('reason', 'like', '%damag%')
-                  ->orWhere('action', 'like', '%damag%');
-            })->count();
+            $issueSummary['total'] = Report::whereBetween('created_at', [$from, $to])->count();
+            $operationalMetrics['issue_reports'] = $issueSummary['total'];
 
-        $disconnectedCustomers = Customer::where('status', 'Disconnected')->count();
-        $disconnectionEvents = TransferReconnectAudit::query()
-            ->where('action', 'disconnect')
-            ->whereBetween('performed_at', [$from, $to])
-            ->count();
-        $reconnectionEvents = TransferReconnectAudit::query()
-            ->where('action', 'reconnect')
-            ->whereBetween('performed_at', [$from, $to])
-            ->count();
+            $meterAuditBase = MeterAudit::with('meter')
+                ->whereBetween('created_at', [$from, $to]);
 
-        $recentDisconnections = TransferReconnectAudit::query()
-            ->whereBetween('performed_at', [$from, $to])
-            ->orderByDesc('performed_at')
-            ->limit(10)
-            ->get(['account_no', 'action', 'performed_at', 'notes']);
+            $operationalMetrics['meter_replacements'] = (clone $meterAuditBase)
+                ->where(function ($q) {
+                    $q->where('reason', 'like', '%replac%')
+                      ->orWhere('action', 'like', '%replac%');
+                })->count();
 
-        // Breakdown
-        $format = match($groupBy){
-            'day' => '%Y-%m-%d',
-            'year' => '%Y',
-            default => '%Y-%m'
-        };
+            $operationalMetrics['meter_damages'] = (clone $meterAuditBase)
+                ->where(function ($q) {
+                    $q->where('reason', 'like', '%damag%')
+                      ->orWhere('action', 'like', '%damag%');
+                })->count();
 
-        // Paid rows grouped by period (collections)
-        $paidRows = (clone $payBase)
-            ->selectRaw("DATE_FORMAT(created_at, '{$format}') as p, COUNT(*) as payments, SUM(amount_paid) as paid")
-            ->groupBy('p')->orderBy('p')->get();
+            $meterIncidents = (clone $meterAuditBase)
+                ->orderByDesc('created_at')
+                ->limit(10)
+                ->get(['meter_id', 'action', 'reason', 'created_at']);
 
-        // Build breakdown based solely on payments
-        $breakdown = $paidRows->map(function($row){
-            $period = $row->p;
-            $payments = (int) ($row->payments ?? 0);
-            $paid = (float) ($row->paid ?? 0);
-            return [
-                'period' => $period,
-                'bills' => $payments,
-                'paid' => $paid,
-                'unpaid' => 0.0,
-                'revenue' => $paid,
+            $operationalMetrics['disconnected_customers'] = Customer::where('status', 'Disconnected')->count();
+            $operationalMetrics['disconnection_events'] = TransferReconnectAudit::query()
+                ->where('action', 'disconnect')
+                ->whereBetween('performed_at', [$from, $to])
+                ->count();
+            $operationalMetrics['reconnection_events'] = TransferReconnectAudit::query()
+                ->where('action', 'reconnect')
+                ->whereBetween('performed_at', [$from, $to])
+                ->count();
+
+            $recentDisconnections = TransferReconnectAudit::query()
+                ->whereBetween('performed_at', [$from, $to])
+                ->orderByDesc('performed_at')
+                ->limit(10)
+                ->get(['account_no', 'action', 'performed_at', 'notes']);
+
+            $format = match ($groupBy) {
+                'day' => '%Y-%m-%d',
+                'year' => '%Y',
+                default => '%Y-%m',
+            };
+
+            $breakdown = (clone $payBase)
+                ->selectRaw("DATE_FORMAT(created_at, '{$format}') as period, COUNT(*) as payments, SUM(amount_paid) as paid")
+                ->groupBy('period')
+                ->orderBy('period')
+                ->get()
+                ->map(fn ($row) => [
+                    'period' => $row->period,
+                    'bills' => (int) ($row->payments ?? 0),
+                    'paid' => (float) ($row->paid ?? 0),
+                    'unpaid' => 0.0,
+                    'revenue' => (float) ($row->paid ?? 0),
+                ])
+                ->toArray();
+        } else {
+            $issueBase = Report::query()->with('user')
+                ->whereBetween('created_at', [$from, $to]);
+
+            $issueSummary = [
+                'total' => (clone $issueBase)->count(),
+                'priority' => (clone $issueBase)->where('is_priority', true)->count(),
+                'completed' => (clone $issueBase)->where('status', 'completed')->count(),
             ];
-        });
+
+            $issueByStatus = (clone $issueBase)
+                ->select('status', DB::raw('COUNT(*) as total'))
+                ->groupBy('status')
+                ->orderByDesc('total')
+                ->get()
+                ->map(fn ($row) => [
+                    'label' => $row->status ?: 'Unspecified',
+                    'total' => (int) ($row->total ?? 0),
+                ])
+                ->toArray();
+
+            $issueByCategory = (clone $issueBase)
+                ->select('category', DB::raw('COUNT(*) as total'))
+                ->groupBy('category')
+                ->orderByDesc('total')
+                ->get()
+                ->map(fn ($row) => [
+                    'label' => $row->category ?: 'Unspecified',
+                    'total' => (int) ($row->total ?? 0),
+                ])
+                ->toArray();
+
+            $recentIssues = (clone $issueBase)
+                ->orderByDesc('created_at')
+                ->limit(15)
+                ->get(['id', 'category', 'status', 'created_at', 'other_problem', 'message']);
+
+            $issueTimeline = (clone $issueBase)
+                ->selectRaw('DATE(created_at) as period, COUNT(*) as total')
+                ->groupBy('period')
+                ->orderBy('period')
+                ->get()
+                ->map(fn ($row) => [
+                    'period' => $row->period,
+                    'total' => (int) ($row->total ?? 0),
+                ])
+                ->toArray();
+        }
 
         return view('admin.reports.revenue', [
-            'filters' => [
-                'from' => $from?->toDateString(),
-                'to' => $to?->toDateString(),
-                'group_by' => $groupBy,
-                'customer' => $customer,
-            ],
-            'summary' => [
-                'total_billed' => $totalBilled,
-                'total_paid' => $totalPaid,
-                'unpaid' => $unpaid,
-            ],
+            'filters' => $filters,
+            'activeView' => $activeView,
+            'summary' => $summary,
             'breakdown' => $breakdown,
-            'operationalMetrics' => [
-                'registered_customers' => $registeredCustomers,
-                'bills_created' => $billsCreated,
-                'issue_reports' => $issueTotal,
-                'meter_replacements' => $meterReplacementCount,
-                'meter_damages' => $meterDamageCount,
-                'disconnected_customers' => $disconnectedCustomers,
-                'disconnection_events' => $disconnectionEvents,
-                'reconnection_events' => $reconnectionEvents,
-            ],
+            'operationalMetrics' => $operationalMetrics,
+            'issueSummary' => $issueSummary,
             'issueByStatus' => $issueByStatus,
             'issueByCategory' => $issueByCategory,
             'recentIssues' => $recentIssues,
+            'issueTimeline' => $issueTimeline,
             'meterIncidents' => $meterIncidents,
             'recentDisconnections' => $recentDisconnections,
         ]);

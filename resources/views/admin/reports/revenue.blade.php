@@ -2,23 +2,63 @@
 
 @section('title', 'Admin • Revenue Report')
 
+@php
+    $activeView = $activeView ?? 'payments';
+    $isPayments = $activeView === 'payments';
+    $isIssues = $activeView === 'issues';
+    $isPrint = $activeView === 'print';
+    $queryExceptView = request()->except('view');
+@endphp
+
 @section('content')
 <div class="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 font-[Poppins] space-y-6 lg:space-y-8 print:px-0">
     <div class="rounded-3xl bg-gradient-to-r from-blue-600 via-blue-500 to-sky-500 text-white p-6 shadow-xl print:hidden">
         <div class="flex flex-wrap items-start justify-between gap-4">
             <div class="space-y-1">
-                <h1 class="text-2xl font-semibold">Revenue Report</h1>
-                <p class="text-sm/relaxed text-white/80">Monitor collections, compare billed versus paid, and drill into historical performance.</p>
+                <h1 class="text-2xl font-semibold">
+                    @if($isPayments)
+                        Customer Payment Report
+                    @elseif($isIssues)
+                        Issue Report
+                    @else
+                        Printable Reports
+                    @endif
+                </h1>
+                <p class="text-sm/relaxed text-white/80">
+                    @if($isPayments)
+                        Monitor collections, compare billed against paid invoices, and drill into customer payments.
+                    @elseif($isIssues)
+                        Track reported customer issues, priorities, and resolutions across the selected period.
+                    @else
+                        Generate printer-friendly revenue summaries and operational metrics for archival use.
+                    @endif
+                </p>
             </div>
             <div class="inline-flex items-center gap-2 text-xs bg-white/10 px-3 py-1 rounded-xl">
-                <x-heroicon-o-banknotes class="w-4 h-4" /> Collections-focused dashboard
+                <x-heroicon-o-banknotes class="w-4 h-4" /> Reports Dashboard
             </div>
+        </div>
+        <div class="mt-4 flex flex-wrap items-center gap-2">
+            <a href="{{ route('admin.reports.revenue', array_merge($queryExceptView, ['view' => 'payments'])) }}"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition {{ $isPayments ? 'bg-white text-blue-600 shadow' : 'bg-white/15 text-white hover:bg-white/20' }}">
+                <x-heroicon-o-banknotes class="w-4 h-4" /> Customer Payment Report
+            </a>
+            <a href="{{ route('admin.reports.revenue', array_merge($queryExceptView, ['view' => 'issues'])) }}"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition {{ $isIssues ? 'bg-white text-blue-600 shadow' : 'bg-white/15 text-white hover:bg-white/20' }}">
+                <x-heroicon-o-exclamation-triangle class="w-4 h-4" /> Issue Report
+            </a>
+            <a href="{{ route('admin.reports.revenue', array_merge($queryExceptView, ['view' => 'print'])) }}"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition {{ $isPrint ? 'bg-white text-blue-600 shadow' : 'bg-white/15 text-white hover:bg-white/20' }}">
+                <x-heroicon-o-printer class="w-4 h-4" /> Print Reports
+            </a>
         </div>
     </div>
 
     <!-- Filters -->
+    @if($isPayments)
     <div class="bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700/60 p-6 print:hidden">
         <form method="GET" class="w-full space-y-5">
+            <input type="hidden" name="view" value="payments">
             <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-5">
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
@@ -55,16 +95,16 @@
                 <p class="text-xs text-gray-500 dark:text-gray-400">Tip: Use quick ranges for rolling analysis, then refine using exact dates.</p>
                 <div class="flex gap-2">
                     <button type="submit" class="inline-flex items-center justify-center px-5 h-[42px] rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-500 transition">Apply filters</button>
-                    <a href="{{ route('admin.reports.revenue') }}" class="inline-flex items-center justify-center px-5 h-[42px] rounded-xl bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-sm text-gray-700 dark:text-gray-100">Reset</a>
+                    <a href="{{ route('admin.reports.revenue', ['view' => 'payments']) }}" class="inline-flex items-center justify-center px-5 h-[42px] rounded-xl bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-sm text-gray-700 dark:text-gray-100">Reset</a>
                 </div>
             </div>
         </form>
     </div>
 
     <!-- Insights & Snapshots -->
-    <section class="grid grid-cols-1 2xl:grid-cols-3 gap-5 print:gap-3">
+    <section class="space-y-5 print:space-y-3">
         <!-- Collections Insight -->
-        <div class="2xl:col-span-2 space-y-5 print:space-y-3">
+        <div class="space-y-5 print:space-y-3">
             <article class="bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700/60 p-6 print:border-gray-300 print:shadow-none">
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                     <div>
@@ -98,120 +138,7 @@
                     <div id="revChart" class="h-64"></div>
                 </div>
             </article>
-
-            <article class="bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700/60 p-6 print:border-gray-300 print:shadow-none">
-                <header class="flex items-center justify-between mb-4">
-                    <div>
-                        <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-100">Operational snapshot</h2>
-                        <p class="text-[11px] text-gray-500 dark:text-gray-400">Key counts derived from the selected interval.</p>
-                    </div>
-                    <span class="text-[11px] text-gray-400 dark:text-gray-500">
-                        {{ ($filters['from'] ?? null) && ($filters['to'] ?? null)
-                            ? ($filters['from'] ?? '') .' → '. ($filters['to'] ?? '')
-                            : ucfirst($filters['group_by'] ?? 'month').' view' }}
-                    </span>
-                </header>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    @php($ops = $operationalMetrics ?? [])
-                    <x-admin.metric-card label="Registered customers" :value="number_format($ops['registered_customers'] ?? 0)" helper="New records created" icon="user-plus" />
-                    <x-admin.metric-card label="Bills created" :value="number_format($ops['bills_created'] ?? 0)" helper="Within range" icon="document-text" />
-                    <x-admin.metric-card label="Issue reports" :value="number_format($ops['issue_reports'] ?? 0)" helper="Submitted by staff" icon="exclamation-triangle" tone="amber" />
-                    <x-admin.metric-card label="Meter replacements" :value="number_format($ops['meter_replacements'] ?? 0)" helper="Recorded in audits" icon="wrench-screwdriver" tone="blue" />
-                    <x-admin.metric-card label="Meter damages" :value="number_format($ops['meter_damages'] ?? 0)" helper="Flagged by crews" icon="fire" tone="rose" />
-                    <x-admin.metric-card label="Disconnected accounts" :value="number_format($ops['disconnected_customers'] ?? 0)" helper="Current status" icon="bolt-slash" tone="slate" />
-                    <x-admin.metric-card label="Disconnections" :value="number_format($ops['disconnection_events'] ?? 0)" helper="Logged operations" icon="minus-circle" tone="slate" />
-                    <x-admin.metric-card label="Reconnactions" :value="number_format($ops['reconnection_events'] ?? 0)" helper="Back online" icon="arrow-path" tone="emerald" />
-                </div>
-            </article>
         </div>
-
-        <!-- Issue & Meter Activity -->
-        <aside class="space-y-5 print:space-y-3">
-            <section class="bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700/60 p-6 print:border-gray-300 print:shadow-none">
-                <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-3">Issue report mix</h2>
-                <div class="space-y-4 text-xs text-gray-600 dark:text-gray-300">
-                    <div>
-                        <p class="font-semibold text-[11px] uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 mb-2">By status</p>
-                        <ul class="space-y-1">
-                            @forelse(($issueByStatus ?? []) as $row)
-                                <li class="flex items-center justify-between"><span>{{ $row['label'] }}</span><span class="font-semibold">{{ number_format($row['total']) }}</span></li>
-                            @empty
-                                <li class="text-gray-400">No issue data</li>
-                            @endforelse
-                        </ul>
-                    </div>
-                    <div>
-                        <p class="font-semibold text-[11px] uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 mb-2">By category</p>
-                        <ul class="space-y-1">
-                            @forelse(($issueByCategory ?? []) as $row)
-                                <li class="flex items-center justify-between"><span>{{ $row['label'] }}</span><span class="font-semibold">{{ number_format($row['total']) }}</span></li>
-                            @empty
-                                <li class="text-gray-400">No categorized issues</li>
-                            @endforelse
-                        </ul>
-                    </div>
-                </div>
-                <div class="mt-4">
-                    <p class="text-[11px] uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 mb-2">Recent issues</p>
-                    <ul class="space-y-2 max-h-52 overflow-y-auto pr-1">
-                        @forelse(($recentIssues ?? []) as $issue)
-                            <li class="rounded-xl bg-gray-50 dark:bg-gray-800 px-3 py-2">
-                                <div class="flex items-center justify-between text-[11px] text-gray-400 dark:text-gray-500">
-                                    <span>{{ optional($issue->created_at)->format('M d, Y') }}</span>
-                                    <span class="uppercase font-semibold">{{ $issue->status ?? 'open' }}</span>
-                                </div>
-                                <p class="text-xs font-semibold text-gray-700 dark:text-gray-200">{{ $issue->category ?? 'General' }}</p>
-                                @if($issue->other_problem)
-                                    <p class="text-[11px] text-gray-500 dark:text-gray-400">{{ $issue->other_problem }}</p>
-                                @endif
-                            </li>
-                        @empty
-                            <li class="text-xs text-gray-400">No recent issue submissions.</li>
-                        @endforelse
-                    </ul>
-                </div>
-            </section>
-
-            <section class="bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700/60 p-6 print:border-gray-300 print:shadow-none">
-                <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-3">Meter activity</h2>
-                <ul class="space-y-2 max-h-56 overflow-y-auto pr-1 text-xs text-gray-600 dark:text-gray-300">
-                    @forelse(($meterIncidents ?? []) as $incident)
-                        <li class="rounded-xl bg-gray-50 dark:bg-gray-800 px-3 py-2">
-                            <div class="flex items-center justify-between text-[11px] text-gray-400 dark:text-gray-500 mb-1">
-                                <span>{{ optional($incident->created_at)->format('M d, Y') }}</span>
-                                <span class="uppercase font-semibold">{{ $incident->action }}</span>
-                            </div>
-                            <p class="text-xs font-semibold">Meter #{{ $incident->meter_id }}</p>
-                            @if($incident->reason)
-                                <p class="text-[11px] text-gray-500 dark:text-gray-400">{{ $incident->reason }}</p>
-                            @endif
-                        </li>
-                    @empty
-                        <li class="text-xs text-gray-400">No meter events recorded.</li>
-                    @endforelse
-                </ul>
-            </section>
-
-            <section class="bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700/60 p-6 print:border-gray-300 print:shadow-none">
-                <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-3">Connection changes</h2>
-                <ul class="space-y-2 max-h-56 overflow-y-auto pr-1 text-xs text-gray-600 dark:text-gray-300">
-                    @forelse(($recentDisconnections ?? []) as $event)
-                        <li class="rounded-xl bg-gray-50 dark:bg-gray-800 px-3 py-2">
-                            <div class="flex items-center justify-between text-[11px] text-gray-400 dark:text-gray-500 mb-1">
-                                <span>{{ optional($event->performed_at)->format('M d, Y') }}</span>
-                                <span class="uppercase font-semibold">{{ $event->action }}</span>
-                            </div>
-                            <p class="text-xs font-semibold">Account {{ $event->account_no }}</p>
-                            @if($event->notes)
-                                <p class="text-[11px] text-gray-500 dark:text-gray-400">{{ $event->notes }}</p>
-                            @endif
-                        </li>
-                    @empty
-                        <li class="text-xs text-gray-400">No disconnection or reconnection logged.</li>
-                    @endforelse
-                </ul>
-            </section>
-        </aside>
     </section>
 
     <!-- Detailed Tables -->
@@ -259,13 +186,143 @@
             </div>
         </article>
 
-        <article class="bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700/60 p-6 print:border-gray-300 print:shadow-none">
-            <div class="flex items-center justify-between mb-4">
+    </section>
+    @elseif($isIssues)
+    <div class="bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700/60 p-6 print:hidden">
+        <form method="GET" class="space-y-4">
+            <input type="hidden" name="view" value="issues">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Printable summary</h2>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Use this condensed table for physical filing.</p>
+                    <label class="block text-xs_anchor">From</label>
+                    <input type="date" name="from" value="{{ $filters['from'] ?? '' }}" class="w-full h-[44px] rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 text-sm text-gray-700 dark:text-gray-100" />
                 </div>
-                <button onclick="window.print()" class="print:hidden inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-blue-500 text-blue-600 text-xs font-semibold hover:bg-blue-50">Print report</button>
+                <div>
+                    <label class="block text-xs_anchor">To</label>
+                    <input type="date" name="to" value="{{ $filters['to'] ?? '' }}" class="w-full h-[44px] rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 text-sm text-gray-700 dark:text-gray-100" />
+                </div>
+            </div>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <p class="text-xs text-gray-500 dark:text-gray-400">Filter the reported issues by date range to track workload.</p>
+                <div class="flex gap-2">
+                    <button type="submit" class="inline-flex items-center justify-center px-5 h-[42px] rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-500 transition">Apply filters</button>
+                    <a href="{{ route('admin.reports.revenue', ['view' => 'issues']) }}" class="inline-flex items-center justify-center px-5 h-[42px] rounded-xl bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-sm text-gray-700 dark:text-gray-100">Reset</a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <section class="space-y-5">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            @php($issueSummary = $issueSummary ?? ['total' => 0, 'priority' => 0, 'completed' => 0])
+            <div class="p-5 rounded-2xl bg-blue-600 text-white shadow">
+                <p class="text-[11px] uppercase tracking-[0.2em] text-white/70">Total issues</p>
+                <p class="mt-2 text-3xl font-semibold">{{ number_format($issueSummary['total'] ?? 0) }}</p>
+                <p class="text-xs text-white/80">Submitted within range</p>
+            </div>
+            <div class="p-5 rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-200 shadow">
+                <p class="text-[11px] uppercase tracking-[0.2em]">Priority</p>
+                <p class="mt-2 text-3xl font-semibold">{{ number_format($issueSummary['priority'] ?? 0) }}</p>
+                <p class="text-xs">Flagged as urgent</p>
+            </div>
+            <div class="p-5 rounded-2xl bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200 shadow">
+                <p class="text-[11px] uppercase tracking-[0.2em]">Completed</p>
+                <p class="mt-2 text-3xl font-semibold">{{ number_format($issueSummary['completed'] ?? 0) }}</p>
+                <p class="text-xs">Resolved tickets</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <article class="bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700/60 p-6">
+                <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-3">Issues by status</h2>
+                <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                    @forelse(($issueByStatus ?? []) as $row)
+                        <li class="flex items-center justify-between">
+                            <span>{{ $row['label'] }}</span>
+                            <span class="font-semibold">{{ number_format($row['total']) }}</span>
+                        </li>
+                    @empty
+                        <li class="text-gray-400">No issue data for the selected range.</li>
+                    @endforelse
+                </ul>
+            </article>
+            <article class="bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700/60 p-6">
+                <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-3">Issues by category</h2>
+                <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                    @forelse(($issueByCategory ?? []) as $row)
+                        <li class="flex items-center justify-between">
+                            <span>{{ $row['label'] }}</span>
+                            <span class="font-semibold">{{ number_format($row['total']) }}</span>
+                        </li>
+                    @empty
+                        <li class="text-gray-400">No categorized issues found.</li>
+                    @endforelse
+                </ul>
+            </article>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <article class="bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700/60 p-6">
+                <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-3">Issue timeline</h2>
+                <div class="overflow-x-auto max-h-64">
+                    <table class="min-w-full text-xs md:text-sm">
+                        <thead class="bg-gray-100 dark:bg-gray-800/70 text-gray-600 dark:text-gray-300 uppercase tracking-[0.2em]">
+                            <tr>
+                                <th class="px-4 py-2 text-left">Date</th>
+                                <th class="px-4 py-2 text-left">Issues</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                            @forelse(($issueTimeline ?? []) as $row)
+                                <tr>
+                                    <td class="px-4 py-2">{{ $row['period'] }}</td>
+                                    <td class="px-4 py-2 font-semibold">{{ number_format($row['total']) }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="2" class="px-4 py-6 text-center text-gray-400">No timeline data for the selected dates.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+            <article class="bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700/60 p-6">
+                <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-3">Recent issue submissions</h2>
+                <ul class="space-y-3 max-h-72 overflow-y-auto pr-1 text-xs text-gray-600 dark:text-gray-300">
+                    @forelse(($recentIssues ?? []) as $issue)
+                        <li class="rounded-xl bg-gray-50 dark:bg-gray-800 px-3 py-2">
+                            <div class="flex items-center justify-between text-[11px] text-gray-400 dark:text-gray-500">
+                                <span>{{ optional($issue->created_at)->format('M d, Y') }}</span>
+                                <span class="uppercase font-semibold">{{ $issue->status ?? 'open' }}</span>
+                            </div>
+                            <p class="text-xs font-semibold text-gray-700 dark:text-gray-200">{{ $issue->category ?? 'General' }}</p>
+                            @if($issue->other_problem)
+                                <p class="text-[11px] text-gray-500 dark:text-gray-400">{{ $issue->other_problem }}</p>
+                            @endif
+                            @if($issue->message)
+                                <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{{ \Illuminate\Support\Str::limit($issue->message, 120) }}</p>
+                            @endif
+                        </li>
+                    @empty
+                        <li class="text-gray-400">No recent issues submitted within this range.</li>
+                    @endforelse
+                </ul>
+            </article>
+        </div>
+    </section>
+    @endif
+
+    @if($isPrint)
+    <section id="printable-reports" class="space-y-3">
+        <article class="bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700/60 p-6 print:border-gray-300 print:shadow-none">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Printable Reports</h2>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Generate a print-friendly snapshot of current billing and operational metrics.</p>
+                </div>
+                <button onclick="window.print()" type="button" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-blue-500 text-blue-600 text-xs font-semibold hover:bg-blue-50 print:hidden">
+                    <x-heroicon-o-printer class="w-4 h-4" /> Print Reports
+                </button>
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full text-xs md:text-sm">
@@ -279,18 +336,20 @@
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                         <tr><td class="px-4 py-2">Total billed</td><td class="px-4 py-2">₱{{ number_format($summary['total_billed'] ?? 0, 2) }}</td><td class="px-4 py-2">Invoices generated in period</td></tr>
                         <tr><td class="px-4 py-2">Total collected</td><td class="px-4 py-2">₱{{ number_format($summary['total_paid'] ?? 0, 2) }}</td><td class="px-4 py-2">Paid receipts</td></tr>
-                        <tr><td class="px-4 py-2">Bills created</td><td class="px-4 py-2">{{ number_format(($operationalMetrics['bills_created'] ?? 0)) }}</td><td class="px-4 py-2">Billing records counted</td></tr>
-                        <tr><td class="px-4 py-2">New customers</td><td class="px-4 py-2">{{ number_format(($operationalMetrics['registered_customers'] ?? 0)) }}</td><td class="px-4 py-2">Registrations added</td></tr>
-                        <tr><td class="px-4 py-2">Issue reports</td><td class="px-4 py-2">{{ number_format(($operationalMetrics['issue_reports'] ?? 0)) }}</td><td class="px-4 py-2">Filed by teams</td></tr>
-                        <tr><td class="px-4 py-2">Meter replacements</td><td class="px-4 py-2">{{ number_format(($operationalMetrics['meter_replacements'] ?? 0)) }}</td><td class="px-4 py-2">Recorded in audits</td></tr>
-                        <tr><td class="px-4 py-2">Meter damages</td><td class="px-4 py-2">{{ number_format(($operationalMetrics['meter_damages'] ?? 0)) }}</td><td class="px-4 py-2">Damage-related actions</td></tr>
-                        <tr><td class="px-4 py-2">Disconnections</td><td class="px-4 py-2">{{ number_format(($operationalMetrics['disconnection_events'] ?? 0)) }}</td><td class="px-4 py-2">Performed actions</td></tr>
-                        <tr><td class="px-4 py-2">Reconnactions</td><td class="px-4 py-2">{{ number_format(($operationalMetrics['reconnection_events'] ?? 0)) }}</td><td class="px-4 py-2">Restored accounts</td></tr>
+                        <tr><td class="px-4 py-2">Bills created</td><td class="px-4 py-2">{{ number_format($operationalMetrics['bills_created'] ?? 0) }}</td><td class="px-4 py-2">Billing records counted</td></tr>
+                        <tr><td class="px-4 py-2">New customers</td><td class="px-4 py-2">{{ number_format($operationalMetrics['registered_customers'] ?? 0) }}</td><td class="px-4 py-2">Registrations added</td></tr>
+                        <tr><td class="px-4 py-2">Issue reports</td><td class="px-4 py-2">{{ number_format($operationalMetrics['issue_reports'] ?? 0) }}</td><td class="px-4 py-2">Filed by teams</td></tr>
+                        <tr><td class="px-4 py-2">Meter replacements</td><td class="px-4 py-2">{{ number_format($operationalMetrics['meter_replacements'] ?? 0) }}</td><td class="px-4 py-2">Recorded in audits</td></tr>
+                        <tr><td class="px-4 py-2">Meter damages</td><td class="px-4 py-2">{{ number_format($operationalMetrics['meter_damages'] ?? 0) }}</td><td class="px-4 py-2">Damage-related actions</td></tr>
+                        <tr><td class="px-4 py-2">Disconnections</td><td class="px-4 py-2">{{ number_format($operationalMetrics['disconnection_events'] ?? 0) }}</td><td class="px-4 py-2">Performed actions</td></tr>
+                        <tr><td class="px-4 py-2">Reconnactions</td><td class="px-4 py-2">{{ number_format($operationalMetrics['reconnection_events'] ?? 0) }}</td><td class="px-4 py-2">Restored accounts</td></tr>
                     </tbody>
                 </table>
             </div>
         </article>
     </section>
+    @endif
+
 </div>
 
 <style>
@@ -300,6 +359,7 @@
   .print\:px-0 { padding-left: 0 !important; padding-right: 0 !important; }
 }
 </style>
+@if($isPayments)
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function(){
@@ -345,4 +405,5 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 });
 </script>
+@endif
 @endsection

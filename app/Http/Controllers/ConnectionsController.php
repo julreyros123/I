@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -11,6 +12,7 @@ use App\Models\CustomerApplication;
 use App\Models\Customer;
 use App\Models\BillingRecord;
 use App\Models\ApplicantPaymentRecord;
+use Carbon\Carbon;
 
 class ConnectionsController extends Controller
 {
@@ -256,7 +258,7 @@ class ConnectionsController extends Controller
     }
 
     // Staff: schedule installation
-    public function schedule(Request $request, $id): JsonResponse
+    public function schedule(Request $request, $id): JsonResponse|RedirectResponse
     {
         abort_unless($request->user(), 401);
         $request->validate([
@@ -264,13 +266,24 @@ class ConnectionsController extends Controller
         ]);
         $app = CustomerApplication::findOrFail($id);
         if (!in_array($app->status, ['paid','scheduled'])) {
-            return response()->json(['ok' => false, 'message' => 'Invalid status for scheduling'], 422);
+            $message = 'Invalid status for scheduling';
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json(['ok' => false, 'message' => $message], 422);
+            }
+            return redirect()->back()->withErrors(['schedule_date' => $message]);
         }
-        $app->schedule_date = $request->date('schedule_date');
+        $scheduleDate = Carbon::parse($request->input('schedule_date'));
+        $app->schedule_date = $scheduleDate;
         $app->scheduled_by = $request->user()->id;
         $app->status = 'scheduled';
         $app->save();
-        return response()->json(['ok' => true, 'application' => $app]);
+        if ($request->expectsJson() || $request->wantsJson()) {
+            return response()->json(['ok' => true, 'application' => $app]);
+        }
+
+        return redirect()
+            ->back()
+            ->with('success', sprintf('Installation for %s scheduled on %s.', $app->application_code, $scheduleDate->format('M d, Y')));
     }
 
     // Staff: log meter details prior to installation

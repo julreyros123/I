@@ -115,7 +115,7 @@
             </li>
 
             {{-- Reports dropdown --}}
-            <li x-data="{ openReports: false }" class="relative">
+            <li x-data="{ openReports: {{ request()->routeIs('admin.reports.revenue') ? 'true' : 'false' }} }" class="relative">
                 <button @click="openReports = !openReports"
                         class="w-full flex items-center justify-between px-3 py-2 rounded-lg 
                                hover:bg-blue-700/60 dark:hover:bg-gray-800 transition-all duration-200 ease-in-out font-medium">
@@ -135,11 +135,27 @@
                            border border-blue-700 dark:border-gray-800 
                            rounded-lg shadow-lg overflow-hidden">
                     <li>
-                        <a href="{{ route('admin.reports.revenue') }}"
+                        <a href="{{ route('admin.reports.revenue', ['view' => 'payments']) }}"
                            class="block px-3 py-2 hover:bg-blue-700/70 dark:hover:bg-gray-800 
                                   transition-all duration-200 ease-in-out rounded-md 
-                                  {{ request()->routeIs('admin.reports.revenue') ? 'bg-blue-700/60 dark:bg-gray-800 text-white' : '' }}">
-                           Revenue Report
+                                  {{ request()->routeIs('admin.reports.revenue') && request('view', 'payments') === 'payments' ? 'bg-blue-700/60 dark:bg-gray-800 text-white' : '' }}">
+                           Customer Payment Report
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.reports.revenue', ['view' => 'issues']) }}"
+                           class="block px-3 py-2 hover:bg-blue-700/70 dark:hover:bg-gray-800 
+                                  transition-all duration-200 ease-in-out rounded-md 
+                                  {{ request()->routeIs('admin.reports.revenue') && request('view') === 'issues' ? 'bg-blue-700/60 dark:bg-gray-800 text-white' : '' }}">
+                           Issue Report
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.reports.revenue', ['view' => 'print']) }}"
+                           class="block px-3 py-2 hover:bg-blue-700/70 dark:hover:bg-gray-800 
+                                  transition-all duration-200 ease-in-out rounded-md 
+                                  {{ request()->routeIs('admin.reports.revenue') && request('view') === 'print' ? 'bg-blue-700/60 dark:bg-gray-800 text-white' : '' }}">
+                           Print Reports
                         </a>
                     </li>
                 </ul>

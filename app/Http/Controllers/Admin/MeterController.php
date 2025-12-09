@@ -39,8 +39,62 @@ class MeterController extends Controller
             ->orderBy('serial')
             ->get(['id', 'serial', 'type', 'size', 'manufacturer', 'seal_no']);
 
+        $installationQueue = CustomerApplication::query()
+            ->with(['customer:id,name,account_no'])
+            ->whereIn('status', ['paid', 'scheduled'])
+            ->orderByRaw("CASE WHEN status = 'paid' THEN 0 ELSE 1 END")
+            ->orderBy('schedule_date')
+            ->limit(25)
+            ->get(['id', 'applicant_name', 'address', 'status', 'schedule_date', 'customer_id']);
+
+        $assignmentOptions = $installationQueue
+            ->filter(fn ($app) => $app->status === 'scheduled')
+            ->map(function ($app) {
+                $customer = $app->customer;
+                if (!$customer && $app->customer_id) {
+                    $customer = Customer::find($app->customer_id);
+                }
+
+                if (!$customer) {
+                    $nameKey = trim(mb_strtolower($app->applicant_name ?? ''));
+                    $addressKey = trim(mb_strtolower($app->address ?? ''));
+
+                    $customer = Customer::query()
+                        ->when($nameKey !== '', fn ($q) => $q->whereRaw('LOWER(TRIM(name)) = ?', [$nameKey]))
+                        ->when($addressKey !== '', fn ($q) => $q->whereRaw('LOWER(TRIM(address)) = ?', [$addressKey]))
+                        ->first();
+
+                    if (!$customer && $nameKey !== '') {
+                        $customer = Customer::query()
+                            ->whereRaw('LOWER(TRIM(name)) = ?', [$nameKey])
+                            ->orderByDesc('created_at')
+                            ->first();
+                    }
+                }
+
+                return [
+                    'application_id' => $app->id,
+                    'customer_id' => $customer?->id,
+                    'customer_name' => $customer?->name ?? $app->applicant_name,
+                    'account_no' => $customer?->account_no,
+                    'address' => $app->address,
+                    'scheduled_for' => optional($app->schedule_date)->format('M d, Y'),
+                ];
+            })
+            ->filter(fn ($option) => !empty($option['customer_id']))
+            ->unique('customer_id')
+            ->values();
+
+        $recentCustomers = Customer::query()
+            ->orderByDesc('created_at')
+            ->limit(50)
+            ->get(['id','name','account_no','address']);
+
         return view('admin.meters', array_merge($result, [
             'inventoryMeters' => $inventoryMeters,
+            'installationQueue' => $installationQueue,
+            'assignmentOptions' => $assignmentOptions,
+            'recentCustomers' => $recentCustomers,
         ]));
     }
 

@@ -254,121 +254,225 @@
                                 </td>
                                 <td class="px-2.5 py-1.5">
                                     <div class="flex flex-wrap gap-2">
-                                        <details>
-                                            <summary class="list-none w-8 h-8 inline-flex items-center justify-center rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 cursor-pointer" title="Edit">
-                                                <x-heroicon-o-pencil-square class="w-4 h-4" />
-                                            </summary>
-                                            <div class="mt-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
-                                                <form method="post" action="{{ route('admin.meters.update', $m) }}" class="grid grid-cols-2 gap-3">
-                                                    @csrf
-                                                    @method('PATCH')
-                                                    <div>
-                                                        <label class="text-xs">Status</label>
-                                                        <select name="status" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900">
-                                                            @foreach($statuses as $s)
-                                                                <option value="{{ $s }}" @selected($m->status===$s)>{{ ucfirst($s) }}</option>
-                                                            @endforeach
-                                                        </select>
-                                                    </div>
-                                                    <div>
-                                                        <label class="text-xs">Type</label>
-                                                        <input name="type" value="{{ $m->type }}" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900" />
-                                                    </div>
-                                                    <div>
-                                                        <label class="text-xs">Size</label>
-                                                        <input name="size" value="{{ $m->size }}" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900" />
-                                                    </div>
-                                                    <div>
-                                                        <label class="text-xs">Manufacturer</label>
-                                                        <input name="manufacturer" value="{{ $m->manufacturer }}" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900" />
-                                                    </div>
-                                                    <div class="col-span-2">
-                                                        <label class="text-xs">Address</label>
-                                                        <input name="location_address" value="{{ $m->location_address }}" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900" />
-                                                    </div>
-                                                    <div>
-                                                        <label class="text-xs">Barangay</label>
-                                                        <input name="barangay" value="{{ $m->barangay }}" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900" />
-                                                    </div>
-                                                    <div class="col-span-2">
-                                                        <label class="text-xs">Notes</label>
-                                                        <textarea name="notes" rows="2" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900">{{ $m->notes }}</textarea>
-                                                    </div>
-                                                    <div class="col-span-2 flex justify-end">
-                                                        <button class="h-9 px-4 rounded-md bg-blue-600 hover:bg-blue-700 text-white">Save</button>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                        </details>
-
-                                        <details>
-                                            <summary class="list-none w-8 h-8 inline-flex items-center justify-center rounded-md bg-blue-600 hover:bg-blue-700 text-white cursor-pointer" title="Assign">
-                                                <x-heroicon-o-user-plus class="w-4 h-4" />
-                                            </summary>
-                                            <div class="mt-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
-                                                <form method="post" action="{{ route('admin.meters.assign', $m) }}" class="grid grid-cols-2 gap-3 relative">
-                                                    @csrf
-                                                    <div class="col-span-2">
-                                                        <label class="text-xs">Customer (installed – waiting for meter assignment)</label>
-                                                        <select name="account_id" id="installedCustomerForMeter-{{ $m->id }}" required class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900">
-                                                            <option value="">Select installed customer...</option>
-                                                        </select>
-                                                        <input type="hidden" name="application_id" class="selected-application-id" value="" />
-                                                    </div>
-                                                    <div>
-                                                        <label class="text-xs">Assigned At</label>
-                                                        <input name="assigned_at" type="datetime-local" value="{{ now()->format('Y-m-d\TH:i') }}" required class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900" />
-                                                    </div>
-                                                    <div class="col-span-2">
-                                                        <label class="text-xs">Reason</label>
-                                                        <input name="reason" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900" />
-                                                    </div>
-                                                    <div class="col-span-2">
-                                                        <label class="text-xs">Notes</label>
-                                                        <textarea name="notes" rows="2" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900"></textarea>
-                                                    </div>
-                                                    <div class="col-span-2 flex justify-end">
-                                                        <button class="h-9 px-4 rounded-md bg-blue-600 hover:bg-blue-700 text-white">Assign</button>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                        </details>
-
-                                        <details>
-                                            <summary class="list-none w-8 h-8 inline-flex items-center justify-center rounded-md bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 cursor-pointer" title="Unassign">
-                                                <x-heroicon-o-user-minus class="w-4 h-4" />
-                                            </summary>
-                                            <div class="mt-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
-                                                <form method="post" action="{{ route('admin.meters.unassign', $m) }}" class="grid grid-cols-2 gap-3">
-                                                    @csrf
-                                                    <div>
-                                                        <label class="text-xs">Unassigned At</label>
-                                                        <input name="unassigned_at" type="datetime-local" value="{{ now()->format('Y-m-d\TH:i') }}" required class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900" />
-                                                    </div>
-                                                    <div class="col-span-2">
-                                                        <label class="text-xs">Reason</label>
-                                                        <input name="reason" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-900" />
-                                                    </div>
-                                                    <div class="col-span-2 flex justify-end">
-                                                        <button class="h-9 px-4 rounded-md bg-gray-700 hover:bg-gray-800 text-white">Unassign</button>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                        </details>
-
-                                        <button type="button" class="w-8 h-8 inline-flex items-center justify-center rounded-md bg-amber-500 hover:bg-amber-600 text-white" title="Log service issue" data-report-meter data-meter-id="{{ $m->id }}" data-meter-serial="{{ $m->serial }}" data-customer-id="{{ $m->current_account_id }}" data-customer-name="{{ $m->currentCustomer?->name }}" data-application-id="{{ $app->id ?? '' }}">
-                                            <x-heroicon-o-lifebuoy class="w-4 h-4" />
+                                        <button type="button" data-open-modal="meter-edit-modal-{{ $m->id }}" class="h-9 w-9 inline-flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800" aria-label="Edit meter {{ $m->serial }}">
+                                            <x-heroicon-o-pencil-square class="w-4 h-4" />
                                         </button>
-
-                                        <form method="post" action="{{ route('admin.meters.destroy', $m) }}" onsubmit="return confirm('Delete meter {{ $m->serial }}?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button title="Delete" class="w-8 h-8 inline-flex items-center justify-center rounded-md bg-red-600 hover:bg-red-700 text-white">
-                                                <x-heroicon-o-trash class="w-4 h-4" />
-                                            </button>
-                                        </form>
+                                        <button type="button" data-open-modal="meter-assign-modal-{{ $m->id }}" class="h-9 w-9 inline-flex items-center justify-center rounded-lg bg-blue-600 text-white hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" aria-label="Assign meter {{ $m->serial }}">
+                                            <x-heroicon-o-user-plus class="w-4 h-4" />
+                                        </button>
+                                        <button type="button" data-open-modal="meter-unassign-modal-{{ $m->id }}" class="h-9 w-9 inline-flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800" aria-label="Unassign meter {{ $m->serial }}">
+                                            <x-heroicon-o-user-minus class="w-4 h-4" />
+                                        </button>
+                                        <button type="button" data-open-modal="meter-delete-modal-{{ $m->id }}" class="h-9 w-9 inline-flex items-center justify-center rounded-lg bg-rose-600 text-white hover:bg-rose-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500" aria-label="Delete meter {{ $m->serial }}">
+                                            <x-heroicon-o-trash class="w-4 h-4" />
+                                        </button>
                                     </div>
                                 </td>
+                                @push('modals')
+                                    <div class="hidden fixed inset-0 z-50 overflow-y-auto" id="meter-edit-modal-{{ $m->id }}" data-modal aria-hidden="true">
+                                        <div class="absolute inset-0 bg-black/50" data-modal-backdrop data-modal-dismiss></div>
+                                        <div class="relative mx-auto my-16 w-full max-w-3xl px-4">
+                                            <div class="rounded-2xl bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                                                <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+                                                    <div>
+                                                        <h2 class="text-base font-semibold text-gray-800 dark:text-gray-100">Edit meter {{ $m->serial }}</h2>
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400">Update metadata and status before reassignment.</p>
+                                                    </div>
+                                                    <button type="button" class="h-9 w-9 inline-flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500" data-modal-dismiss aria-label="Close">
+                                                        <x-heroicon-o-x-mark class="w-5 h-5" />
+                                                    </button>
+                                                </div>
+                                                <div class="px-5 py-6">
+                                                    <form method="post" action="{{ route('admin.meters.update', $m) }}" class="grid gap-4 md:grid-cols-2" data-modal-autofocus>
+                                                        @csrf
+                                                        @method('PATCH')
+                                                        <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">
+                                                            Status
+                                                            <select name="status" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-100">
+                                                                @foreach($statuses as $s)
+                                                                    <option value="{{ $s }}" @selected($m->status===$s)>{{ ucfirst($s) }}</option>
+                                                                @endforeach
+                                                            </select>
+                                                        </label>
+                                                        <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">
+                                                            Type
+                                                            <input name="type" value="{{ $m->type }}" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-100" />
+                                                        </label>
+                                                        <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">
+                                                            Size
+                                                            <input name="size" value="{{ $m->size }}" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-100" />
+                                                        </label>
+                                                        <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">
+                                                            Manufacturer
+                                                            <input name="manufacturer" value="{{ $m->manufacturer }}" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-100" />
+                                                        </label>
+                                                        <label class="text-xs font-semibold text-gray-600 dark:text-gray-300 md:col-span-2">
+                                                            Address
+                                                            <input name="location_address" value="{{ $m->location_address }}" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-100" />
+                                                        </label>
+                                                        <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">
+                                                            Barangay
+                                                            <input name="barangay" value="{{ $m->barangay }}" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-100" />
+                                                        </label>
+                                                        <label class="text-xs font-semibold text-gray-600 dark:text-gray-300 md:col-span-2">
+                                                            Notes
+                                                            <textarea name="notes" rows="3" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-100">{{ $m->notes }}</textarea>
+                                                        </label>
+                                                        <div class="md:col-span-2 flex justify-end gap-2">
+                                                            <button type="button" class="inline-flex items-center justify-center h-10 px-4 rounded-lg border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800" data-modal-dismiss>Cancel</button>
+                                                            <button class="inline-flex items-center justify-center h-10 px-4 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-500">Save changes</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="hidden fixed inset-0 z-50 overflow-y-auto" id="meter-assign-modal-{{ $m->id }}" data-modal aria-hidden="true">
+                                        <div class="absolute inset-0 bg-black/50" data-modal-backdrop data-modal-dismiss></div>
+                                        <div class="relative mx-auto my-16 w-full max-w-2xl px-4">
+                                            <div class="rounded-2xl bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                                                <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+                                                    <div>
+                                                        <h2 class="text-base font-semibold text-gray-800 dark:text-gray-100">Assign meter {{ $m->serial }}</h2>
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400">Link this meter to a scheduled installation.</p>
+                                                    </div>
+                                                    <button type="button" class="h-9 w-9 inline-flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500" data-modal-dismiss aria-label="Close">
+                                                        <x-heroicon-o-x-mark class="w-5 h-5" />
+                                                    </button>
+                                                </div>
+                                                <div class="px-5 py-6 space-y-4">
+                                                    <form method="post" action="{{ route('admin.meters.assign', $m) }}" class="space-y-4" data-modal-autofocus>
+                                                            @csrf
+                                                            <input type="hidden" name="account_id" id="accountInput-{{ $m->id }}">
+                                                            <input type="hidden" name="application_id" id="applicationInput-{{ $m->id }}">
+                                                            <div class="space-y-2">
+                                                                <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">Select scheduled customer</label>
+                                                                <select id="scheduledSelect-{{ $m->id }}" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-100" data-app-select data-account-target="#accountInput-{{ $m->id }}" data-application-target="#applicationInput-{{ $m->id }}" data-fallback-reset="#recentCustomerSelect-{{ $m->id }}">
+                                                                    <option value="">Choose scheduled installation...</option>
+                                                                    @foreach($assignmentOptions as $option)
+                                                                        <option value="{{ $option['customer_id'] }}" data-application-id="{{ $option['application_id'] }}">
+                                                                            {{ $option['customer_name'] }}
+                                                                            @if(!empty($option['account_no']))
+                                                                                · Acct {{ $option['account_no'] }}
+                                                                            @endif
+                                                                            @if(!empty($option['address']))
+                                                                                · {{ $option['address'] }}
+                                                                            @endif
+                                                                            @if(!empty($option['scheduled_for']))
+                                                                                · Visit {{ $option['scheduled_for'] }}
+                                                                            @endif
+                                                                        </option>
+                                                                    @endforeach
+                                                                </select>
+                                                                <p class="text-[11px] text-gray-500 dark:text-gray-400">Pick a scheduled installation to auto-fill the application link.</p>
+                                                            </div>
+                                                            <hr class="border-gray-200 dark:border-gray-700" />
+                                                            <div class="space-y-2">
+                                                                <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">Or choose a recent customer</label>
+                                                                <select id="recentCustomerSelect-{{ $m->id }}" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-100" data-fallback-select data-account-target="#accountInput-{{ $m->id }}" data-application-target="#applicationInput-{{ $m->id }}" data-scheduled-reset="#scheduledSelect-{{ $m->id }}">
+                                                                    <option value="">Recent registrations...</option>
+                                                                    @foreach(($recentCustomers ?? collect()) as $recent)
+                                                                        <option value="{{ $recent->id }}">
+                                                                            {{ $recent->name }}
+                                                                            @if(!empty($recent->account_no))
+                                                                                · Acct {{ $recent->account_no }}
+                                                                            @endif
+                                                                            @if(!empty($recent->address))
+                                                                                · {{ $recent->address }}
+                                                                            @endif
+                                                                        </option>
+                                                                    @endforeach
+                                                                </select>
+                                                                <p class="text-[11px] text-gray-500 dark:text-gray-400">Use this when the customer was recently registered but the application isn’t linked yet.</p>
+                                                            </div>
+                                                            <div class="grid gap-3 md:grid-cols-2">
+                                                                <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">
+                                                                    Assigned at
+                                                                    <input name="assigned_at" type="datetime-local" value="{{ now()->format('Y-m-d\TH:i') }}" required class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-100" />
+                                                                </label>
+                                                                <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">
+                                                                    Reason
+                                                                    <input name="reason" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-100" />
+                                                                </label>
+                                                                <label class="text-xs font-semibold text-gray-600 dark:text-gray-300 md:col-span-2">
+                                                                    Notes
+                                                                    <textarea name="notes" rows="2" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-100"></textarea>
+                                                                </label>
+                                                            </div>
+                                                            <div class="flex justify-end gap-2">
+                                                                <button type="button" class="inline-flex items-center justify-center h-10 px-4 rounded-lg border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800" data-modal-dismiss>Cancel</button>
+                                                                <button class="inline-flex items-center justify-center h-10 px-4 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-500">Assign meter</button>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="hidden fixed inset-0 z-50 overflow-y-auto" id="meter-unassign-modal-{{ $m->id }}" data-modal aria-hidden="true">
+                                        <div class="absolute inset-0 bg-black/50" data-modal-backdrop data-modal-dismiss></div>
+                                        <div class="relative mx-auto my-16 w-full max-w-xl px-4">
+                                            <div class="rounded-2xl bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                                                <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+                                                    <div>
+                                                        <h2 class="text-base font-semibold text-gray-800 dark:text-gray-100">Unassign meter {{ $m->serial }}</h2>
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400">Release the meter back to inventory.</p>
+                                                    </div>
+                                                    <button type="button" class="h-9 w-9 inline-flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500" data-modal-dismiss aria-label="Close">
+                                                        <x-heroicon-o-x-mark class="w-5 h-5" />
+                                                    </button>
+                                                </div>
+                                                <div class="px-5 py-6">
+                                                    <form method="post" action="{{ route('admin.meters.unassign', $m) }}" class="space-y-4" data-modal-autofocus>
+                                                        @csrf
+                                                        <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">
+                                                            Unassigned at
+                                                            <input name="unassigned_at" type="datetime-local" value="{{ now()->format('Y-m-d\TH:i') }}" required class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-100" />
+                                                        </label>
+                                                        <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">
+                                                            Reason
+                                                            <input name="reason" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-100" />
+                                                        </label>
+                                                        <div class="flex justify-end gap-2">
+                                                            <button type="button" class="inline-flex items-center justify-center h-10 px-4 rounded-lg border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800" data-modal-dismiss>Cancel</button>
+                                                            <button class="inline-flex items-center justify-center h-10 px-4 rounded-lg bg-gray-700 text-white text-sm font-semibold hover:bg-gray-600">Unassign</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="hidden fixed inset-0 z-50 overflow-y-auto" id="meter-delete-modal-{{ $m->id }}" data-modal aria-hidden="true">
+                                        <div class="absolute inset-0 bg-black/60" data-modal-backdrop data-modal-dismiss></div>
+                                        <div class="relative mx-auto my-16 w-full max-w-md px-4">
+                                            <div class="rounded-2xl bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                                                <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+                                                    <div>
+                                                        <h2 class="text-base font-semibold text-gray-800 dark:text-gray-100">Delete meter {{ $m->serial }}</h2>
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400">This action cannot be undone.</p>
+                                                    </div>
+                                                    <button type="button" class="h-9 w-9 inline-flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500" data-modal-dismiss aria-label="Close">
+                                                        <x-heroicon-o-x-mark class="w-5 h-5" />
+                                                    </button>
+                                                </div>
+                                                <div class="px-5 py-6 space-y-4">
+                                                    <p class="text-sm text-gray-600 dark:text-gray-300">Are you sure you want to delete this meter? Any historical audit entries will remain, but the meter will be removed from active records.</p>
+                                                    <div class="flex justify-end gap-2">
+                                                        <button type="button" class="inline-flex items-center justify-center h-10 px-4 rounded-lg border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800" data-modal-dismiss>Cancel</button>
+                                                        <form method="post" action="{{ route('admin.meters.destroy', $m) }}" onsubmit="return confirm('Delete meter {{ $m->serial }}?');">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button class="inline-flex items-center justify-center h-10 px-4 rounded-lg bg-rose-600 text-white text-sm font-semibold hover:bg-rose-500">Delete</button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endpush
                             </tr>
                         @empty
                             <tr>
@@ -418,582 +522,93 @@
                 </div>
             </div>
         @endif
-        <div class="border-t border-gray-100 dark:border-gray-800 bg-gray-50/40 dark:bg-gray-900/40 px-4 py-5 md:px-6 md:py-6">
-            <div class="flex items-center justify-between mb-4">
-                <div>
-                    <h2 class="text-base font-semibold text-gray-800 dark:text-gray-100">Installation pipeline</h2>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Track newly paid applicants and scheduled installations awaiting action.</p>
-                </div>
-                <button type="button" id="refreshPipeline" class="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-gray-300 text-sm text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800">
-                    <x-heroicon-o-arrow-path class="w-4 h-4" />
-                    Refresh
-                </button>
+        @php
+            $pendingScheduling = ($installationQueue ?? collect())->where('status', 'paid');
+            $scheduledInstalls = ($installationQueue ?? collect())->where('status', 'scheduled');
+        @endphp
+        <div id="installationPipeline" class="border-t border-gray-100 dark:border-gray-800 bg-gray-50/40 dark:bg-gray-900/40 px-4 py-5 md:px-6 md:py-6 space-y-5">
+            <div class="flex items-center justify-between">
+                <h2 class="text-base font-semibold text-gray-800 dark:text-gray-100">Installation pipeline</h2>
+                <span class="text-xs text-gray-500 dark:text-gray-400">Manage scheduling for paid applicants</span>
             </div>
-            <div class="grid gap-4 lg:grid-cols-2" id="installationPipeline">
-                <div class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
-                    <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-                        <span class="inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
-                        Paid applicants awaiting scheduling
-                    </h3>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Once scheduled, these move to the next column.</p>
-                    <div id="paidApplicationsList" class="space-y-2 text-sm text-gray-700 dark:text-gray-100">
-                        <div class="rounded-lg border border-dashed border-gray-300 dark:border-gray-700 px-3 py-2 text-xs text-gray-500 dark:text-gray-400">No paid applications found.</div>
+
+            <div class="grid gap-5 lg:grid-cols-2">
+                <section class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/70 p-4 space-y-3">
+                    <header class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100">Awaiting schedule</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Paid applications that still need a visit date.</p>
+                        </div>
+                        <span class="inline-flex items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-200 px-2 py-0.5 text-[11px] font-medium">{{ $pendingScheduling->count() }}</span>
+                    </header>
+
+                    <div class="space-y-3">
+                        @forelse($pendingScheduling as $app)
+                            <div class="rounded-xl border border-gray-200 dark:border-gray-700 px-3 py-3 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-semibold text-gray-800 dark:text-gray-100">{{ $app->application_code ?? ('APP-'.str_pad($app->id, 6, '0', STR_PAD_LEFT)) }}</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ $app->applicant_name }} · {{ $app->address ?? 'No address on file' }}</p>
+                                    </div>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-200 text-[11px] font-semibold">Paid</span>
+                                </div>
+                                <form method="POST" action="{{ route('connections.schedule', $app->id) }}" class="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+                                    @csrf
+                                    @method('PUT')
+                                    <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">
+                                        Schedule date
+                                        <input type="date" name="schedule_date" value="{{ old('schedule_date', optional($app->schedule_date)->toDateString()) }}" min="{{ now()->toDateString() }}" required class="mt-1 w-full h-10 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 text-sm text-gray-700 dark:text-gray-100" />
+                                    </label>
+                                    <button class="inline-flex justify-center items-center h-10 px-4 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-500">Schedule</button>
+                                </form>
+                            </div>
+                        @empty
+                            <p class="text-xs text-gray-500 dark:text-gray-400">No paid applications are waiting for scheduling.</p>
+                        @endforelse
                     </div>
-                </div>
-                <div class="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
-                    <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-                        <span class="inline-flex h-2 w-2 rounded-full bg-sky-500"></span>
-                        Scheduled installations
-                    </h3>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">Keep an eye on upcoming meter installations.</p>
-                    <div id="scheduledApplicationsList" class="space-y-2 text-sm text-gray-700 dark:text-gray-100">
-                        <div class="rounded-lg border border-dashed border-gray-300 dark:border-gray-700 px-3 py-2 text-xs text-gray-500 dark:text-gray-400">No scheduled installations yet.</div>
+                </section>
+
+                <section class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/70 p-4 space-y-3">
+                    <header class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100">Scheduled installs</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Update visit dates or confirm progress.</p>
+                        </div>
+                        <span class="inline-flex items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200 px-2 py-0.5 text-[11px] font-medium">{{ $scheduledInstalls->count() }}</span>
+                    </header>
+
+                    <div class="space-y-3">
+                        @forelse($scheduledInstalls as $app)
+                            <div class="rounded-xl border border-gray-200 dark:border-gray-700 px-3 py-3 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-semibold text-gray-800 dark:text-gray-100">{{ $app->application_code ?? ('APP-'.str_pad($app->id, 6, '0', STR_PAD_LEFT)) }}</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ $app->applicant_name }} · {{ $app->address ?? 'No address on file' }}</p>
+                                    </div>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200 text-[11px] font-semibold">Scheduled</span>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-300">
+                                    <span class="font-medium text-gray-700 dark:text-gray-100">Visit:</span>
+                                    <span>{{ optional($app->schedule_date)->format('M d, Y') ?? 'Not set' }}</span>
+                                </div>
+                                <form method="POST" action="{{ route('connections.schedule', $app->id) }}" class="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+                                    @csrf
+                                    @method('PUT')
+                                    <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">
+                                        Reschedule
+                                        <input type="date" name="schedule_date" value="{{ optional($app->schedule_date)->toDateString() ?? now()->toDateString() }}" min="{{ now()->toDateString() }}" required class="mt-1 w-full h-10 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 text-sm text-gray-700 dark:text-gray-100" />
+                                    </label>
+                                    <button class="inline-flex justify-center items-center h-10 px-4 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800">Update</button>
+                                </form>
+                            </div>
+                        @empty
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Nothing scheduled yet. Once dates are set, they will appear here.</p>
+                        @endforelse
                     </div>
-                </div>
+                </section>
             </div>
         </div>
     </div>
 </div>
 
-<div id="reportTicketOverlay" class="fixed inset-0 z-50 hidden">
-    <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" data-report-dismiss></div>
-    <div class="relative mx-auto mt-24 w-full max-w-lg px-4">
-        <div class="rounded-2xl border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900">
-            <div class="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-700">
-                <div>
-                    <h3 class="text-base font-semibold text-gray-800 dark:text-gray-100">Log remediation ticket</h3>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Report installation issues so the maintenance team can respond promptly.</p>
-                </div>
-                <button type="button" class="h-8 w-8 rounded-full text-gray-500 transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800" data-report-dismiss>
-                    <x-heroicon-o-x-mark class="h-5 w-5 mx-auto" />
-                </button>
-            </div>
-            <form id="reportTicketForm" class="px-5 py-4 space-y-4">
-                <input type="hidden" id="reportTicketMeter" />
-                <input type="hidden" id="reportTicketCustomer" />
-                <input type="hidden" id="reportTicketApplication" />
-                <div class="rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:bg-gray-800/80 dark:text-gray-300">
-                    <dl class="grid grid-cols-1 gap-1">
-                        <div>
-                            <dt class="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Meter</dt>
-                            <dd id="reportTicketMeterLabel" class="font-semibold text-gray-800 dark:text-gray-100">—</dd>
-                        </div>
-                        <div>
-                            <dt class="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Customer</dt>
-                            <dd id="reportTicketCustomerLabel" class="text-gray-700 dark:text-gray-200">Unassigned</dd>
-                        </div>
-                    </dl>
-                </div>
-                @include('components.ticket.form')
-                <div class="flex items-center justify-between gap-3">
-                    <button type="button" class="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800" data-report-dismiss>Cancel</button>
-                    <button id="reportTicketSubmit" type="submit" class="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60">
-                        <x-heroicon-o-paper-airplane class="h-4 w-4" />
-                        Submit ticket
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 @endsection
-
-@push('scripts')
-<script>
-(function(){
-    const drawer = document.getElementById('createMeterDrawer');
-    const openBtn = document.getElementById('openCreateMeter');
-    const closeBtn = document.getElementById('closeCreateMeter');
-    const overlay = document.getElementById('createMeterOverlay');
-    const reportOverlay = document.getElementById('reportTicketOverlay');
-    const reportForm = document.getElementById('reportTicketForm');
-    const reportSubmit = document.getElementById('reportTicketSubmit');
-    const reportMeterInput = document.getElementById('reportTicketMeter');
-    const reportCustomerInput = document.getElementById('reportTicketCustomer');
-    const reportApplicationInput = document.getElementById('reportTicketApplication');
-    const reportMeterLabel = document.getElementById('reportTicketMeterLabel');
-    const reportCustomerLabel = document.getElementById('reportTicketCustomerLabel');
-    const issueTypeField = document.getElementById('ticketIssueType');
-    const descriptionField = document.getElementById('ticketDescription');
-    const scheduleField = document.getElementById('ticketSchedule');
-
-    function toggleDrawer(show){
-        if (!drawer || !overlay) return;
-        drawer.classList.toggle('translate-x-full', !show);
-        overlay.classList.toggle('hidden', !show);
-        overlay.classList.toggle('opacity-0', !show);
-    }
-
-    if (openBtn){
-        openBtn.addEventListener('click', () => toggleDrawer(true));
-    }
-    if (closeBtn){
-        closeBtn.addEventListener('click', () => toggleDrawer(false));
-    }
-    if (overlay){
-        overlay.addEventListener('click', (event) => {
-            if (event.target === overlay){
-                toggleDrawer(false);
-            }
-        });
-    }
-
-    function toggleReport(show) {
-        if (!reportOverlay) return;
-        reportOverlay.classList.toggle('hidden', !show);
-        if (show) {
-            reportOverlay.classList.remove('opacity-0');
-        }
-    }
-
-    function resetReportForm(){
-        if (reportForm) reportForm.reset();
-        if (descriptionField) descriptionField.value = '';
-        if (scheduleField) scheduleField.value = '';
-    }
-
-    function openReportModal({ meterId, meterSerial, customerName, customerId, applicationId }){
-        if (!reportOverlay || !issueTypeField) return;
-        reportMeterInput.value = meterId || '';
-        reportCustomerInput.value = customerId || '';
-        reportApplicationInput.value = applicationId || '';
-        reportMeterLabel.textContent = meterSerial || '—';
-        reportCustomerLabel.textContent = customerName || 'Unassigned';
-        if (!issueTypeField.value) issueTypeField.value = 'bad_installation';
-        toggleReport(true);
-    }
-
-    if (reportOverlay){
-        reportOverlay.querySelectorAll('[data-report-dismiss]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                toggleReport(false);
-                resetReportForm();
-            });
-        });
-    }
-
-    document.querySelectorAll('[data-report-meter]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const meterId = btn.dataset.meterId;
-            const meterSerial = btn.dataset.meterSerial;
-            const customerId = btn.dataset.customerId;
-            const customerName = btn.closest('tr')?.querySelector('[data-customer-name]')?.textContent?.trim();
-            const applicationId = btn.dataset.applicationId || '';
-            openReportModal({ meterId, meterSerial, customerName, customerId, applicationId });
-        });
-    });
-
-    if (reportForm){
-        reportForm.addEventListener('submit', async (event) => {
-            event.preventDefault();
-            if (!reportSubmit) return;
-            const payload = {
-                meter_id: reportMeterInput.value || null,
-                customer_id: reportCustomerInput.value || null,
-                customer_application_id: reportApplicationInput.value || null,
-                issue_type: issueTypeField?.value || 'other',
-                description: descriptionField?.value || null,
-                scheduled_visit_at: scheduleField?.value || null,
-            };
-            reportSubmit.disabled = true;
-            reportSubmit.classList.add('opacity-70');
-            try {
-                const res = await fetch('{{ route('admin.meter-service-tickets.store') }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                    },
-                    body: JSON.stringify(payload),
-                });
-                if (!res.ok) {
-                    const data = await res.json().catch(() => ({}));
-                    throw new Error(data.message || 'Unable to submit ticket.');
-                }
-                toast('Remediation ticket logged.');
-                toggleReport(false);
-                resetReportForm();
-            } catch (err){
-                toast(err.message || 'Unable to log ticket.', 'error');
-            } finally {
-                reportSubmit.disabled = false;
-                reportSubmit.classList.remove('opacity-70');
-            }
-        });
-    }
-
-    const __applicationsByStatus = {};
-
-    const toast = (message, variant = 'success') => {
-        const alert = document.getElementById('meterToast');
-        if (!alert) return;
-        alert.textContent = message;
-        alert.className = 'fixed top-6 right-6 z-50 px-4 py-2 rounded-lg shadow-lg text-sm font-semibold transition';
-        if (variant === 'error') {
-            alert.classList.add('bg-red-600', 'text-white');
-        } else {
-            alert.classList.add('bg-emerald-600', 'text-white');
-        }
-        alert.classList.remove('hidden');
-        setTimeout(() => alert.classList.add('hidden'), 3200);
-    };
-
-    function registerCopySerialButtons(){
-        const buttons = document.querySelectorAll('[data-copy-serial]');
-        if (!buttons.length) return;
-        buttons.forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const serial = btn.dataset.copySerial;
-                if (!serial) return;
-                try {
-                    if (navigator.clipboard?.writeText){
-                        await navigator.clipboard.writeText(serial);
-                    } else {
-                        const temp = document.createElement('textarea');
-                        temp.value = serial;
-                        temp.style.position = 'fixed';
-                        temp.style.opacity = '0';
-                        document.body.appendChild(temp);
-                        temp.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(temp);
-                    }
-                    toast(`Copied ${serial} to clipboard.`);
-                } catch (err){
-                    console.error(err);
-                    toast('Unable to copy serial.', 'error');
-                }
-            });
-        });
-    }
-
-    function escapeHtml(value){
-        return String(value ?? '').replace(/[&<>"']/g, (ch) => ({
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#39;',
-        })[ch]);
-    }
-
-    function friendlyDate(value){
-        if (!value) return '—';
-        try {
-            const date = new Date(value);
-            if (Number.isNaN(date.getTime())) return '—';
-            return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' });
-        } catch(_){
-            return '—';
-        }
-    }
-
-    function friendlyDateTime(value){
-        if (!value) return '—';
-        try {
-            const date = new Date(value);
-            if (Number.isNaN(date.getTime())) return '—';
-            return date.toLocaleString();
-        } catch(_){
-            return '—';
-        }
-    }
-
-    async function fetchApplicationsByStatus(status){
-        if (__applicationsByStatus[status]) return __applicationsByStatus[status];
-        try {
-            const url = new URL('/api/connections', window.location.origin);
-            url.searchParams.set('status', status);
-            const res = await fetch(url.toString(), { headers:{ 'Accept':'application/json' } });
-            if (!res.ok) throw new Error('Failed to load applications');
-            const data = await res.json();
-            const list = (data && data.items && (data.items.data || data.items)) || [];
-            __applicationsByStatus[status] = Array.isArray(list) ? list : [];
-        } catch(_){
-            __applicationsByStatus[status] = [];
-        }
-        return __applicationsByStatus[status];
-    }
-
-    async function getPipelineApplications(){
-        const statuses = ['paid','scheduled','installing','installed'];
-        const results = {};
-        for (const status of statuses){
-            results[status] = await fetchApplicationsByStatus(status);
-        }
-        return results;
-    }
-
-    function renderPipelineList(containerId, items, emptyMessage, type){
-        const container = document.getElementById(containerId);
-        if (!container) return;
-        if (!items.length){
-            container.innerHTML = `<div class="rounded-lg border border-dashed border-gray-300 dark:border-gray-700 px-3 py-2 text-xs text-gray-500 dark:text-gray-400">${escapeHtml(emptyMessage)}</div>`;
-            return;
-        }
-        container.innerHTML = items.map(app => {
-            const code = escapeHtml(app.application_code || `APP-${app.id}`);
-            const name = escapeHtml(app.applicant_name || 'Unnamed applicant');
-            const address = escapeHtml(app.address || 'Address unavailable');
-            const paidAt = friendlyDateTime(app.paid_at);
-            const scheduleDate = friendlyDate(app.schedule_date);
-            const tag = (app.status || '').toString();
-            const badge = tag === 'scheduled'
-                ? 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-200'
-                : (tag === 'installed'
-                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200'
-                    : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200');
-
-            const scheduleAction = type === 'paid' ? `
-                <button type="button" data-action="schedule" data-id="${app.id}" class="inline-flex items-center gap-1 rounded-lg border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700 hover:bg-sky-100 dark:border-sky-800 dark:bg-sky-900/40 dark:text-sky-200">
-                    <x-heroicon-o-calendar class="w-4 h-4" />
-                    Schedule install
-                </button>` : '';
-
-            const detailAction = ['scheduled','installing'].includes(tag) ? `
-                <button type="button" data-action="meter-details" data-id="${app.id}" class="inline-flex items-center gap-1 rounded-lg border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700 hover:bg-sky-100 dark:border-sky-800 dark:bg-sky-900/40 dark:text-sky-200">
-                    <x-heroicon-o-wrench class="w-4 h-4" />
-                    Log meter details
-                </button>` : '';
-
-            const installAction = tag === 'installing' ? `
-                <button type="button" data-action="install" data-id="${app.id}" class="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">
-                    <x-heroicon-o-bolt class="w-4 h-4" />
-                    Mark installed
-                </button>` : '';
-
-            const assignAction = tag === 'installed' ? `
-                <button type="button" data-action="assign" data-id="${app.id}" data-customer="${app.customer_id || ''}" class="inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200">
-                    <x-heroicon-o-arrow-right-circle class="w-4 h-4" />
-                    Assign meter
-                </button>` : '';
-
-            const actions = [scheduleAction, detailAction, installAction, assignAction].filter(Boolean).join('');
-
-            return `
-                <div class="rounded-lg border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-900/60 px-3 py-2 space-y-2">
-                    <div class="flex items-start justify-between gap-2">
-                        <div>
-                            <p class="text-sm font-semibold text-gray-800 dark:text-gray-100">${code}</p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">${name}</p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">${address}</p>
-                        </div>
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${badge}">
-                            ${escapeHtml(tag)}
-                        </span>
-                    </div>
-                    <dl class="grid grid-cols-2 gap-2 text-[11px] text-gray-500 dark:text-gray-400">
-                        <div>
-                            <dt class="uppercase">Paid</dt>
-                            <dd class="font-medium text-gray-700 dark:text-gray-200">${paidAt}</dd>
-                        </div>
-                        <div>
-                            <dt class="uppercase">Schedule</dt>
-                            <dd class="font-medium text-gray-700 dark:text-gray-200">${scheduleDate}</dd>
-                        </div>
-                    </dl>
-                    ${actions ? `<div class="flex flex-wrap items-center gap-2" data-actions>${actions}</div>` : ''}
-                </div>
-            `;
-        }).join('');
-        container.querySelectorAll('[data-actions] button').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const action = btn.dataset.action;
-                const id = btn.dataset.id;
-                if (!action || !id) return;
-                if (action === 'schedule') {
-                    await promptSchedule(id);
-                } else if (action === 'meter-details') {
-                    await promptMeterDetails(id);
-                } else if (action === 'install') {
-                    await markInstalled(id);
-                } else if (action === 'assign') {
-                    await openAssignFlow(id, btn.dataset.customer || '');
-                }
-            });
-        });
-    }
-
-    async function refreshPipeline(){
-        const data = await getPipelineApplications();
-        renderPipelineList('paidApplicationsList', (data.paid || []).filter(item => (item.status || '') === 'paid'), 'No paid applications found.', 'paid');
-        const scheduledItems = [...(data.scheduled || []), ...(data.installing || [])]
-            .filter(item => (item.status || '').toLowerCase() !== 'installed')
-            .filter((item, index, arr) => arr.findIndex(candidate => candidate.id === item.id) === index);
-        renderPipelineList('scheduledApplicationsList', scheduledItems, 'No scheduled installations yet.', 'scheduled');
-    }
-
-    async function populateInstalledCustomerSelects(){
-        const selects = document.querySelectorAll('select[id^="installedCustomerForMeter-"]');
-        if (!selects.length) return;
-        const pipeline = await getPipelineApplications();
-        const apps = [
-            ...(pipeline.paid || []),
-            ...(pipeline.scheduled || []),
-            ...(pipeline.installing || []),
-            ...(pipeline.installed || []),
-        ].filter(item => item.customer_id).filter((item, index, arr) => arr.findIndex(candidate => candidate.id === item.id) === index);
-        if (!apps.length) return;
-
-        selects.forEach(sel => {
-            // Reset to placeholder
-            const first = sel.querySelector('option[value=""]');
-            sel.innerHTML = '';
-            if (first){ sel.appendChild(first); } else {
-                const opt = document.createElement('option');
-                opt.value = '';
-                opt.textContent = 'Select installed customer...';
-                sel.appendChild(opt);
-            }
-
-            apps.forEach(app => {
-                const labelParts = [app.applicant_name || 'Customer'];
-                if (app.application_code) labelParts.push(app.application_code);
-                if (app.status) labelParts.push(app.status.toUpperCase());
-                const opt = document.createElement('option');
-                opt.value = app.customer_id;
-                opt.dataset.applicationId = app.id;
-                opt.textContent = labelParts.join(' • ');
-                sel.appendChild(opt);
-            });
-
-            sel.addEventListener('change', () => {
-                const hidden = sel.closest('form')?.querySelector('input.selected-application-id');
-                if (!hidden) return;
-                const selected = sel.options[sel.selectedIndex];
-                hidden.value = selected?.dataset.applicationId || '';
-            });
-        });
-    }
-
-    async function init(){
-        await Promise.all([
-            populateInstalledCustomerSelects(),
-            refreshPipeline(),
-        ]);
-    }
-
-    const refreshButton = document.getElementById('refreshPipeline');
-    if (refreshButton){
-        refreshButton.addEventListener('click', async () => {
-            Object.keys(__applicationsByStatus).forEach(key => delete __applicationsByStatus[key]);
-            await init();
-        });
-    }
-
-    function boot(){
-        registerCopySerialButtons();
-        init();
-    }
-
-    if (document.readyState === 'loading'){
-        document.addEventListener('DOMContentLoaded', boot);
-    } else {
-        boot();
-    }
-
-    async function promptSchedule(id){
-        const scheduleDate = window.prompt('Set installation schedule (YYYY-MM-DD):');
-        if (!scheduleDate) return;
-        try {
-            const res = await fetch(`/api/connections/${id}/schedule`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                },
-                body: JSON.stringify({ schedule_date: scheduleDate }),
-            });
-            if (!res.ok){
-                const data = await res.json().catch(() => ({}));
-                throw new Error(data.message || 'Unable to schedule');
-            }
-            await refreshAfterMutation();
-            toast('Installation scheduled.');
-        } catch (err){
-            toast(err.message || 'Unable to schedule installation.', 'error');
-        }
-    }
-
-    async function promptMeterDetails(id){
-        const meterNo = window.prompt('Enter assigned meter number:');
-        if (!meterNo) return;
-        const meterSize = window.prompt('Optional: meter size (e.g. 1/2")');
-        try {
-            const res = await fetch(`/api/connections/${id}/meter-details`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                },
-                body: JSON.stringify({ meter_no: meterNo, meter_size: meterSize || null }),
-            });
-            if (!res.ok){
-                const data = await res.json().catch(() => ({}));
-                throw new Error(data.message || 'Unable to save meter details');
-            }
-            await refreshAfterMutation();
-            toast('Meter details logged.');
-        } catch (err){
-            toast(err.message || 'Unable to save meter details.', 'error');
-        }
-    }
-
-    async function markInstalled(id){
-        if (!confirm('Mark this installation as completed now?')) return;
-        try {
-            const res = await fetch(`/api/connections/${id}/install`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                },
-                body: JSON.stringify({}),
-            });
-            if (!res.ok){
-                const data = await res.json().catch(() => ({}));
-                throw new Error(data.message || 'Unable to mark installed');
-            }
-            await refreshAfterMutation();
-            toast('Application marked installed.');
-        } catch (err){
-            toast(err.message || 'Unable to mark as installed.', 'error');
-        }
-    }
-
-    async function openAssignFlow(applicationId, customerId){
-        try {
-            const selects = Array.from(document.querySelectorAll('select[id^="installedCustomerForMeter-"]'));
-            const select = selects.find(sel => sel.options.length > 1) || selects[0];
-            if (!select){
-                toast('No meter assignment form found on page.', 'error');
-                return;
-            }
-            const pipeline = await getPipelineApplications();
-            const target = [...(pipeline.installed || [])].find(app => String(app.id) === String(applicationId));
-            if (!target){
-                toast('Installed application not found in pipeline.', 'error');
-                return;
-            }
-            const meterAccordion = select.closest('details');
-            await refreshAfterMutation();
-            select.value = customerId || target.customer_id || '';
-            select.dispatchEvent(new Event('change'));
-            select.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            toast('Select an inventory meter to assign.', 'success');
-        } catch (err){
-            toast(err.message || 'Unable to open assignment flow.', 'error');
-        }
-    }
-
-    async function refreshAfterMutation(){
-        Object.keys(__applicationsByStatus).forEach(key => delete __applicationsByStatus[key]);
-        await init();
-    }
-})();
-</script>
-@endpush

@@ -126,20 +126,46 @@
         </section>
         @endif
 
+        @php
+            $statusOptions = [
+                'Pending',
+                'Paid',
+                'Outstanding Payment',
+                'Notice of Disconnection',
+                'Disconnected',
+                'Overdue'
+            ];
+        @endphp
+
         <!-- Action Buttons -->
-        <div class="px-8 pb-8 flex justify-center gap-3 border-t border-gray-100 dark:border-gray-800 pt-6">
-            <button onclick="printBill()" title="Print Invoice"
-                    class="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-500 transition">
-                <x-heroicon-o-printer class="w-4 h-4" /> Print
-            </button>
-            <button onclick="updateStatus()" title="Update Status"
-                    class="inline-flex items-center gap-2 rounded-xl bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 transition">
-                <x-heroicon-o-pencil-square class="w-4 h-4" /> Update Status
-            </button>
-            <button onclick="window.close()" title="Close"
-                    class="inline-flex items-center gap-2 rounded-xl bg-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-300 transition">
+        <div class="px-8 pb-8 flex flex-col gap-4 border-t border-gray-100 dark:border-gray-800 pt-6 lg:flex-row lg:items-center lg:justify-between">
+            <div class="flex items-center gap-3">
+                <button onclick="printBill()" title="Print Invoice"
+                        class="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-500 transition">
+                    <x-heroicon-o-printer class="w-4 h-4" /> Print
+                </button>
+
+                <form method="POST" action="{{ route('records.billing.status', $billingRecord->id) }}" class="flex items-center gap-3 rounded-xl bg-white dark:bg-gray-900/50 px-4 py-2 ring-1 ring-gray-200 dark:ring-gray-700">
+                    @csrf
+                    <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">
+                        Status
+                        <select name="bill_status" class="mt-1 w-44 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-100">
+                            @foreach($statusOptions as $status)
+                                <option value="{{ $status }}" @selected($billingRecord->bill_status === $status)>{{ $status }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+                    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-700 transition">
+                        <x-heroicon-o-check class="w-4 h-4" /> Save
+                    </button>
+                </form>
+            </div>
+
+            <a href="{{ route('records.billing') }}"
+               class="inline-flex items-center gap-2 rounded-xl bg-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-300 transition self-start lg:self-center"
+               title="Back to billing records">
                 <x-heroicon-o-x-mark class="w-4 h-4" /> Close
-            </button>
+            </a>
         </div>
     </div>
 </div>
@@ -147,36 +173,6 @@
 <script>
 function printBill() {
     window.open(`/records/billing/{{ $billingRecord->id }}/print`, '_blank');
-}
-
-function updateStatus() {
-    const newStatus = prompt('Update bill status:\n1. Pending\n2. Paid\n3. Notice of Disconnection\n\nEnter the new status:');
-    
-    if (newStatus && ['Pending', 'Paid', 'Notice of Disconnection'].includes(newStatus)) {
-        fetch(`/records/billing/{{ $billingRecord->id }}/status`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            },
-            body: JSON.stringify({
-                bill_status: newStatus,
-                notes: document.querySelector('textarea')?.value || ''
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Bill status updated successfully!');
-                location.reload();
-            } else {
-                alert('Error updating status: ' + data.message);
-            }
-        })
-        .catch(error => {
-            alert('Error updating status: ' + error.message);
-        });
-    }
 }
 </script>
 @endsection
