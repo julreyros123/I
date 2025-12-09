@@ -92,12 +92,12 @@
                         <p class="text-[11px] uppercase tracking-wide text-blue-600 dark:text-blue-300">Live Summary</p>
                         <p id="feesSummaryStatus" class="text-sm font-semibold text-blue-900 dark:text-blue-200">Select a fee to begin</p>
                     </div>
-                    <div class="flex items-center justify-between">
-                        <div>
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div class="sm:max-w-[60%]">
                             <p class="text-[11px] text-gray-600 dark:text-gray-400">Invoice No.</p>
-                            <p id="feesInvoiceDisplay" class="font-mono text-sm text-gray-900 dark:text-gray-100">—</p>
+                            <p id="feesInvoiceDisplay" class="font-mono text-sm text-gray-900 dark:text-gray-100 break-words sm:break-normal">—</p>
                         </div>
-                        <div class="grid grid-cols-3 gap-3 text-right">
+                        <div class="grid grid-cols-3 gap-3 text-left sm:text-right w-full sm:w-auto sm:min-w-[180px]">
                             <div>
                                 <p class="text-[11px] uppercase text-gray-500 dark:text-gray-400">Due</p>
                                 <p id="feesSummaryDue" class="text-base font-semibold text-gray-900 dark:text-gray-100">₱0.00</p>
