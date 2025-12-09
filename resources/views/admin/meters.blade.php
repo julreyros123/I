@@ -612,3 +612,50 @@
 </div>
 
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const overlay = document.getElementById('createMeterOverlay');
+    const drawer = document.getElementById('createMeterDrawer');
+    const openBtn = document.getElementById('openCreateMeter');
+    const closeBtn = document.getElementById('closeCreateMeter');
+
+    if (!overlay || !drawer || !openBtn || !closeBtn) {
+        return;
+    }
+
+    const form = overlay.querySelector('form');
+
+    const showDrawer = () => {
+        overlay.classList.remove('hidden');
+        requestAnimationFrame(() => {
+            overlay.classList.remove('opacity-0');
+            overlay.classList.add('opacity-100');
+            drawer.classList.remove('translate-x-full');
+        });
+    };
+
+    const hideDrawer = () => {
+        overlay.classList.remove('opacity-100');
+        overlay.classList.add('opacity-0');
+        drawer.classList.add('translate-x-full');
+        setTimeout(() => overlay.classList.add('hidden'), 200);
+    };
+
+    openBtn.addEventListener('click', showDrawer);
+    closeBtn.addEventListener('click', hideDrawer);
+    overlay.addEventListener('click', (event) => {
+        if (event.target === overlay) {
+            hideDrawer();
+        }
+    });
+
+    if (form) {
+        form.addEventListener('submit', () => {
+            openBtn.disabled = true;
+        });
+    }
+});
+</script>
+@endpush

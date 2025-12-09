@@ -128,18 +128,25 @@ class PaymentController extends Controller
     public function quickSearch(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'q' => ['required', 'string', 'max:100']
+            'q' => ['required', 'string', 'max:100'],
+            'name' => ['nullable', 'string', 'max:100'],
         ]);
 
-        $q = trim($data['q']);
+        $query = trim($data['q']);
+        $nameFilter = isset($data['name']) ? trim($data['name']) : '';
 
         // Fast, limited search for registered (active) customers by account, name, or address
         $results = Customer::query()
             ->when(method_exists(Customer::class, 'scopeActive'), fn($qb) => $qb->active())
-            ->where(function ($qb) use ($q) {
-                $qb->where('account_no', 'like', "%{$q}%")
-                   ->orWhere('name', 'like', "%{$q}%")
-                   ->orWhere('address', 'like', "%{$q}%");
+            ->where(function ($qb) use ($query, $nameFilter) {
+                $qb->where('account_no', 'like', "%{$query}%")
+                   ->orWhere('name', 'like', "%{$query}%")
+                   ->orWhere('address', 'like', "%{$query}%");
+
+                if ($nameFilter !== '') {
+                    $qb->orWhere('name', 'like', "%{$nameFilter}%")
+                       ->orWhere('address', 'like', "%{$nameFilter}%");
+                }
             })
             // Prioritize starts-with matches on account_no, then name
             ->orderByRaw(
@@ -148,10 +155,10 @@ class PaymentController extends Controller
                     WHEN name LIKE ? THEN 1 
                     ELSE 2 
                 END, name ASC",
-                ["{$q}%", "{$q}%"]
+                ["{$query}%", ($nameFilter !== '' ? "{$nameFilter}%" : "{$query}%")]
             )
             ->limit(10)
-            ->get(['id', 'account_no', 'name', 'address', 'meter_no']);
+            ->get(['id', 'account_no', 'name', 'address', 'meter_no', 'classification']);
 
         return response()->json([
             'results' => $results,

@@ -22,7 +22,7 @@
                 <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
                     <div class="w-full sm:max-w-sm">
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Applicant Directory</label>
-                        <x-ui.input id="applicantSearchInput" class="w-full h-11 text-sm" />
+                        <x-ui.input id="applicantSearchInput" placeholder="Search by name, application, or account no." class="w-full h-11 text-sm" />
                     </div>
                     <p class="text-xs text-gray-500 dark:text-gray-400">Results update instantly. Displaying up to 10 matches.</p>
                 </div>
@@ -140,19 +140,26 @@
 
     <!-- Search Customer (Account No.) -->
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-4 space-y-3">
-        <div class="flex flex-col md:flex-row md:items-end md:gap-3">
-            <div class="w-full md:w-auto md:max-w-xs">
-                <label class="block text-sm text-gray-600 dark:text-gray-400">Account No.</label>
+        <div class="flex flex-col lg:flex-row lg:items-end lg:gap-4">
+            <div class="w-full md:w-auto md:max-w-md">
+                <label class="block text-sm text-gray-600 dark:text-gray-400">Search Customer</label>
                 <div class="relative">
-                    <x-ui.input id="searchAccount" placeholder="e.g. 22-123456-7" class="w-full" />
+                    <x-ui.input id="unifiedSearch" placeholder="Account no. or customer name" class="w-full" />
                     <div id="quickSuggest" class="hidden absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow"></div>
                 </div>
             </div>
-            <div class="mt-3 md:mt-0 md:ml-3 flex gap-2">
+            <div class="mt-3 md:mt-0 flex gap-2">
                 <x-primary-button type="button" id="searchBtn" class="h-[42px]">Search</x-primary-button>
             </div>
         </div>
-        <p class="text-xs text-gray-500">Tip: Type at least 2 characters to see quick suggestions.</p>
+        <p class="text-xs text-gray-500">Tip: Type at least 2 characters — we’ll match either account numbers or customer names.</p>
+        <div id="searchResults" class="hidden mt-3 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-white dark:bg-gray-900">
+            <div class="flex items-center justify-between px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-800">
+                <span>Search Results</span>
+                <button type="button" id="clearResults" class="text-xs text-blue-600 dark:text-blue-400 hover:underline">Clear</button>
+            </div>
+            <ul id="searchResultsList" class="divide-y divide-gray-200 dark:divide-gray-800"></ul>
+        </div>
     </div>
 
     <!-- Payment Summary Layout: Current Bill + Quick Links + Recent Activity -->
@@ -383,8 +390,13 @@ function showAlert(msg, type = 'success') {
 
 // --- Customer Search Functionality ---
 // --- Account No. formatter and validator ---
-const acctInput = document.getElementById('searchAccount');
+const unifiedInput = document.getElementById('unifiedSearch');
+const acctInput = document.getElementById('account_no');
+const nameInputHidden = document.getElementById('customer_name');
 const suggestBox = document.getElementById('quickSuggest');
+const resultsPanel = document.getElementById('searchResults');
+const resultsList = document.getElementById('searchResultsList');
+const clearResultsBtn = document.getElementById('clearResults');
 function formatAcct(v){
     const d = (v || '').replace(/\D+/g,'').slice(0,9); // 9 digits total
     const p1 = d.slice(0,2);
@@ -556,37 +568,115 @@ if (searchBtnEl && acctInput){
     });
 }
 
-function hideSuggest(){ if (!suggestBox) return; suggestBox.classList.add('hidden'); suggestBox.innerHTML = ''; }
-
-async function quickSuggest(q){
+function hideSuggest(){
     if (!suggestBox) return;
-    try {
-        const url = new URL(`{{ route('api.payment.quick-search') }}`, window.location.origin);
-        url.searchParams.set('q', q);
-        const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-        if (!res.ok) { hideSuggest(); return; }
-        const data = await res.json();
-        const items = (data.results || []);
-        if (!items.length) { hideSuggest(); return; }
-        suggestBox.innerHTML = items.map(it => `
-            <button type="button" data-account="${it.account_no}" class="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between">
-                <span class="block">
-                    <span class="font-medium">${escapeHtml(it.name || '')}</span>
-                    <span class="block text-xs text-gray-500">${escapeHtml(it.address || '')}</span>
-                </span>
-                <span class="ml-3 text-xs px-2 py-1 rounded bg-gray-100 dark:bg-gray-700">${escapeHtml(it.account_no || '')}</span>
-            </button>
-        `).join('');
-        suggestBox.classList.remove('hidden');
-        suggestBox.querySelectorAll('button[data-account]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const acct = btn.getAttribute('data-account') || '';
-                if (acctInput) acctInput.value = acct;
-                hideSuggest();
-                searchByAccount(acct);
-            });
+    suggestBox.classList.add('hidden');
+    suggestBox.innerHTML = '';
+}
+
+function hideResults(){
+    if (!resultsPanel || !resultsList) return;
+    resultsPanel.classList.add('hidden');
+    resultsList.innerHTML = '';
+}
+
+function renderResults(customers){
+    if (!resultsPanel || !resultsList) return;
+    resultsList.innerHTML = '';
+    if (!customers.length) {
+        hideResults();
+        return;
+    }
+    customers.forEach(customer => {
+        const { account_no, name, address, classification } = customer;
+        const li = document.createElement('li');
+        li.className = 'px-4 py-3 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer transition';
+        li.innerHTML = `
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div>
+                    <p class="font-semibold text-gray-800 dark:text-gray-100">${escapeHtml(name || '—')}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">${escapeHtml(account_no || '—')}</p>
+                    <p class="text-[11px] text-gray-400 dark:text-gray-500 truncate">${escapeHtml(address || '—')}</p>
+                </div>
+                ${classification ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-200 text-[10px] uppercase">${escapeHtml(classification)}</span>` : ''}
+            </div>
+        `;
+        li.addEventListener('click', async () => {
+            if (unifiedInput) unifiedInput.value = account_no || name || '';
+            if (acctInput) acctInput.value = account_no || '';
+            if (nameInputHidden) nameInputHidden.value = name || '';
+            hideSuggest();
+            hideResults();
+            await searchByAccount(account_no || '');
         });
-    } catch { hideSuggest(); }
+        resultsList.appendChild(li);
+    });
+    resultsPanel.classList.remove('hidden');
+}
+
+function renderSuggestions(customers){
+    if (!suggestBox) return;
+    suggestBox.innerHTML = '';
+    if (!customers.length) {
+        hideSuggest();
+        return;
+    }
+    customers.forEach(customer => suggestBox.appendChild(buildSuggestionItem(customer)));
+    suggestBox.classList.remove('hidden');
+}
+
+async function fetchCustomers(query){
+    if (!query || query.length < 2) return [];
+    const url = new URL(`{{ route('api.payment.quick-search') }}`, window.location.origin);
+    url.searchParams.set('q', query);
+    const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.results || [];
+}
+
+async function quickSuggest(query){
+    if (!suggestBox) return;
+    const customers = await fetchCustomers(query);
+    if (!customers.length) {
+        hideSuggest();
+        return;
+    }
+    renderSuggestions(customers);
+}
+
+async function searchUnified(value){
+    const trimmed = (value || '').trim();
+    if (!trimmed) {
+        showAlert('Please enter an account number or customer name.', 'error');
+        return;
+    }
+
+    // If it looks like an account number, go straight to search
+    if (/^[0-9]{2}-[0-9]{6}-[0-9]$/i.test(trimmed) || /^[0-9]{9}$/.test(trimmed.replace(/\D+/g,''))) {
+        if (acctInput) acctInput.value = formatAcct(trimmed);
+        hideSuggest();
+        await searchByAccount(formatAcct(trimmed));
+        return;
+    }
+
+    // Otherwise, treat as name search
+    const matches = await fetchCustomers(trimmed);
+    if (!matches.length) {
+        hideSuggest();
+        showAlert('No customer found for that search.', 'error');
+        return;
+    }
+    if (matches.length === 1) {
+        const customer = matches[0];
+        if (acctInput) acctInput.value = customer.account_no || '';
+        if (nameInputHidden) nameInputHidden.value = customer.name || '';
+        if (unifiedInput) unifiedInput.value = customer.account_no || customer.name || '';
+        hideSuggest();
+        await searchByAccount(customer.account_no || '');
+        return;
+    }
+    renderSuggestions(matches);
 }
 
 function escapeHtml(s){
@@ -595,6 +685,7 @@ function escapeHtml(s){
 
 // Quick search: auto-trigger when a valid account number is typed (debounced)
 let acctDebounce;
+let nameDebounce;
 if (acctInput){
     acctInput.addEventListener('input', () => {
         clearTimeout(acctDebounce);
@@ -603,8 +694,9 @@ if (acctInput){
             acctDebounce = setTimeout(() => searchByAccount(account), 400);
             hideSuggest();
         } else {
+            const nameHint = nameInput ? nameInput.value.trim() : '';
             if ((account || '').replace(/\D+/g,'').length >= 2 || account.length >= 2) {
-                acctDebounce = setTimeout(() => quickSuggest(account), 250);
+                acctDebounce = setTimeout(() => quickSuggest(account, nameHint), 250);
             } else {
                 hideSuggest();
             }
@@ -874,7 +966,10 @@ function renderApplicantDirectory(rows){
             <tr data-applicant-row="${item.id}" tabindex="0" class="cursor-pointer transition hover:bg-blue-50 dark:hover:bg-blue-900/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400">
                 <td class="px-4 py-3">
                     <div class="font-semibold text-gray-900 dark:text-gray-100">${escapeHtml(item.application_code || `APP-${item.id || 'NEW'}`)}</div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">#${escapeHtml(item.id ?? '—')}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 flex flex-wrap gap-2 items-center">
+                        <span>#${escapeHtml(item.id ?? '—')}</span>
+                        ${item.account_no ? `<span class="inline-flex px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-200 text-[10px] uppercase">${escapeHtml(item.account_no)}</span>` : ''}
+                    </p>
                 </td>
                 <td class="px-4 py-3">
                     <p class="font-medium text-gray-900 dark:text-gray-100">${escapeHtml(item.applicant_name || '—')}</p>
@@ -899,18 +994,32 @@ function renderApplicantDirectory(rows){
     markActiveApplicantRow();
 }
 
+function normalizeSearchTerm(value){
+    return (value || '').toString().trim().toLowerCase();
+}
+
+function normalizeAccountTerm(value){
+    return (value || '').toString().replace(/[^0-9a-z]/gi, '').toLowerCase();
+}
+
 function filterApplicants(list, term){
-    const normalized = term.trim().toLowerCase();
-    if (!normalized) return list;
+    const normalized = normalizeSearchTerm(term);
+    const accountTerm = normalizeAccountTerm(term);
+    if (!normalized && !accountTerm) return list;
     return list.filter(item => {
         const fields = [
             item.application_code,
             item.applicant_name,
             item.address,
             item.contact_no,
+            item.account_no,
             item.id ? String(item.id) : '',
         ];
-        return fields.some(value => value && value.toString().toLowerCase().includes(normalized));
+
+        const matchesText = normalized ? fields.some(value => value && value.toString().toLowerCase().includes(normalized)) : false;
+        const matchesAccount = accountTerm ? fields.some(value => value && normalizeAccountTerm(value).includes(accountTerm)) : false;
+
+        return matchesText || matchesAccount;
     });
 }
 
@@ -921,6 +1030,7 @@ function normalizeApplication(item){
         ...item,
         id,
         application_code: item.application_code || (id ? `APP-${String(id).padStart(6, '0')}` : 'APP-NEW'),
+        account_no: item.account_no || item.accountNumber || null,
     };
 }
 

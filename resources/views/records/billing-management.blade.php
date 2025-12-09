@@ -344,14 +344,14 @@
                                     @endif
                                 </div>
                             </td>
-                            <td class="px-6 py-3 align-middle">
+                            <td class="px-6 py-3 align-middle print-status-cell">
                                 @if($printed)
-                                    <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 text-xs font-medium dark:bg-emerald-900/30 dark:text-emerald-200">
+                                    <div class="print-status-badge inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 text-xs font-medium dark:bg-emerald-900/30 dark:text-emerald-200" data-status="printed" data-date="{{ optional($record->generated_at)->format('M d, Y') ?? '' }}">
                                         <x-heroicon-o-check-badge class="w-4 h-4" />
                                         Printed {{ optional($record->generated_at)->format('M d, Y') ?? '' }}
                                     </div>
                                 @else
-                                    <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-medium dark:bg-blue-900/40 dark:text-blue-200">
+                                    <div class="print-status-badge inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-medium dark:bg-blue-900/40 dark:text-blue-200" data-status="pending">
                                         <x-heroicon-o-information-circle class="w-4 h-4" />
                                         Awaiting print
                                     </div>
@@ -457,6 +457,13 @@ function initBulkControls(){
   const selectAll = document.getElementById('selectAll');
   const rowChecks = Array.from(document.querySelectorAll('.row-check'));
   const eligible = () => rowChecks.filter(ch => !ch.disabled);
+  const formatPrintedDate = () => {
+    const now = new Date();
+    const month = now.toLocaleString('en-US', { month: 'short' });
+    const day = String(now.getDate()).padStart(2, '0');
+    const year = now.getFullYear();
+    return `${month} ${day}, ${year}`;
+  };
 
   function refreshBulkState() {
     const selectable = eligible();
@@ -513,7 +520,24 @@ function initBulkControls(){
 
     ids.forEach(id => {
       const tr = document.querySelector(`tr[data-id="${id}"]`);
-      if (tr) tr.classList.add('locked-row');
+      if (!tr) return;
+      tr.classList.add('locked-row');
+
+      const checkbox = tr.querySelector('.row-check');
+      if (checkbox) {
+        checkbox.checked = false;
+        checkbox.disabled = true;
+      }
+
+      const badge = tr.querySelector('.print-status-badge');
+      if (badge) {
+        badge.dataset.status = 'printed';
+        const date = formatPrintedDate();
+        badge.dataset.date = date;
+        badge.classList.remove('bg-blue-50','text-blue-600','dark:bg-blue-900/40','dark:text-blue-200');
+        badge.classList.add('bg-emerald-50','text-emerald-600','dark:bg-emerald-900/30','dark:text-emerald-200');
+        badge.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M9 2.25A.75.75 0 0 1 9.75 3v1.5h4.5V3a.75.75 0 0 1 1.5 0v1.5H18a2.25 2.25 0 0 1 2.25 2.25v11.25A2.25 2.25 0 0 1 18 20.25H6a2.25 2.25 0 0 1-2.25-2.25V6.75A2.25 2.25 0 0 1 6 4.5h2.25V3A.75.75 0 0 1 9 2.25Zm-3 7.5A.75.75 0 0 0 5.25 10.5v7.5c0 .414.336.75.75.75h12a.75.75 0 0 0 .75-.75v-7.5a.75.75 0 0 0-.75-.75H6Z" clip-rule="evenodd"/><path d="M7.5 12.75a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5a.75.75 0 0 1-.75-.75Z"/></svg> Printed ${date}`;
+      }
     });
     bumpCounts(-ids.length, +ids.length);
     refreshBulkState();
