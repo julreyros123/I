@@ -201,6 +201,10 @@
     let selectedAccount = null;
     let lastSnapshot = null;
     let currentSearchController = null;
+    let latestResults = [];
+    let pendingSnapshotAccount = null;
+
+    const normalizeAccount = (value = '') => value.replace(/[^A-Za-z0-9]/g, '').toLowerCase();
 
     function resetPanels(){
         selectedAccount = null;
@@ -224,7 +228,47 @@
         lastUpdated.appendChild(document.createTextNode('Awaiting lookup'));
     }
 
+    function selectAccount(item){
+        if (!item || !item.account_no) {
+            return;
+        }
+
+        const normalizedTarget = normalizeAccount(item.account_no);
+        if (
+            normalizeAccount(selectedAccount) === normalizedTarget ||
+            normalizeAccount(pendingSnapshotAccount) === normalizedTarget
+        ) {
+            searchResults.classList.add('hidden');
+            searchInput.value = item.account_no;
+            return;
+        }
+
+        searchResults.classList.add('hidden');
+        searchInput.value = item.account_no;
+        loadSnapshot(item.account_no);
+    }
+
+    function maybeAutoSelect(query){
+        const normalizedQuery = normalizeAccount(query);
+        if (normalizedQuery.length < 4) {
+            return;
+        }
+
+        if (
+            normalizeAccount(selectedAccount) === normalizedQuery ||
+            normalizeAccount(pendingSnapshotAccount) === normalizedQuery
+        ) {
+            return;
+        }
+
+        const exact = latestResults.find(item => normalizeAccount(item.account_no) === normalizedQuery);
+        if (exact) {
+            selectAccount(exact);
+        }
+    }
+
     function showResults(items){
+        latestResults = items;
         searchResults.innerHTML = '';
         if (!items.length){
             const empty = document.createElement('div');
@@ -243,9 +287,7 @@
                                 <span class="text-xs text-gray-500 dark:text-gray-400">${item.name ?? '—'}</span>
                                 <span class="text-xs text-gray-400 dark:text-gray-500">${item.address ?? ''}</span>`;
             option.addEventListener('click', () => {
-                searchResults.classList.add('hidden');
-                searchInput.value = item.account_no;
-                loadSnapshot(item.account_no);
+                selectAccount(item);
             });
             searchResults.appendChild(option);
         });
@@ -256,6 +298,7 @@
         if (currentSearchController){
             currentSearchController.abort();
         }
+        latestResults = [];
         if (!query){
             searchResults.classList.add('hidden');
             return;
@@ -271,7 +314,9 @@
             if (!res.ok) throw new Error('Search failed');
             const data = await res.json();
             if (currentSearchController !== controller) return;
-            showResults(data.results || []);
+            const items = Array.isArray(data.results) ? data.results : [];
+            showResults(items);
+            maybeAutoSelect(query);
         } catch (error){
             if (error.name === 'AbortError'){
                 return;
@@ -283,6 +328,16 @@
     }
 
     async function loadSnapshot(accountNo){
+        const normalizedTarget = normalizeAccount(accountNo);
+        if (!normalizedTarget) {
+            return;
+        }
+
+        if (normalizeAccount(pendingSnapshotAccount) === normalizedTarget) {
+            return;
+        }
+
+        pendingSnapshotAccount = accountNo;
         resetPanels();
         formStatus.textContent = 'Loading…';
         try {
@@ -312,6 +367,8 @@
             console.error(error);
             formStatus.textContent = 'Unable to load account';
             showToast?.('Failed to load account: ' + error.message, 'error');
+        } finally {
+            pendingSnapshotAccount = null;
         }
     }
 
@@ -400,6 +457,31 @@
             return;
         }
         debounceTimer = setTimeout(() => searchAccounts(value), 120);
+    });
+
+    searchInput?.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter') {
+            return;
+        }
+
+        const value = searchInput.value.trim();
+        if (!value){
+            return;
+        }
+
+        e.preventDefault();
+        const normalizedValue = normalizeAccount(value);
+        if (latestResults.length){
+            const exact = latestResults.find(item => normalizeAccount(item.account_no) === normalizedValue);
+            selectAccount(exact ?? latestResults[0]);
+            return;
+        }
+
+        if (normalizedValue.length >= 4 && /\d/.test(normalizedValue)){
+            selectAccount({ account_no: value });
+        } else {
+            searchAccounts(value);
+        }
     });
 
     document.addEventListener('click', (e) => {
