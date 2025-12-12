@@ -284,7 +284,7 @@
                             <button type="button" id="staffAddActivityToggle" class="text-[11px] px-2 py-1 rounded border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover-bg-gray-700">Add Activity</button>
                         </div>
                         <div class="border-t border-gray-200 dark:border-gray-700 mb-3"></div>
-                        <div class="divide-y divide-gray-200 dark:divide-gray-700 text-xs text-gray-700 dark:text-gray-200">
+                        <div class="divide-y divide-gray-200 dark:divide-gray-700 text-sm text-gray-700 dark:text-gray-200">
                             <div class="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
                                 <div class="flex-1 min-w-0">
                                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">

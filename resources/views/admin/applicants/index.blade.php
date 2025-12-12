@@ -10,20 +10,7 @@
                 <h1 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">New Applicant Workspace</h1>
                 <p class="text-sm/relaxed text-gray-500 dark:text-gray-400">Track every new connection request, validate requirements, and act fast on pending approvals.</p>
             </div>
-            <div class="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
-                <a href="#" class="inline-flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2 font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition" data-intent="import">
-                    <x-heroicon-o-arrow-up-tray class="w-4 h-4 text-gray-500" /> Import CSV
-                </a>
-                <a href="{{ route('admin.applicants.index', array_merge($filters, ['export' => 'csv'])) }}" class="inline-flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2 font-semibold text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                    <x-heroicon-o-arrow-down-tray class="w-4 h-4 text-gray-500" /> Export CSV
-                </a>
-                <button type="button" class="inline-flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2 font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                    <x-heroicon-o-users class="w-4 h-4 text-gray-500" /> Merge Duplicates
-                </button>
-                <button type="button" class="inline-flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-2 font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                    <x-heroicon-o-clipboard-document-list class="w-4 h-4 text-gray-500" /> Audit Log
-                </button>
-            </div>
+            <div class="hidden"></div>
         </div>
         <dl class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             @php

@@ -97,16 +97,16 @@
                             <p class="text-[11px] text-gray-600 dark:text-gray-400">Invoice No.</p>
                             <p id="feesInvoiceDisplay" class="font-mono text-sm text-gray-900 dark:text-gray-100 break-words sm:break-normal">—</p>
                         </div>
-                        <div class="grid grid-cols-3 gap-3 text-left sm:text-right w-full sm:w-auto sm:min-w-[180px]">
-                            <div>
+                        <div class="w-full sm:w-auto sm:min-w-[220px] space-y-2">
+                            <div class="flex items-center justify-between gap-4">
                                 <p class="text-[11px] uppercase text-gray-500 dark:text-gray-400">Due</p>
                                 <p id="feesSummaryDue" class="text-base font-semibold text-gray-900 dark:text-gray-100">₱0.00</p>
                             </div>
-                            <div>
+                            <div class="flex items-center justify-between gap-4">
                                 <p class="text-[11px] uppercase text-gray-500 dark:text-gray-400">Tendered</p>
                                 <p id="feesSummaryTender" class="text-base font-semibold text-gray-900 dark:text-gray-100">₱0.00</p>
                             </div>
-                            <div>
+                            <div class="flex items-center justify-between gap-4">
                                 <p class="text-[11px] uppercase text-gray-500 dark:text-gray-400">Change</p>
                                 <p id="feesSummaryChange" class="text-base font-semibold text-gray-900 dark:text-gray-100">₱0.00</p>
                             </div>
@@ -164,7 +164,7 @@
 
     <!-- Payment Summary Layout: Current Bill + Quick Links + Recent Activity -->
     <div id="paymentSummary" class="mt-4 bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-200 dark:border-gray-700 p-5 space-y-4">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 flex items-center justify-center">
                     <x-heroicon-o-credit-card class="w-5 h-5" />
@@ -174,13 +174,13 @@
                     <p id="summaryCustomerName" class="text-sm font-semibold text-gray-900 dark:text-gray-100">—</p>
                 </div>
             </div>
-            <div class="flex items-center gap-6 sm:text-right">
-                <div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Unpaid bills</p>
+            <div class="grid grid-cols-2 sm:grid-cols-2 gap-4 sm:gap-6 w-full sm:w-auto sm:min-w-[220px]">
+                <div class="flex flex-col items-end text-right">
+                    <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Unpaid bills</p>
                     <p id="unpaidCount" class="text-lg font-semibold text-gray-900 dark:text-gray-100">0</p>
                 </div>
-                <div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Latest bill</p>
+                <div class="flex flex-col items-end text-right">
+                    <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Latest bill</p>
                     <p id="latestBillAmount" class="text-lg font-semibold text-gray-900 dark:text-gray-100">₱0.00</p>
                 </div>
             </div>

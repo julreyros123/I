@@ -40,49 +40,53 @@ class MeterController extends Controller
             ->get(['id', 'serial', 'type', 'size', 'manufacturer', 'seal_no']);
 
         $installationQueue = CustomerApplication::query()
-            ->with(['customer:id,name,account_no'])
-            ->whereIn('status', ['paid', 'scheduled'])
+            ->with(['customer:id,name,account_no,meter_no,meter_size'])
+            ->whereIn('status', ['paid', 'scheduled', 'installing'])
             ->orderByRaw("CASE WHEN status = 'paid' THEN 0 ELSE 1 END")
             ->orderBy('schedule_date')
             ->limit(25)
             ->get(['id', 'applicant_name', 'address', 'status', 'schedule_date', 'customer_id']);
 
-        $assignmentOptions = $installationQueue
-            ->filter(fn ($app) => $app->status === 'scheduled')
-            ->map(function ($app) {
+        $assignmentOptions = CustomerApplication::query()
+            ->whereIn('status', ['scheduled', 'installing'])
+            ->with(['customer:id,name,account_no,address,meter_no'])
+            ->orderByRaw("CASE WHEN status = 'scheduled' THEN 0 ELSE 1 END")
+            ->orderBy('schedule_date')
+            ->limit(50)
+            ->get(['id', 'customer_id', 'applicant_name', 'address', 'status', 'schedule_date'])
+            ->filter(function ($app) {
                 $customer = $app->customer;
-                if (!$customer && $app->customer_id) {
-                    $customer = Customer::find($app->customer_id);
-                }
+                if ($customer) {
+                    if (!empty($customer->meter_no)) {
+                        return false;
+                    }
 
-                if (!$customer) {
-                    $nameKey = trim(mb_strtolower($app->applicant_name ?? ''));
-                    $addressKey = trim(mb_strtolower($app->address ?? ''));
+                    $hasAssignment = $customer->meterAssignments()
+                        ->whereNull('unassigned_at')
+                        ->exists();
 
-                    $customer = Customer::query()
-                        ->when($nameKey !== '', fn ($q) => $q->whereRaw('LOWER(TRIM(name)) = ?', [$nameKey]))
-                        ->when($addressKey !== '', fn ($q) => $q->whereRaw('LOWER(TRIM(address)) = ?', [$addressKey]))
-                        ->first();
-
-                    if (!$customer && $nameKey !== '') {
-                        $customer = Customer::query()
-                            ->whereRaw('LOWER(TRIM(name)) = ?', [$nameKey])
-                            ->orderByDesc('created_at')
-                            ->first();
+                    if ($hasAssignment) {
+                        return false;
                     }
                 }
 
+                return true;
+            })
+            ->map(function ($app) {
+                $customer = $app->customer;
                 return [
                     'application_id' => $app->id,
                     'customer_id' => $customer?->id,
                     'customer_name' => $customer?->name ?? $app->applicant_name,
                     'account_no' => $customer?->account_no,
-                    'address' => $app->address,
+                    'address' => $customer?->address ?? $app->address,
                     'scheduled_for' => optional($app->schedule_date)->format('M d, Y'),
+                    'status' => $app->status,
                 ];
             })
-            ->filter(fn ($option) => !empty($option['customer_id']))
-            ->unique('customer_id')
+            ->filter(function ($option) {
+                return !empty($option['application_id']);
+            })
             ->values();
 
         $recentCustomers = Customer::query()
@@ -159,6 +163,27 @@ class MeterController extends Controller
         $customer = Customer::find($data['account_id']);
         $targetApp = null;
         if ($customer) {
+            $alreadyMetered = !empty($customer->meter_no)
+                || MeterAssignment::query()
+                    ->where('account_id', $customer->id)
+                    ->whereNull('unassigned_at')
+                    ->exists();
+
+            if ($alreadyMetered) {
+                $message = 'This customer already has a meter assigned. Unassign it first before linking a new one.';
+                if ($request->expectsJson() || $request->wantsJson()) {
+                    return response()->json([
+                        'ok' => false,
+                        'message' => $message,
+                        'code' => 'CUSTOMER_ALREADY_METERED',
+                    ], 422);
+                }
+
+                return back()->withErrors([
+                    'account_id' => $message,
+                ])->withInput();
+            }
+
             if (!empty($data['application_id'])) {
                 $targetApp = CustomerApplication::where('id', $data['application_id'])
                     ->where('customer_id', $customer->id)
@@ -195,7 +220,11 @@ class MeterController extends Controller
                 'assigned_by' => optional(auth()->user())->id,
             ]);
             $before = $meter->toArray();
-            $meter->update(['current_account_id' => $data['account_id'], 'status' => 'active']);
+            $meter->update([
+                'current_account_id' => $data['account_id'],
+                'status' => 'active',
+                'install_date' => $meter->install_date ?? now(),
+            ]);
             MeterAudit::create([
                 'meter_id' => $meter->id,
                 'action' => 'assign',
@@ -215,9 +244,15 @@ class MeterController extends Controller
             }
 
             if ($targetApp) {
-                $targetApp->status = $targetApp->status === 'paid' ? 'scheduled' : $targetApp->status;
-                $targetApp->schedule_date = $targetApp->schedule_date ?? now();
-                $targetApp->scheduled_by = $targetApp->scheduled_by ?? optional(auth()->user())->id;
+                $docs = is_array($targetApp->documents) ? $targetApp->documents : [];
+                $docs['assigned_meter_no'] = $meter->serial;
+                $docs['assigned_meter_size'] = $meter->size;
+                $docs['installation_completed_at'] = now()->toISOString();
+
+                $targetApp->documents = $docs;
+                $targetApp->status = 'installed';
+                $targetApp->installed_at = now();
+                $targetApp->installed_by = optional(auth()->user())->id;
                 $targetApp->save();
             }
 

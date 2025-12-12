@@ -162,10 +162,6 @@
                     <h2 class="text-base font-semibold text-gray-800 dark:text-gray-100">Meters eligible for installation</h2>
                     <p class="text-sm text-gray-500 dark:text-gray-400">Showing {{ request('scope', 'eligible') === 'all' ? 'all tracked meters' : 'inventory, installed, and active lines' }}</p>
                 </div>
-                <a href="{{ route('admin.meters.export', request()->all()) }}" class="h-10 inline-flex items-center gap-2 px-3 rounded-lg border border-gray-300 text-sm text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800">
-                    <x-heroicon-o-arrow-down-tray class="w-4 h-4" />
-                    Export
-                </a>
             </div>
 
             <div class="overflow-x-auto rounded-lg border border-gray-100 dark:border-gray-800">

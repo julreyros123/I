@@ -28,24 +28,26 @@ class CustomerIssueController extends Controller
         ]);
 
         $q = trim($data['q']);
+        $normalized = preg_replace('/[^A-Za-z0-9]/', '', $q);
 
-        if ($q === '') {
+        if ($q === '' || !preg_match('/\d/', $normalized)) {
             return response()->json(['results' => []]);
         }
 
         $results = Customer::query()
             ->select(['id', 'account_no', 'name', 'address', 'contact_no', 'meter_no'])
-            ->when(method_exists(Customer::class, 'scopeActive'), fn ($qb) => $qb->active())
             ->where(function ($qb) use ($q) {
                 $qb->where('account_no', 'like', "%{$q}%")
                     ->orWhere('name', 'like', "%{$q}%")
                     ->orWhere('address', 'like', "%{$q}%");
             })
+            ->orWhere(function ($qb) use ($normalized) {
+                $qb->whereRaw("REPLACE(REPLACE(account_no,'-',''),' ','') LIKE ?", ["%{$normalized}%"]);
+            })
             ->orderByRaw(
                 "CASE 
                     WHEN account_no LIKE ? THEN 0 
                     WHEN name LIKE ? THEN 1 
-                    ELSE 2 
                 END, name ASC",
                 ["{$q}%", "{$q}%"]
             )

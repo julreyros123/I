@@ -515,22 +515,9 @@
     </div>
 
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-200 dark:border-gray-700 p-4 lg:p-5 space-y-5">
-        <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-            <div class="space-y-1">
-                <h1 class="text-xl font-semibold text-gray-800 dark:text-gray-100">Customer Management</h1>
-                <p class="text-[12px] text-gray-500 dark:text-gray-400">Search, filter, and manage customer records with full audit history.</p>
-            </div>
-            <div class="flex flex-wrap items-center gap-2 text-xs sm:text-[13px]">
-                <a href="{{ route('admin.customers', array_filter([...request()->except('export'), 'export' => 'csv'])) }}" class="inline-flex items-center gap-1 px-3 py-2 rounded-lg bg-blue-600 text-white font-semibold shadow hover:bg-blue-500 transition">
-                    <x-heroicon-o-arrow-down-tray class="w-4 h-4" /> Export CSV
-                </a>
-                <button type="button" class="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800">
-                    <x-heroicon-o-users class="w-4 h-4" /> Merge Duplicates
-                </button>
-                <button type="button" id="openAuditLog" class="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800">
-                    <x-heroicon-o-clipboard-document-list class="w-4 h-4" /> Audit Log
-                </button>
-            </div>
+        <div class="space-y-1">
+            <h1 class="text-xl font-semibold text-gray-800 dark:text-gray-100">Customer Management</h1>
+            <p class="text-[12px] text-gray-500 dark:text-gray-400">Search, filter, and manage customer records with full audit history.</p>
         </div>
 
         <form id="customerFilters" method="GET" class="space-y-4">

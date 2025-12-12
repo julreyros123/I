@@ -4,7 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+
+use App\Models\MeterAssignment;
 
 class Customer extends Model
 {
@@ -56,6 +59,11 @@ class Customer extends Model
     public function latestApplication(): HasOne
     {
         return $this->hasOne(\App\Models\CustomerApplication::class)->latestOfMany();
+    }
+
+    public function meterAssignments(): HasMany
+    {
+        return $this->hasMany(MeterAssignment::class, 'account_id');
     }
 
     // Helper methods
