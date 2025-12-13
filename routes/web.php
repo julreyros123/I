@@ -141,6 +141,7 @@ Route::middleware('auth')->group(function () {
 Route::post('/api/customer/attach', [CustomerController::class, 'attach'])->middleware('auth')->name('customer.attach');
 Route::post('/api/customer/transfer', [CustomerController::class, 'transferOwnership'])->middleware('auth')->name('customer.transfer');
 Route::post('/api/customer/reconnect', [CustomerController::class, 'reconnectService'])->middleware('auth')->name('customer.reconnect');
+Route::post('/api/customer/{id}/request-reconnect', [CustomerController::class, 'requestReconnect'])->middleware('auth')->name('customer.requestReconnect');
 Route::get('/api/customer/next-account', [CustomerController::class, 'nextAccount'])->name('customer.nextAccount');
 Route::get('/api/customer/find', [CustomerController::class, 'findByAccount'])->middleware('auth')->name('customer.findByAccount');
 Route::get('/api/customer/search', [CustomerController::class, 'searchAccounts'])->middleware('auth')->name('customer.searchAccounts');

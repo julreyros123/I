@@ -68,7 +68,7 @@
 
     {{-- Main Content --}}
     <main class="md:ml-64 pt-16 min-h-screen transition-all duration-300">
-        <div class="max-w-7xl mx-auto px-6 py-6 lg:py-8">
+        <div class="w-full mx-auto px-6 py-6 lg:py-8">
             @yield('content')
         </div>
     </main>
@@ -138,9 +138,9 @@
         document.querySelectorAll('table').forEach(function(tbl){
             if (tbl.closest('.table-responsive-wrapper')) return;
             var wrapper = document.createElement('div');
-            wrapper.className = 'table-responsive-wrapper overflow-x-auto -mx-4 md:mx-0 relative';
-            // Ensure columns are wide enough so hidden columns become reachable via scroll
-            tbl.classList.add('min-w-max');
+            wrapper.className = 'table-responsive-wrapper overflow-x-auto w-full relative';
+            // Ensure table stretches to available width while keeping scroll for overflow
+            tbl.classList.add('min-w-full','w-full');
             tbl.parentNode.insertBefore(wrapper, tbl);
             wrapper.appendChild(tbl);
 

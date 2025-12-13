@@ -21,12 +21,15 @@ class Customer extends Model
         'meter_no',
         'meter_size',
         'status',
+        'reconnect_requested_at',
+        'reconnect_requested_by',
         'created_by',
         'previous_reading',
     ];
 
     protected $casts = [
         'previous_reading' => 'float',
+        'reconnect_requested_at' => 'datetime',
     ];
 
     // Scope for active customers

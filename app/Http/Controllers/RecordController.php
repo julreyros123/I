@@ -33,7 +33,7 @@ class RecordController extends Controller
             ->when($status, function($query) use ($status) {
                 $query->where('bill_status', $status);
             })
-            ->when($generated !== '' && \Schema::hasColumn('billing_records','is_generated'), function($query) use ($generated){
+            ->when($generated !== '' && Schema::hasColumn('billing_records','is_generated'), function($query) use ($generated){
                 $query->where('is_generated', $generated === '1');
             })
             ->when($issueFrom, function($query) use ($issueFrom) {
@@ -61,7 +61,7 @@ class RecordController extends Controller
                 }
             })
             ->orderByDesc('created_at')
-            ->paginate(15)
+            ->paginate(10)
             ->withQueryString();
 
         // Get statistics (generation-focused) with guard if column not migrated yet
@@ -159,7 +159,7 @@ class RecordController extends Controller
                 $query->where('is_generated', $generated === '1');
             })
             ->orderByDesc('created_at')
-            ->paginate(15)
+            ->paginate(10)
             ->withQueryString();
 
         // Get statistics (generation-focused) with guard if column not migrated yet

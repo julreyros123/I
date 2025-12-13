@@ -404,7 +404,7 @@ class AdminController extends Controller
             return $this->exportCustomersCsv(clone $query);
         }
 
-        $customers = $query->orderByDesc('created_at')->paginate(20)->withQueryString();
+        $customers = $query->orderByDesc('created_at')->paginate(10)->withQueryString();
 
         $auditLog = TransferReconnectAudit::with('performedByUser')
             ->orderByDesc('performed_at')

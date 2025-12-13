@@ -27,7 +27,7 @@ class CustomerController extends Controller
                 $query->where('status', $status);
             })
             ->orderBy('created_at', 'desc')
-            ->paginate(20)
+            ->paginate(10)
             ->withQueryString();
 
         return view('customer.index', compact('customers', 'q', 'status'));
@@ -156,21 +156,46 @@ class CustomerController extends Controller
 
     public function searchAccounts(Request $request): JsonResponse
     {
-        $request->validate(['q' => ['required','string','max:50']]);
-        $query = $request->string('q')->toString();
-        
-        $customers = Customer::active()
-            ->where('account_no', 'like', "%{$query}%")
-            ->orderBy('account_no')
+        $request->validate([
+            'q' => ['required','string','max:50'],
+            'include_all' => ['nullable'],
+        ]);
+        $query = trim($request->string('q')->toString());
+
+        if ($query === '') {
+            return response()->json(['suggestions' => []]);
+        }
+
+        $normalized = preg_replace('/[^A-Za-z0-9]/', '', $query);
+        $includeAll = $request->boolean('include_all') || optional($request->user())->role === 'admin';
+
+        $customers = Customer::query()
+            ->when(!$includeAll, function ($qb) {
+                $qb->where('status', 'Active');
+            })
+            ->where(function ($qb) use ($query, $normalized) {
+                $qb->where('account_no', 'like', "%{$query}%")
+                    ->orWhere('name', 'like', "%{$query}%")
+                    ->orWhere('address', 'like', "%{$query}%");
+
+                if ($normalized !== '' && $normalized !== $query) {
+                    $qb->orWhereRaw("REPLACE(REPLACE(account_no,'-',''),' ','') LIKE ?", ["%{$normalized}%"]);
+                }
+            })
+            ->orderByRaw(
+                "CASE WHEN name LIKE ? THEN 0 WHEN account_no LIKE ? THEN 1 ELSE 2 END, name ASC",
+                ["{$query}%", "{$query}%"]
+            )
             ->limit(10)
-            ->get(['account_no', 'name', 'address']);
-            
+            ->get(['account_no', 'name', 'address', 'status']);
+
         return response()->json([
             'suggestions' => $customers->map(function ($customer) {
                 return [
                     'account_no' => $customer->account_no,
                     'name' => $customer->name,
                     'address' => $customer->address,
+                    'status' => $customer->status,
                 ];
             })
         ]);
@@ -241,6 +266,43 @@ class CustomerController extends Controller
         }
 
         return response()->json(['ok' => true, 'customer' => $result, 'message' => 'Service reconnected successfully']);
+    }
+
+    /**
+     * Staff request for reconnect service (marks customer record for admin follow-up).
+     */
+    public function requestReconnect(Request $request, int $id): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($user, 403);
+
+        $customer = Customer::findOrFail($id);
+
+        if (strtolower($customer->status) !== 'disconnected') {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Reconnect request allowed only for disconnected accounts.'
+            ], 422);
+        }
+
+        if ($customer->reconnect_requested_at) {
+            return response()->json([
+                'ok' => true,
+                'message' => 'Reconnect already requested.',
+                'customer' => $customer,
+            ]);
+        }
+
+        $customer->fill([
+            'reconnect_requested_at' => now(),
+            'reconnect_requested_by' => $user->id,
+        ])->save();
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Reconnect request logged for admin review.',
+            'customer' => $customer,
+        ]);
     }
 
     // Delete multiple customers

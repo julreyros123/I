@@ -522,12 +522,15 @@
 
         <form id="customerFilters" method="GET" class="space-y-4">
             <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
-                <div class="flex flex-1 items-center rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 overflow-hidden">
-                    <span class="px-3 text-gray-400">
-                        <x-heroicon-o-magnifying-glass class="w-4 h-4" />
-                    </span>
-                    <input id="customer-search" name="search" value="{{ $filters['search'] ?? '' }}" type="search" placeholder="Search name, account, or address" class="flex-1 bg-transparent px-2 py-2 text-sm text-gray-800 dark:text-gray-100 focus:outline-none" />
-                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm font-semibold hover:bg-blue-500 transition">Search</button>
+                <div class="relative flex-1">
+                    <div class="flex items-center rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 overflow-hidden">
+                        <span class="px-3 text-gray-400">
+                            <x-heroicon-o-magnifying-glass class="w-4 h-4" />
+                        </span>
+                        <input id="adminCustomerSearch" name="search" value="{{ $filters['search'] ?? '' }}" type="search" placeholder="Search name, account, or address" class="flex-1 bg-transparent px-2 py-2 text-sm text-gray-800 dark:text-gray-100 focus:outline-none" autocomplete="off" />
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm font-semibold hover:bg-blue-500 transition">Search</button>
+                    </div>
+                    <div id="adminCustomerSuggestions" class="absolute z-30 top-full left-0 right-0 mt-2 hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xl overflow-hidden"></div>
                 </div>
                 <div class="flex items-center gap-2">
                     <a href="{{ route('admin.customers') }}" class="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-xs font-semibold text-gray-600 dark:text-gray-200 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800">Reset</a>
@@ -568,7 +571,7 @@
         </form>
     </div>
 
-    <div class="bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700/60 overflow-hidden">
+    <div class="bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700/60">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 px-6 lg:px-8 py-5 border-b border-gray-100 dark:border-gray-800">
             <div>
                 <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Customer Directory</h2>
@@ -583,7 +586,7 @@
                 </a>
             </div>
         </div>
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto overflow-y-visible">
             <table class="min-w-full text-sm border-collapse">
                 <thead class="bg-gradient-to-r from-blue-700 via-blue-600 to-blue-500 text-white uppercase text-[11px] tracking-wide">
                     <tr>
@@ -598,7 +601,7 @@
                 </thead>
                 <tbody class="text-gray-800 dark:text-gray-100">
                     @forelse($customers as $c)
-                    <tr class="odd:bg-white even:bg-blue-50/40 dark:odd:bg-gray-900 dark:even:bg-gray-800/70 hover:bg-blue-100/60 dark:hover:bg-gray-800 transition-colors">
+                    <tr class="odd:bg-white even:bg-blue-50/40 dark:odd:bg-gray-900 dark:even:bg-gray-800/70 hover:bg-blue-100/60 dark:hover:bg-gray-800 transition-colors" data-customer-id="{{ $c->id }}" data-account-no="{{ $c->account_no }}" data-reconnect-requested="{{ $c->reconnect_requested_at ? '1' : '0' }}">
                         <td class="px-6 lg:px-8 py-3 font-mono text-xs text-gray-500 dark:text-gray-400">{{ $c->account_no }}</td>
                         <td class="px-6 lg:px-8 py-3">
                             <div class="font-medium text-gray-900 dark:text-gray-100 flex items-start gap-2">
@@ -613,12 +616,17 @@
                         <td class="px-6 lg:px-8 py-3 text-sm text-gray-600 dark:text-gray-300">{{ $c->classification ?? '—' }}</td>
                         <td class="px-6 lg:px-8 py-3">
                             @php $color = ($c->status === 'Active') ? 'bg-green-100 text-green-700' : (($c->status === 'Inactive' || $c->status === 'Disconnected') ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'); @endphp
-                            <span class="px-2 py-1 rounded-full text-xs {{ $color }}">{{ $c->status ?? '—' }}</span>
+                            <div class="flex flex-col items-start gap-1" data-admin-reconnect-pill>
+                                <span class="px-2 py-1 rounded-full text-xs {{ $color }}">{{ $c->status ?? '—' }}</span>
+                                @if($c->reconnect_requested_at)
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">Staff requested reconnect</span>
+                                @endif
+                            </div>
                         </td>
                         <td class="px-6 lg:px-8 py-3 text-sm text-gray-600 dark:text-gray-300">{{ optional($c->created_at)->format('Y-m-d') }}</td>
                         <td class="px-6 lg:px-8 py-3 text-right">
                             <div class="inline-flex items-center gap-2 text-xs font-medium">
-                                <details class="relative inline-block">
+                                <details class="relative inline-block" data-admin-actions>
                                     <summary class="list-none px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-gray-800 text-gray-600 dark:text-gray-200 cursor-pointer hover:bg-slate-200 dark:hover:bg-gray-700 transition">More ▾</summary>
                                     <div class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg z-10 py-2">
                                         <div class="px-3 py-1 text-[10px] uppercase text-gray-400">Customer</div>
@@ -634,6 +642,16 @@
                                             data-cust-id="{{ $c->id }}">
                                             Verify customer
                                         </button>
+                                        @endif
+                                        @if (strtolower($c->status) === 'disconnected' && $c->reconnect_requested_at)
+                                        <button class="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700 reconnect-customer-btn"
+                                            data-cust-id="{{ $c->id }}"
+                                            data-account-no="{{ $c->account_no }}"
+                                            data-cust-name="{{ $c->name }}">
+                                            Reconnect service
+                                        </button>
+                                        @elseif (strtolower($c->status) === 'disconnected')
+                                        <span class="block px-3 py-2 text-[11px] text-gray-400">Awaiting staff reconnect request</span>
                                         @endif
                                         <button class="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700 assign-meter-btn {{ strtolower($c->status) !== 'active' ? 'opacity-50 cursor-not-allowed' : '' }}"
                                             data-account-id="{{ $c->id }}"
@@ -668,26 +686,28 @@
                 </tbody>
             </table>
         </div>
-        <div class="px-6 lg:px-8 py-5 border-t border-gray-100 dark:border-gray-800 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-xs text-gray-500">
-            <div class="leading-tight">
-                @if($customers->total() > 0)
-                    Showing <span class="font-semibold text-gray-700 dark:text-gray-200">{{ $customers->firstItem() }}–{{ $customers->lastItem() }}</span> of <span class="font-semibold text-gray-700 dark:text-gray-200">{{ $customers->total() }}</span> records
+        <div class="px-6 lg:px-8 py-5 border-t border-gray-100 dark:border-gray-800 flex flex-col gap-3 mt-4">
+            <p class="text-xs text-gray-500 dark:text-gray-400">
+                @if($customers->total())
+                    Showing
+                    <span class="font-medium text-gray-700 dark:text-gray-200">{{ $customers->firstItem() }}</span>
+                    –
+                    <span class="font-medium text-gray-700 dark:text-gray-200">{{ $customers->lastItem() }}</span>
+                    of
+                    <span class="font-medium text-gray-700 dark:text-gray-200">{{ $customers->total() }}</span>
+                    customers
                 @else
-                    Showing <span class="font-semibold text-gray-700 dark:text-gray-200">0</span> of <span class="font-semibold text-gray-700 dark:text-gray-200">0</span> records
+                    No customers to display.
                 @endif
-            </div>
-            <div class="flex items-center gap-2 sm:justify-end">
-                <a href="{{ $customers->onFirstPage() ? '#' : $customers->previousPageUrl() }}"
-                   class="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-200 text-xs font-medium transition {{ $customers->onFirstPage() ? 'opacity-40 pointer-events-none' : 'hover:border-blue-400 hover:text-blue-600' }}">
-                    Previous
-                </a>
-                <a href="{{ $customers->hasMorePages() ? $customers->nextPageUrl() : '#' }}"
-                   class="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-200 text-xs font-medium transition {{ $customers->hasMorePages() ? 'hover:border-blue-400 hover:text-blue-600' : 'opacity-40 pointer-events-none' }}">
-                    Next
+            </p>
+            <div class="sm:ml-auto">
+                {{ $customers->onEachSide(1)->links() }}
                 </a>
             </div>
         </div>
     </div>
+
+    @include('admin.partials.reconnect-modal')
 
     <!-- Audit Log Modal -->
 </div>
@@ -696,6 +716,310 @@
 @push('scripts')
 <script>
 (function(){
+    const searchInput = document.getElementById('adminCustomerSearch');
+    const suggestionPanel = document.getElementById('adminCustomerSuggestions');
+    if (!searchInput || !suggestionPanel) return;
+
+    let controller = null;
+    let activeIndex = -1;
+    let suggestions = [];
+
+    function resetSuggestions(){
+        activeIndex = -1;
+        suggestions = [];
+        suggestionPanel.classList.add('hidden');
+        suggestionPanel.innerHTML = '';
+    }
+
+    async function fetchSuggestions(term){
+        const query = term.trim();
+        if (query.length < 2){
+            resetSuggestions();
+            return;
+        }
+
+        if (controller){ controller.abort(); }
+        controller = new AbortController();
+        suggestionPanel.innerHTML = '<div class="px-4 py-2 text-xs text-gray-400">Searching…</div>';
+        suggestionPanel.classList.remove('hidden');
+
+        try {
+            const res = await fetch(`{{ route('customer.searchAccounts') }}?q=${encodeURIComponent(query)}`, {
+                headers: { 'Accept':'application/json' },
+                signal: controller.signal,
+            });
+            if (!res.ok) throw new Error('Request failed');
+            const data = await res.json();
+            suggestions = Array.isArray(data.suggestions) ? data.suggestions : [];
+            if (!suggestions.length){
+                suggestionPanel.innerHTML = '<div class="px-4 py-2 text-xs text-gray-400">No matches.</div>';
+                return;
+            }
+            suggestionPanel.innerHTML = suggestions.map((item, idx) => {
+                const status = (item.status || '').toLowerCase();
+                const tone = status === 'active'
+                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                    : status === 'disconnected'
+                        ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                        : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300';
+                return `
+                    <button type="button" data-index="${idx}" class="admin-suggestion w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-100 hover:bg-blue-50 dark:hover:bg-gray-800 focus:bg-blue-50 dark:focus:bg-gray-800">
+                        <div class="flex items-center justify-between gap-3 mb-1">
+                            <span class="font-mono text-xs text-gray-500 dark:text-gray-400">${item.account_no ?? ''}</span>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${tone}">${item.status ?? ''}</span>
+                        </div>
+                        <div class="text-sm font-semibold text-gray-800 dark:text-gray-100">${item.name ?? 'Unnamed customer'}</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">${item.address ?? 'No address on file'}</div>
+                    </button>
+                `;
+            }).join('');
+            activeIndex = -1;
+        } catch (error) {
+            if (error.name === 'AbortError') return;
+            console.error(error);
+            suggestionPanel.innerHTML = '<div class="px-4 py-2 text-xs text-rose-500">Unable to load suggestions.</div>';
+        }
+    }
+
+    searchInput.addEventListener('input', (event) => {
+        fetchSuggestions(event.target.value);
+    });
+
+    searchInput.addEventListener('keydown', (event) => {
+        if (suggestionPanel.classList.contains('hidden')) return;
+        const buttons = suggestionPanel.querySelectorAll('.admin-suggestion');
+        if (!buttons.length) return;
+
+        if (event.key === 'ArrowDown' || event.key === 'ArrowUp'){
+            event.preventDefault();
+            if (event.key === 'ArrowDown'){
+                activeIndex = (activeIndex + 1) % buttons.length;
+            } else {
+                activeIndex = (activeIndex - 1 + buttons.length) % buttons.length;
+            }
+            buttons.forEach((btn, idx) => {
+                btn.classList.toggle('bg-blue-50', idx === activeIndex);
+                btn.classList.toggle('dark:bg-gray-800', idx === activeIndex);
+            });
+        } else if (event.key === 'Enter' && activeIndex >= 0){
+            event.preventDefault();
+            buttons[activeIndex]?.click();
+        } else if (event.key === 'Escape'){
+            resetSuggestions();
+        }
+    });
+
+    suggestionPanel.addEventListener('mousedown', (event) => {
+        const item = event.target.closest('.admin-suggestion');
+        if (!item) return;
+        const idx = Number(item.dataset.index);
+        const data = suggestions[idx];
+        if (!data) return;
+        searchInput.value = data.account_no || data.name || '';
+        resetSuggestions();
+        searchInput.form?.submit();
+    });
+
+    document.addEventListener('click', (event) => {
+        if (event.target === searchInput || suggestionPanel.contains(event.target)) return;
+        resetSuggestions();
+    });
+
+    searchInput.addEventListener('search', () => {
+        resetSuggestions();
+        searchInput.form?.submit();
+    });
+})();
+</script>
+@endpush
+
+@push('scripts')
+<script>
+(function(){
+    const reconnectModal = document.getElementById('reconnectCustomerModal');
+    const reconnectDialog = reconnectModal?.querySelector('[data-reconnect-dialog]');
+    const reconnectAccountInput = reconnectModal?.querySelector('#reconnectAccountInput');
+    const reconnectAccountDisplay = reconnectModal?.querySelector('#reconnectAccountDisplay');
+    const reconnectNameDisplay = reconnectModal?.querySelector('#reconnectCustomerNameDisplay');
+    const reconnectNotes = reconnectModal?.querySelector('#reconnectNotes');
+    const confirmReconnectBtn = reconnectModal?.querySelector('#confirmReconnectBtn');
+    const cancelReconnectBtn = reconnectModal?.querySelector('#cancelReconnectBtn');
+    const closeReconnectModalBtn = reconnectModal?.querySelector('#closeReconnectModal');
+    let reconnectOriginButton = null;
+
+    function showToast(msg, type){
+        try {
+            if (typeof window.showToast === 'function') {
+                window.showToast(msg, type || 'info');
+                return;
+            }
+        } catch (err) {}
+        alert(msg);
+    }
+
+    function openReconnectModal(accountNo, name, origin){
+        if (!reconnectModal) return;
+        reconnectOriginButton = origin || null;
+        reconnectAccountInput.value = accountNo || '';
+        reconnectAccountDisplay.textContent = accountNo || '—';
+        reconnectNameDisplay.textContent = name || '—';
+        reconnectNotes.value = '';
+        resetProgress();
+        reconnectModal.classList.remove('hidden');
+        requestAnimationFrame(() => {
+            reconnectModal.classList.add('flex');
+            reconnectDialog?.classList.remove('scale-95','opacity-0');
+            reconnectDialog?.classList.add('scale-100','opacity-100');
+        });
+    }
+
+    function closeReconnectModal(){
+        if (!reconnectModal) return;
+        reconnectDialog?.classList.add('scale-95','opacity-0');
+        reconnectDialog?.classList.remove('scale-100','opacity-100');
+        setTimeout(() => {
+            reconnectModal.classList.add('hidden');
+            reconnectModal.classList.remove('flex');
+            reconnectOriginButton = null;
+        }, 180);
+    }
+
+    function computeProgress(){
+        const checkboxes = Array.from(reconnectModal.querySelectorAll('.reconnect-step-checkbox'));
+        const completed = checkboxes.filter(cb => cb.checked).length;
+        const total = checkboxes.length || 1;
+        const pct = Math.round((completed / total) * 100);
+        reconnectModal.querySelector('#reconnectProgressLabel').textContent = `${completed} of ${total} steps completed`;
+        reconnectModal.querySelector('#reconnectProgressPercent').textContent = `${pct}%`;
+        reconnectModal.querySelector('#reconnectProgressFill').style.width = `${pct}%`;
+        confirmReconnectBtn.disabled = completed !== total;
+    }
+
+    function resetProgress(){
+        reconnectModal.querySelectorAll('.reconnect-step-checkbox').forEach(cb => {
+            cb.checked = false;
+        });
+        computeProgress();
+    }
+
+    async function submitReconnect(){
+        const account = reconnectAccountInput?.value?.trim();
+        if (!account){
+            showToast('Missing account number', 'error');
+            return;
+        }
+
+        confirmReconnectBtn.disabled = true;
+        const originalLabel = confirmReconnectBtn.innerHTML;
+        confirmReconnectBtn.innerHTML = '<span class="flex items-center gap-2"><svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg> Processing…</span>';
+
+        try {
+            const res = await fetch("{{ route('customer.reconnect') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                },
+                body: JSON.stringify({
+                    account_no: account,
+                    notes: reconnectNotes?.value?.trim() || null,
+                })
+            });
+
+            if (!res.ok){
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.message || 'Failed to reconnect service');
+            }
+
+            const data = await res.json();
+            showToast(data.message || 'Customer reconnected', 'success');
+            updateRowAfterReconnect(account);
+            closeReconnectModal();
+        } catch (error) {
+            console.error(error);
+            showToast(error.message || 'Failed to reconnect service', 'error');
+        } finally {
+            confirmReconnectBtn.disabled = false;
+            confirmReconnectBtn.innerHTML = originalLabel;
+        }
+    }
+
+    function updateRowAfterReconnect(accountNo){
+        const row = document.querySelector(`tr[data-account-no="${CSS.escape(accountNo)}"]`);
+        if (!row) {
+            window.location.reload();
+            return;
+        }
+
+        const statusBadge = row.querySelector('span.rounded-full');
+        if (statusBadge){
+            statusBadge.textContent = 'Active';
+            statusBadge.className = 'px-2 py-1 rounded-full text-xs bg-green-100 text-green-700';
+        }
+
+        const disconnectedChip = row.querySelector('span.bg-red-100');
+        if (disconnectedChip){
+            disconnectedChip.remove();
+        }
+
+        row.querySelectorAll('.reconnect-customer-btn').forEach(btn => btn.remove());
+        row.querySelectorAll('.assign-meter-btn, .replace-meter-btn').forEach(btn => {
+            btn.classList.remove('opacity-50','cursor-not-allowed');
+            btn.removeAttribute('title');
+        });
+    }
+
+    function handleReconnectClick(event){
+        event.preventDefault();
+        const trigger = event.currentTarget;
+        openReconnectModal(
+            trigger.getAttribute('data-account-no'),
+            trigger.getAttribute('data-cust-name'),
+            trigger
+        );
+        trigger.closest('details')?.removeAttribute('open');
+    }
+
+    const stepCheckboxes = reconnectModal ? Array.from(reconnectModal.querySelectorAll('.reconnect-step-checkbox')) : [];
+    stepCheckboxes.forEach(cb => cb.addEventListener('change', computeProgress));
+
+    document.querySelectorAll('.reconnect-customer-btn').forEach(btn => {
+        btn.addEventListener('click', handleReconnectClick);
+    });
+
+    document.addEventListener('click', (event) => {
+        if (event.target === reconnectModal){
+            closeReconnectModal();
+        }
+    });
+
+    if (closeReconnectModalBtn){
+        closeReconnectModalBtn.addEventListener('click', closeReconnectModal);
+    }
+    if (cancelReconnectBtn){
+        cancelReconnectBtn.addEventListener('click', closeReconnectModal);
+    }
+    if (confirmReconnectBtn){
+        confirmReconnectBtn.addEventListener('click', submitReconnect);
+    }
+
+})();
+
+(function(){
+    const menus = Array.from(document.querySelectorAll('details[data-admin-actions]'));
+    if (menus.length){
+        menus.forEach(menu => {
+            menu.addEventListener('toggle', function(){
+                if (menu.open){
+                    menus.forEach(other => {
+                        if (other !== menu){ other.open = false; }
+                    });
+                }
+            });
+        });
+    }
+
     const auditBtn = document.getElementById('openAuditLog');
     const auditModal = document.getElementById('customerAuditLogModal');
     const auditClose = document.getElementById('closeAuditLog');

@@ -3,53 +3,123 @@
 @section('title', 'Customers')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-6 py-4 font-[Poppins]">
+<div class="w-full px-4 sm:px-6 py-4 font-[Poppins]">
 
-    <!-- Customer Section -->
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-5 transition-all">
-        <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Guide: Search by name, address, or account. Use status filter to narrow results. Click View to see details or Edit for quick corrections.</p>
-        <div class="flex items-center justify-end mb-3">
-            <!-- Clear Selected Button -->
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-5 transition-all space-y-5">
+        <div class="flex flex-wrap items-start justify_between gap-3">
+            <div>
+                <h1 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Customer directory</h1>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Search by name, address, or account number. Use filters to refine results.</p>
+            </div>
             <x-danger-button id="clearSelectedBtn" type="button" class="hidden">
                 Clear Selected
             </x-danger-button>
         </div>
 
-        <!-- Search + Filters -->
-        <form method="GET" class="mb-3 space-y-2">
-            <div class="flex flex-col lg:flex-row lg:items-center gap-2">
-                <div class="w-full md:w-2/3 lg:w-5/12">
-                    <div class="flex rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/60">
-                        <div class="flex items-center px-3 text-gray-400">
-                            <x-heroicon-o-magnifying-glass class="w-4 h-4" />
-                        </div>
-                        <input id="searchCustomer" name="q" value="{{ $q ?? '' }}"
-                               class="flex-1 px-3 py-2 bg-transparent text-sm text-gray-900 dark:text-gray-100 focus:outline-none"
-                               placeholder="Search by name, address, or account no.">
-                        <button type="submit" class="px-4 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white">
-                            Search
-                        </button>
-                    </div>
-                </div>
-
-                <div class="flex items-center lg:ml-2">
-                    <div class="md:w-48">
-                        <select name="status" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-xs 
-                                                    focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white dark:bg-gray-900 
-                                                    text-gray-800 dark:text-gray-200">
-                            <option value="">All Status</option>
-                            <option value="Active" {{ ($status ?? '') === 'Active' ? 'selected' : '' }}>Active</option>
-                            <option value="Inactive" {{ ($status ?? '') === 'Inactive' ? 'selected' : '' }}>Inactive</option>
-                            <option value="Disconnected" {{ ($status ?? '') === 'Disconnected' ? 'selected' : '' }}>Disconnected</option>
-                        </select>
-                    </div>
+        <form id="customerSearchForm" method="GET" class="flex flex-col lg:flex-row lg:items-center gap-3">
+            <div class="relative flex-1 min-w-[240px]">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                    <x-heroicon-o-magnifying-glass class="w-4 h-4" />
+                </span>
+                <input
+                    id="searchCustomer"
+                    name="q"
+                    type="search"
+                    value="{{ $q ?? '' }}"
+                    placeholder="Search by name, address, or account no."
+                    class="w-full pl-10 pr-28 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                />
+                <div id="customerSuggestions" class="absolute top-full left-0 right-0 mt-1 hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg overflow-hidden z-20"></div>
+                <div class="absolute inset-y-0 right-0 flex items-center pr-2 gap-2">
+                    @if(!empty($q))
+                        <a href="{{ route('customer.index') }}" class="px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700">
+                            Clear
+                        </a>
+                    @endif
+                    <button type="submit" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md bg-blue-600 hover:bg-blue-700 text-white">
+                        Search
+                    </button>
                 </div>
             </div>
-
+            <div class="flex items-center gap-2">
+                <label for="statusFilter" class="text-xs font-medium text-gray-500 dark:text-gray-400">Status</label>
+                <select
+                    id="statusFilter"
+                    name="status"
+                    class="w-40 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-xs bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                >
+                    <option value="">All Status</option>
+                    <option value="Active" {{ ($status ?? '') === 'Active' ? 'selected' : '' }}>Active</option>
+                    <option value="Inactive" {{ ($status ?? '') === 'Inactive' ? 'selected' : '' }}>Inactive</option>
+                    <option value="Disconnected" {{ ($status ?? '') === 'Disconnected' ? 'selected' : '' }}>Disconnected</option>
+                </select>
+            </div>
         </form>
 
-        <!-- Table -->
-        <div class="overflow-x-auto">
+        <!-- Mobile cards -->
+        <div class="space-y-3 lg:hidden">
+            @forelse ($customers as $c)
+                <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/70 shadow-sm p-4 space-y-3">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <p class="text-[11px] uppercase tracking-[0.16em] text-gray-400">Account No.</p>
+                            <p class="font-mono text-sm text-gray-900 dark:text-gray-100">{{ $c->account_no }}</p>
+                        </div>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold
+                            {{ $c->status === 'Active'
+                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                                : ($c->status === 'Disconnected'
+                                    ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                                    : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300') }}">
+                            {{ $c->status }}
+                        </span>
+                    </div>
+                    <div>
+                        <p class="text-[11px] uppercase tracking-[0.16em] text-gray-400">Name</p>
+                        <p class="text-sm font-semibold text-gray-800 dark:text-gray-100">{{ $c->name }}</p>
+                    </div>
+                    <div>
+                        <p class="text-[11px] uppercase tracking-[0.16em] text-gray-400">Address</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">{{ $c->address }}</p>
+                    </div>
+                    <div class="flex flex-wrap items-start gap-4 text-xs text-gray-500 dark:text-gray-400">
+                        <div>
+                            <p class="text-[11px] uppercase tracking-[0.16em] text-gray-400">Application</p>
+                            <div class="flex items-center gap-1 app-badges">
+                                <span class="text-gray-400">Loading…</span>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-[11px] uppercase tracking-[0.16em] text-gray-400">Contact</p>
+                            <p>{{ $c->contact_no ?? '—' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-[11px] uppercase tracking-[0.16em] text-gray-400">Created</p>
+                            <p>{{ optional($c->created_at)->format('Y-m-d') }}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3 text-xs">
+                            <button class="inline-flex items-center gap-1 text-blue-600" onclick="openViewModal({{ $c->id }}, @js($c->toArray()))">View</button>
+                            <button class="inline-flex items-center gap-1 text-blue-600" onclick="openEditModal({{ $c->id }}, @js($c->toArray()))">Edit</button>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button class="app-rescore-btn opacity-50 cursor-not-allowed text-[11px]">Re-score</button>
+                            <button class="app-approve-btn opacity-50 cursor-not-allowed text-[11px]">Approve</button>
+                            <button class="app-reject-btn opacity-50 cursor-not-allowed text-[11px]">Reject</button>
+                            <button class="verify-customer-btn text-[11px] {{ strtolower($c->status) === 'active' ? 'opacity-50 cursor-not-allowed' : '' }}" title="{{ strtolower($c->status) === 'active' ? 'Already Active' : '' }}">Verify</button>
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div class="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 p-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                    No customers yet.
+                </div>
+            @endforelse
+        </div>
+
+        <!-- Desktop table -->
+        <div class="hidden lg:block overflow-x-auto">
             <table class="min-w-full text-sm text-left text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                 <thead class="bg-gray-50 dark:bg-gray-700/70 text-gray-700 dark:text-gray-200 font-semibold">
                     <tr>
@@ -68,7 +138,7 @@
                 </thead>
                 <tbody id="customerTable" class="divide-y divide-gray-200 dark:divide-gray-700">
                     @forelse ($customers as $c)
-                    <tr class="group transition hover:bg-gray-50 dark:hover:bg-gray-700" data-cust-id="{{ $c->id }}" data-cust-status="{{ $c->status }}">
+                    <tr class="group transition hover:bg-gray-50 dark:hover:bg-gray-700" data-cust-id="{{ $c->id }}" data-cust-status="{{ $c->status }}" data-account-no="{{ $c->account_no }}" data-reconnect-requested="{{ $c->reconnect_requested_at ? '1' : '0' }}">
                         <td class="px-4 py-3"><input type="checkbox" class="rowCheckbox w-4 h-4 accent-blue-600" value="{{ $c->id }}"></td>
                         <td class="px-5 py-3 font-mono text-gray-900 dark:text-gray-100">{{ $c->account_no }}</td>
                         <td class="px-5 py-3 max-w-[220px]">
@@ -87,7 +157,12 @@
                         </td>
                         <td class="px-5 py-3">
                             @php $color = $c->status === 'Active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : ($c->status === 'Disconnected' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'); @endphp
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $color }}">{{ $c->status }}</span>
+                            <div class="flex flex-col items-start gap-1" data-reconnect-pill>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $color }}">{{ $c->status }}</span>
+                                @if($c->reconnect_requested_at)
+                                    <span class="reconnect-request-pill inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Reconnect requested</span>
+                                @endif
+                            </div>
                         </td>
                         <td class="px-5 py-3 whitespace-nowrap">{{ optional($c->created_at)->format('Y-m-d') }}</td>
                         <td class="px-5 py-3">
@@ -102,6 +177,15 @@
                                         <button class="w-full text-left px-3 py-2 text-xs app-reject-btn opacity-50 cursor-not-allowed" title="No application yet">Reject</button>
                                         <a class="w-full block px-3 py-2 text-xs app-viewkyc-link opacity-50 cursor-not-allowed" title="No application yet" target="_blank">View KYC</a>
                                         <button class="w-full text-left px-3 py-2 text-xs verify-customer-btn {{ strtolower($c->status) === 'active' ? 'opacity-50 cursor-not-allowed' : '' }}" title="{{ strtolower($c->status) === 'active' ? 'Already Active' : '' }}">Verify Customer</button>
+                                        @if (strtolower($c->status) === 'disconnected')
+                                            <button
+                                                class="w-full text-left px-3 py-2 text-xs request-reconnect-btn {{ $c->reconnect_requested_at ? 'opacity-50 cursor-not-allowed text-gray-400' : 'text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-700' }}"
+                                                data-cust-id="{{ $c->id }}"
+                                                data-account-no="{{ $c->account_no }}"
+                                                data-requested="{{ $c->reconnect_requested_at ? 'true' : 'false' }}">
+                                                {{ $c->reconnect_requested_at ? 'Reconnect requested' : 'Request reconnect' }}
+                                            </button>
+                                        @endif
                                     </div>
                                 </details>
                             </div>
@@ -109,13 +193,31 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="8" class="px-6 py-6 text-center text-gray-500 dark:text-gray-400">No customers yet.</td>
+                        <td colspan="9" class="px-6 py-6 text-center text-gray-500 dark:text-gray-400">No customers yet.</td>
                     </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
-        
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
+            <p class="text-xs text-gray-500 dark:text-gray-400">
+                @if($customers->total())
+                    Showing
+                    <span class="font-medium text-gray-700 dark:text-gray-200">{{ $customers->firstItem() }}</span>
+                    –
+                    <span class="font-medium text-gray-700 dark:text-gray-200">{{ $customers->lastItem() }}</span>
+                    of
+                    <span class="font-medium text-gray-700 dark:text-gray-200">{{ $customers->total() }}</span>
+                    customers
+                @else
+                    No customers to display.
+                @endif
+            </p>
+            <div class="sm:ml-auto">
+                {{ $customers->onEachSide(1)->links() }}
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -123,16 +225,129 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('searchCustomer');
+    const searchForm = document.getElementById('customerSearchForm');
     const selectAll = document.getElementById('selectAll');
     const clearSelectedBtn = document.getElementById('clearSelectedBtn');
 
-    // 🔍 Live Filter (client-side fallback)
-    searchInput.addEventListener('input', function () {
-        const search = this.value.toLowerCase();
-        document.querySelectorAll('#customerTable tr').forEach(row => {
-            const text = row.innerText.toLowerCase();
-            row.style.display = text.includes(search) ? '' : 'none';
+    if (searchInput && searchForm) {
+        searchInput.addEventListener('search', () => searchForm.submit());
+    }
+
+    const suggestionPanel = document.getElementById('customerSuggestions');
+    let suggestionController = null;
+    let suggestionIndex = -1;
+    let latestSuggestionPayload = [];
+
+    function resetSuggestions(){
+        if (suggestionPanel){
+            suggestionPanel.classList.add('hidden');
+            suggestionPanel.innerHTML = '';
+        }
+        suggestionIndex = -1;
+    }
+
+    async function fetchSuggestions(term){
+        if (!suggestionPanel || !term){
+            resetSuggestions();
+            return;
+        }
+        if (suggestionController){
+            suggestionController.abort();
+        }
+        suggestionController = new AbortController();
+        suggestionPanel.innerHTML = '<div class="px-3 py-2 text-xs text-gray-400">Searching…</div>';
+        suggestionPanel.classList.remove('hidden');
+        try {
+            const res = await fetch(`{{ route('customer.searchAccounts') }}?q=${encodeURIComponent(term)}`, {
+                headers: { 'Accept': 'application/json' },
+                signal: suggestionController.signal,
+            });
+            if (!res.ok){
+                throw new Error('Request failed');
+            }
+            const payload = await res.json();
+            const items = Array.isArray(payload.suggestions) ? payload.suggestions : [];
+            if (!items.length){
+                suggestionPanel.innerHTML = '<div class="px-3 py-2 text-xs text-gray-400">No matches.</div>';
+                return;
+            }
+            latestSuggestionPayload = items;
+            suggestionPanel.innerHTML = items.map((item, idx) => {
+                const status = (item.status || '').toLowerCase();
+                const pillTone = status === 'active'
+                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                    : status === 'disconnected'
+                        ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                        : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300';
+                return `
+                    <button type="button" data-index="${idx}" class="suggestion-item w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-100 hover:bg-blue-50 dark:hover:bg-gray-800 focus:bg-blue-50 dark:focus:bg-gray-800">
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="block font-medium">${item.account_no ?? ''}</span>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${pillTone}">${item.status ?? ''}</span>
+                        </div>
+                        <span class="block text-xs text-gray-500 dark:text-gray-400">${item.name ?? 'Unnamed'} · ${item.address ?? 'No address'}</span>
+                    </button>
+                `;
+            }).join('');
+            suggestionIndex = -1;
+        } catch (error){
+            if (error.name === 'AbortError') return;
+            console.error(error);
+            suggestionPanel.innerHTML = '<div class="px-3 py-2 text-xs text-rose-500">Unable to load suggestions.</div>';
+        }
+    }
+
+    if (searchInput){
+        searchInput.addEventListener('input', (event) => {
+            const value = event.target.value.trim();
+            if (value.length < 2){
+                resetSuggestions();
+                return;
+            }
+            fetchSuggestions(value);
         });
+
+        searchInput.addEventListener('keydown', (event) => {
+            if (suggestionPanel?.classList.contains('hidden')) return;
+            const options = suggestionPanel?.querySelectorAll('.suggestion-item') ?? [];
+            if (!options.length) return;
+
+            if (['ArrowDown','ArrowUp'].includes(event.key)){
+                event.preventDefault();
+                if (event.key === 'ArrowDown'){
+                    suggestionIndex = (suggestionIndex + 1) % options.length;
+                } else {
+                    suggestionIndex = (suggestionIndex - 1 + options.length) % options.length;
+                }
+                options.forEach((btn, idx) => {
+                    btn.classList.toggle('bg-blue-50', idx === suggestionIndex);
+                    btn.classList.toggle('dark:bg-gray-800', idx === suggestionIndex);
+                });
+            } else if (event.key === 'Enter' && suggestionIndex >= 0){
+                event.preventDefault();
+                options[suggestionIndex]?.click();
+            } else if (event.key === 'Escape'){
+                resetSuggestions();
+            }
+        });
+    }
+
+    suggestionPanel?.addEventListener('mousedown', (event) => {
+        const item = event.target.closest('.suggestion-item');
+        if (!item) return;
+        const index = Number(item.dataset.index);
+        const data = latestSuggestionPayload[index] ?? null;
+        if (data && searchInput){
+            searchInput.value = data.account_no;
+            resetSuggestions();
+            searchForm?.submit();
+        }
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!suggestionPanel) return;
+        if (suggestionPanel.contains(event.target) || event.target === searchInput) return;
+        resetSuggestions();
     });
 
     // ✅ Select All Checkbox

@@ -80,14 +80,12 @@
 </head>
 <body class="min-h-screen">
     <div class="w-full min-h-screen flex flex-col items-center justify-center px-4">
-        <!-- Header: Logo and Title -->
-        <header class="text-center mb-6" role="banner" aria-label="MAWASA">
-            <img src="{{ asset('images/ChatGPT Image Nov 11, 2025, 04_40_23 PM.png') }}" alt="MAWASA Logo" class="logo-custom rounded-full mx-auto mb-2 shadow-lg" />
-            <h1 class="text-3xl md:text-4xl font-extrabold tracking-wide text-blue-600 drop-shadow">MAWASA</h1>
-            <p class="text-xs text-gray-200">Manambulan Water and Sanitation</p>
-        </header>
-
         <div class="login-panel shadow-lg rounded-lg p-6 mx-auto border">
+        <!-- Logo -->
+        <div class="text-center mb-4" role="banner" aria-label="MAWASA">
+            <img src="{{ asset('images/ChatGPT Image Nov 11, 2025, 04_40_23 PM.png') }}" alt="MAWASA Logo" class="logo-custom rounded-full mx-auto shadow-lg" />
+        </div>
+
         <!-- Login Form -->
         <h2 class="text-xl font-semibold text-gray-900 mb-1 text-center">Sign in to your account</h2>
         <p class="text-sm text-gray-500 mb-4 text-center">Use your MAWASA credentials</p>

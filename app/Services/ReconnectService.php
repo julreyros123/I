@@ -27,6 +27,8 @@ class ReconnectService
         }
 
         $customer->status = 'Active';
+        $customer->reconnect_requested_at = null;
+        $customer->reconnect_requested_by = null;
         $customer->save();
 
         try {

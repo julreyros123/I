@@ -9,17 +9,17 @@
         ->reject(fn($value) => $value === null || $value === '')
         ->all();
 @endphp
-<div class="max-w-7xl mx-auto px-6 py-8">
-    <div class="mb-4">
+<div class="w-full px-4 sm:px-6 py-6 space-y-6">
+    <div>
         <p class="text-gray-600 text-xs">Generate a bill with invoice details, instant calculations, and save it directly to the billing records.</p>
     </div>
 
-    <div class="bg-white dark:bg-gray-900/70 rounded-2xl shadow-xl ring-1 ring-gray-200 dark:ring-gray-800 p-6 mb-8">
+    <div class="bg-white dark:bg-gray-900/70 rounded-2xl shadow-xl ring-1 ring-gray-200 dark:ring-gray-800 p-5 sm:p-6">
         <div id="alertBox" class="hidden rounded-xl border px-4 py-3 text-sm font-medium mb-4"></div>
 
-        <div class="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-6">
+        <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)] gap-5 xl:gap-6">
             <div>
-                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
                     <div>
                         <h2 class="text-base md:text-lg font-semibold text-gray-900 dark:text-gray-50">Generate Bill</h2>
                         <p class="text-xs text-gray-500 dark:text-gray-400">Provide account, readings, and charges. Totals adjust automatically.</p>
@@ -27,8 +27,8 @@
                     <div class="text-xs text-gray-500 dark:text-gray-400">Fields marked with <span class="text-sky-500">●</span> are required</div>
                 </div>
 
-                <div class="space-y-6">
-                    <div class="grid md:grid-cols-12 gap-5">
+                <div class="space-y-5">
+                    <div class="grid md:grid-cols-12 gap-4">
                         <div class="md:col-span-6 space-y-2">
                             <label class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Invoice Number <span class="text-sky-500">●</span></label>
                             <div class="flex items-center gap-2">
@@ -56,8 +56,17 @@
                         </header>
                         <div class="space-y-2">
                             <label class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Account Number <span class="text-sky-500">●</span></label>
-                            <x-ui.input id="account_no" placeholder="22-123456-1" class="uppercase tracking-wide" />
+                            <div class="relative">
+                                <x-ui.input id="account_no" placeholder="22-123456-1" class="uppercase tracking-wide pr-12" />
+                                <div class="absolute inset-y-0 right-3 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M12.9 14.32a8 8 0 111.414-1.414l3.387 3.387a1 1 0 01-1.414 1.414l-3.387-3.387zM14 8a6 6 0 11-12 0 6 6 0 0112 0z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div id="accountSuggestions" class="absolute z-20 top-full left-0 right-0 mt-2 hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xl overflow-hidden"></div>
+                            </div>
                             <p class="text-[11px] text-gray-400">Format: 22-XXXXXX-X</p>
+                            <p id="accountSelectionHint" class="text-[11px] text-gray-500 dark:text-gray-400 hidden"></p>
                         </div>
                     </section>
 
@@ -115,6 +124,7 @@
                     <div class="hidden">
                         <input type="hidden" id="consumption" />
                         <input type="hidden" id="subtotal_value" />
+                        <input type="hidden" id="vat_value" />
                         <input type="hidden" id="total_value" />
                         <input type="hidden" id="due_date_value" />
                         <input type="hidden" id="disconnect_date_value" />
@@ -127,7 +137,7 @@
             </div>
 
             <aside class="space-y-4">
-                <div class="rounded-2xl border border-gray-100 bg-gradient-to-br from-slate-50 to-white p-6 shadow-sm dark:border-gray-800 dark:from-gray-900 dark:to-gray-900/80">
+                <div class="rounded-2xl border border-gray-100 bg-gradient-to-br from-slate-50 to-white p-5 shadow-sm dark:border-gray-800 dark:from-gray-900 dark:to-gray-900/80">
                     <div class="flex items-center justify-between gap-3 mb-4">
                         <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100">Live Summary</h3>
                         <span class="rounded-full bg-sky-100 px-3 py-1 text-[11px] font-semibold text-sky-600 dark:bg-sky-900/40 dark:text-sky-200">Instant</span>
@@ -146,6 +156,10 @@
                             <dd id="subtotalDisplay" class="font-semibold text-slate-900 dark:text-slate-100">₱0.00</dd>
                         </div>
                         <div class="flex items-center justify-between">
+                            <dt class="text-gray-500 dark:text-gray-400">VAT (12%)</dt>
+                            <dd id="vatDisplay" class="font-semibold text-slate-900 dark:text-slate-100">₱0.00</dd>
+                        </div>
+                        <div class="flex items-center justify-between">
                             <dt class="text-gray-500 dark:text-gray-400">Maintenance</dt>
                             <dd id="maintenanceDisplay" class="text-slate-900 dark:text-slate-100">₱0.00</dd>
                         </div>
@@ -158,12 +172,14 @@
                             <dd id="disconnectDateSummary" class="text-rose-600 dark:text-rose-300">—</dd>
                         </div>
                     </dl>
-                    <div class="mt-5 rounded-xl bg-slate-900 text-white dark:bg-slate-800 px-4 py-3 flex items-center justify-between gap-4">
-                        <div>
-                            <p class="text-[11px] uppercase tracking-wide text-gray-100 dark:text-gray-100">Total Amount Due</p>
-                            <p id="totalDisplay" class="text-2xl font-semibold text-gray-900 bg-white px-3 py-1 rounded-lg">₱0.00</p>
+                    <div class="mt-2 rounded-xl bg-slate-900 text-white dark:bg-slate-800 px-4 py-3">
+                        <div class="flex flex-col gap-3">
+                            <p class="text-[11px] uppercase tracking-wide text-slate-200">Total Amount Due</p>
+                            <div class="flex flex-col sm:flex-row sm:items-stretch gap-2 sm:gap-0">
+                                <p id="totalDisplay" class="flex-1 text-2xl font-semibold text-gray-900 bg-white px-5 h-[46px] rounded-lg sm:rounded-r-none inline-flex items-center justify-center min-w-[10rem]">₱0.00</p>
+                                <x-primary-button id="saveBillBtn" type="button" class="px-6 h-[46px] flex items-center justify-center rounded-lg sm:rounded-l-none sm:rounded-r-lg">Save Bill</x-primary-button>
+                            </div>
                         </div>
-                        <x-primary-button id="saveBillBtn" type="button" class="px-5 whitespace-nowrap">Save Bill</x-primary-button>
                     </div>
                     <div class="mt-4 text-[11px] text-gray-400">Status defaults to <span class="font-semibold text-sky-500">Pending</span> until the customer settles their balance.</div>
                 </div>
@@ -245,8 +261,19 @@
 
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 py-4">
                 <form method="GET" class="flex flex-col sm:flex-row gap-3 w-full lg:max-w-xl">
-                    <div class="flex-1">
-                        <x-ui.input name="q" :value="$q ?? ''" placeholder="Search by account no., customer name, or address" />
+                    <div class="flex-1 relative">
+                        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                            <x-heroicon-o-magnifying-glass class="w-4 h-4" />
+                        </span>
+                        <input
+                            id="billingSearchInput"
+                            name="q"
+                            type="search"
+                            value="{{ $q ?? '' }}"
+                            placeholder="Search by account no., customer name, or address"
+                            class="w-full h-[44px] rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-200 pl-10 pr-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                        />
+                        <div id="billingSearchSuggestions" class="absolute top-full left-0 right-0 mt-2 hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xl z-30 overflow-hidden"></div>
                     </div>
                     <div class="sm:w-52">
                         <select name="status" class="w-full h-[44px] rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-200 px-3">
@@ -440,6 +467,274 @@
   /* Inherit global background from layout; keep cards white individually */
 </style>
 <script>
+const billingSearchInput = document.getElementById('billingSearchInput');
+const billingSearchPanel = document.getElementById('billingSearchSuggestions');
+
+if (billingSearchInput && billingSearchPanel) {
+  let billingSuggestionController = null;
+  let billingSuggestionIndex = -1;
+  let billingSuggestions = [];
+
+  function resetBillingSuggestions() {
+    billingSuggestionIndex = -1;
+    billingSuggestions = [];
+    billingSearchPanel.classList.add('hidden');
+    billingSearchPanel.innerHTML = '';
+  }
+
+  async function fetchBillingSuggestions(term) {
+    if (!term || term.length < 2) {
+      resetBillingSuggestions();
+      return;
+    }
+
+    if (billingSuggestionController) {
+      billingSuggestionController.abort();
+    }
+
+    billingSuggestionController = new AbortController();
+    billingSearchPanel.innerHTML = '<div class="px-4 py-3 text-xs text-gray-400">Searching…</div>';
+    billingSearchPanel.classList.remove('hidden');
+
+    try {
+      const response = await fetch(`{{ route('customer.searchAccounts') }}?q=${encodeURIComponent(term)}`, {
+        headers: { 'Accept': 'application/json' },
+        signal: billingSuggestionController.signal,
+      });
+      if (!response.ok) throw new Error('Request failed');
+
+      const data = await response.json();
+      billingSuggestions = Array.isArray(data.suggestions) ? data.suggestions : [];
+
+      if (!billingSuggestions.length) {
+        billingSearchPanel.innerHTML = '<div class="px-4 py-3 text-xs text-gray-400">No matches.</div>';
+        return;
+      }
+
+      billingSearchPanel.innerHTML = billingSuggestions.map((item, index) => {
+        const status = (item.status || '').toLowerCase();
+        const pillTone = status === 'active'
+          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+          : status === 'disconnected'
+            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+            : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300';
+
+        return `
+          <button type="button" data-index="${index}" class="billing-suggestion w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-100 hover:bg-blue-50 dark:hover:bg-gray-800 focus:bg-blue-50 dark:focus:bg-gray-800">
+            <div class="flex items-center justify-between gap-3 mb-1">
+              <span class="font-mono text-xs text-gray-500 dark:text-gray-400">${item.account_no ?? ''}</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${pillTone}">${item.status ?? ''}</span>
+            </div>
+            <div class="text-sm font-semibold text-gray-800 dark:text-gray-100">${item.name ?? 'Unnamed customer'}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">${item.address ?? 'No address on file'}</div>
+          </button>
+        `;
+      }).join('');
+
+      billingSuggestionIndex = -1;
+    } catch (error) {
+      if (error.name === 'AbortError') return;
+      console.error(error);
+      billingSearchPanel.innerHTML = '<div class="px-4 py-3 text-xs text-rose-500">Unable to load suggestions.</div>';
+    }
+  }
+
+  billingSearchInput.addEventListener('input', (event) => {
+    fetchBillingSuggestions(event.target.value.trim());
+  });
+
+  billingSearchInput.addEventListener('keydown', (event) => {
+    if (billingSearchPanel.classList.contains('hidden')) return;
+    const items = billingSearchPanel.querySelectorAll('.billing-suggestion');
+    if (!items.length) return;
+
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      if (event.key === 'ArrowDown') {
+        billingSuggestionIndex = (billingSuggestionIndex + 1) % items.length;
+      } else {
+        billingSuggestionIndex = (billingSuggestionIndex - 1 + items.length) % items.length;
+      }
+
+      items.forEach((el, idx) => {
+        el.classList.toggle('bg-blue-50', idx === billingSuggestionIndex);
+        el.classList.toggle('dark:bg-gray-800', idx === billingSuggestionIndex);
+      });
+    } else if (event.key === 'Enter' && billingSuggestionIndex >= 0) {
+      event.preventDefault();
+      items[billingSuggestionIndex]?.click();
+    } else if (event.key === 'Escape') {
+      resetBillingSuggestions();
+    }
+  });
+
+  billingSearchPanel.addEventListener('mousedown', (event) => {
+    const target = event.target.closest('.billing-suggestion');
+    if (!target) return;
+    const index = Number(target.dataset.index);
+    const data = billingSuggestions[index];
+    if (!data) return;
+
+    billingSearchInput.value = data.name || data.account_no || '';
+    resetBillingSuggestions();
+    billingSearchInput.form?.submit();
+  });
+
+  document.addEventListener('click', (event) => {
+    if (event.target === billingSearchInput || billingSearchPanel.contains(event.target)) return;
+    resetBillingSuggestions();
+  });
+
+  billingSearchInput.addEventListener('search', () => {
+    resetBillingSuggestions();
+    billingSearchInput.form?.submit();
+  });
+}
+
+const accountInput = document.getElementById('account_no');
+const accountSuggestionsPanel = document.getElementById('accountSuggestions');
+const accountSelectionHint = document.getElementById('accountSelectionHint');
+
+if (accountInput && accountSuggestionsPanel) {
+  let accountController = null;
+  let accountSuggestionIndex = -1;
+  let accountSuggestions = [];
+
+  const accountPreviewEl = document.getElementById('accountPreview');
+
+  function resetAccountSuggestions() {
+    accountSuggestionIndex = -1;
+    accountSuggestions = [];
+    accountSuggestionsPanel.classList.add('hidden');
+    accountSuggestionsPanel.innerHTML = '';
+  }
+
+  function showSelectionHint(customer) {
+    if (!accountSelectionHint) return;
+    if (!customer) {
+      accountSelectionHint.classList.add('hidden');
+      accountSelectionHint.textContent = '';
+      return;
+    }
+    accountSelectionHint.classList.remove('hidden');
+    accountSelectionHint.innerHTML = `Selected: <span class="font-semibold text-gray-700 dark:text-gray-200">${customer.name ?? 'Unnamed customer'}</span> — ${customer.address ?? 'No address provided'}`;
+  }
+
+  async function fetchAccountSuggestions(term) {
+    const query = term.trim();
+    if (query.length < 2) {
+      resetAccountSuggestions();
+      return;
+    }
+
+    if (accountController) {
+      accountController.abort();
+    }
+
+    accountController = new AbortController();
+    accountSuggestionsPanel.innerHTML = '<div class="px-4 py-3 text-xs text-gray-400">Searching…</div>';
+    accountSuggestionsPanel.classList.remove('hidden');
+
+    try {
+      const res = await fetch(`{{ route('customer.searchAccounts') }}?q=${encodeURIComponent(query)}`, {
+        headers: { 'Accept': 'application/json' },
+        signal: accountController.signal,
+      });
+      if (!res.ok) throw new Error('Search failed');
+
+      const data = await res.json();
+      accountSuggestions = Array.isArray(data.suggestions) ? data.suggestions : [];
+
+      if (!accountSuggestions.length) {
+        accountSuggestionsPanel.innerHTML = '<div class="px-4 py-3 text-xs text-gray-400">No matches.</div>';
+        return;
+      }
+
+      accountSuggestionsPanel.innerHTML = accountSuggestions.map((item, index) => {
+        const status = (item.status || '').toLowerCase();
+        const pillTone = status === 'active'
+          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+          : status === 'disconnected'
+            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+            : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300';
+
+        return `
+          <button type="button" data-index="${index}" class="account-suggestion w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-100 hover:bg-blue-50 dark:hover:bg-gray-800 focus:bg-blue-50 dark:focus:bg-gray-800">
+            <div class="flex items-center justify-between gap-3 mb-1">
+              <span class="font-mono text-xs text-gray-500 dark:text-gray-400">${item.account_no ?? ''}</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${pillTone}">${item.status ?? ''}</span>
+            </div>
+            <div class="text-sm font-semibold text-gray-800 dark:text-gray-100">${item.name ?? 'Unnamed customer'}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">${item.address ?? 'No address on file'}</div>
+          </button>
+        `;
+      }).join('');
+
+      accountSuggestionIndex = -1;
+    } catch (error) {
+      if (error.name === 'AbortError') return;
+      console.error(error);
+      accountSuggestionsPanel.innerHTML = '<div class="px-4 py-3 text-xs text-rose-500">Unable to load suggestions.</div>';
+    }
+  }
+
+  accountInput.addEventListener('input', (event) => {
+    const value = event.target.value;
+    showSelectionHint(null);
+    fetchAccountSuggestions(value);
+  });
+
+  accountInput.addEventListener('keydown', (event) => {
+    if (accountSuggestionsPanel.classList.contains('hidden')) return;
+    const items = accountSuggestionsPanel.querySelectorAll('.account-suggestion');
+    if (!items.length) return;
+
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      if (event.key === 'ArrowDown') {
+        accountSuggestionIndex = (accountSuggestionIndex + 1) % items.length;
+      } else {
+        accountSuggestionIndex = (accountSuggestionIndex - 1 + items.length) % items.length;
+      }
+      items.forEach((el, idx) => {
+        el.classList.toggle('bg-blue-50', idx === accountSuggestionIndex);
+        el.classList.toggle('dark:bg-gray-800', idx === accountSuggestionIndex);
+      });
+    } else if (event.key === 'Enter' && accountSuggestionIndex >= 0) {
+      event.preventDefault();
+      items[accountSuggestionIndex]?.click();
+    } else if (event.key === 'Escape') {
+      resetAccountSuggestions();
+    }
+  });
+
+  accountSuggestionsPanel.addEventListener('mousedown', (event) => {
+    const target = event.target.closest('.account-suggestion');
+    if (!target) return;
+    const index = Number(target.dataset.index);
+    const customer = accountSuggestions[index];
+    if (!customer) return;
+
+    accountInput.value = customer.account_no || '';
+    showSelectionHint(customer);
+    if (accountPreviewEl) accountPreviewEl.textContent = customer.account_no || '—';
+    resetAccountSuggestions();
+  });
+
+  document.addEventListener('click', (event) => {
+    if (event.target === accountInput || accountSuggestionsPanel.contains(event.target)) return;
+    resetAccountSuggestions();
+  });
+
+  accountInput.addEventListener('blur', () => {
+    const value = accountInput.value.trim();
+    if (!value) {
+      showSelectionHint(null);
+      if (accountPreviewEl) accountPreviewEl.textContent = '—';
+    }
+  });
+}
+
 let currentBillId = null;
 
 // Lightweight, no-API counter helpers
@@ -724,14 +1019,19 @@ document.getElementById('statusForm').addEventListener('submit', async function(
 
     const consumption = Math.max(0, current - previous);
     const subtotal = consumption * baseRate;
-    const total = subtotal + maintenance;
+    const vat = subtotal * 0.12;
+    const total = subtotal + vat + maintenance;
 
     if (state.consumptionInput) state.consumptionInput.value = consumption.toFixed(2);
     if (state.subtotalInput) state.subtotalInput.value = subtotal.toFixed(2);
+    const vatInput = $('vat_value');
+    if (vatInput) vatInput.value = vat.toFixed(2);
     if (state.totalInput) state.totalInput.value = total.toFixed(2);
 
     if (state.consumptionDisplay) state.consumptionDisplay.textContent = `${consumption.toFixed(2)} m³`;
     if (state.subtotalDisplay) state.subtotalDisplay.textContent = formatCurrency(subtotal);
+    const vatDisplay = $('vatDisplay');
+    if (vatDisplay) vatDisplay.textContent = formatCurrency(vat);
     if (state.maintenanceDisplay) state.maintenanceDisplay.textContent = formatCurrency(maintenance);
     if (state.totalDisplay) state.totalDisplay.textContent = formatCurrency(total);
 
