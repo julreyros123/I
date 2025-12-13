@@ -39,7 +39,7 @@
 
     {{-- Main Content --}}
     <main class="md:ml-64 pt-16 min-h-screen transition-all duration-300">
-        <div class="w-full mx-auto px-6 py-10">
+        <div class="w-full mx-auto px-6 pt-2 pb-6 lg:pt-4 lg:pb-6">
             @yield('content')
         </div>
     </main>

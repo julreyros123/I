@@ -12,10 +12,10 @@
         </button>
         <img src="{{ asset('images/mawasa-logo.png') }}" alt="Logo" class="h-8 w-8 rounded">
         <div class="leading-tight hidden sm:block">
-            <h1 class="text-sm font-semibold text-gray-900 dark:text-white">
+            <h1 class="text-base font-semibold uppercase tracking-wide text-gray-900 dark:text-white">
                 MANAMBULAN WATERWORKS AND SANITATION INC.
             </h1>
-            <p class="text-xs text-gray-500 dark:text-gray-400">Admin Portal</p>
+            <p class="text-[11px] text-gray-500 dark:text-gray-400">Admin Portal</p>
         </div>
     </div>
 

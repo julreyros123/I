@@ -5,85 +5,85 @@
     <!-- Sidebar & Navbar remain unchanged -->
 
     <!-- Main Portal Content -->
-    <div class="flex-1 p-8 font-[Poppins] transition-colors duration-300">
-        <div id="portalContent" class="p-2 w-full space-y-6">
+    <div class="flex-1 px-4 sm:px-6 pt-3 pb-5 font-[Poppins] transition-colors duration-300">
+        <div id="portalContent" class="w-full space-y-4">
 
             <!-- Title removed to save space -->
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6">
-                <a href="{{ route('records.billing') }}" class="group relative overflow-hidden rounded-2xl shadow-lg p-4 lg:p-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 bg-blue-600 text-white">
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6 -mt-3">
+                <a href="{{ route('records.billing') }}" class="group relative overflow-hidden rounded-2xl shadow-lg p-3 sm:p-4 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0085DC] bg-[#00A2FE] text-white">
                     <div class="relative flex h-full flex-col justify-between">
                         <div class="flex items-start gap-3">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20">
-                                <x-heroicon-o-clock class="w-6 h-6" />
+                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-white/25">
+                                <x-heroicon-o-clock class="w-5 h-5" />
                             </div>
                             <div class="space-y-1">
-                                <p class="text-[11px] uppercase tracking-[0.2em] text-white/70">Pending queue</p>
+                                <p class="text-[11px] uppercase tracking-[0.2em] text-white/80">Pending queue</p>
                                 <p class="text-sm font-semibold text-white">Bills to generate</p>
                             </div>
                         </div>
-                        <div class="text-right space-y-1 pt-6">
+                        <div class="text-right space-y-1 pt-4">
                             <p class="text-3xl font-semibold" id="portalPendingCount">{{ $stats['pending_generate'] ?? 0 }}</p>
-                            <p class="text-[11px] text-white/70">Awaiting generation</p>
+                            <p class="text-[11px] text-white/80">Awaiting generation</p>
                         </div>
                     </div>
                 </a>
 
-                <a href="{{ route('records.billing') }}" class="group relative overflow-hidden rounded-2xl shadow-lg p-4 lg:p-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 bg-blue-600 text-white">
+                <a href="{{ route('records.billing') }}" class="group relative overflow-hidden rounded-2xl shadow-lg p-3 sm:p-4 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0085DC] bg-[#00A2FE] text-white">
                     <div class="relative flex h-full flex-col justify-between">
                         <div class="flex items-start gap-3">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20">
-                                <x-heroicon-o-check-circle class="w-6 h-6" />
+                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-white/25">
+                                <x-heroicon-o-check-circle class="w-5 h-5" />
                             </div>
                             <div class="space-y-1">
-                                <p class="text-[11px] uppercase tracking-[0.2em] text-white/70">Generated bills</p>
+                                <p class="text-[11px] uppercase tracking-[0.2em] text-white/80">Generated bills</p>
                                 <p class="text-sm font-semibold text-white">Total processed</p>
                             </div>
                         </div>
-                        <div class="text-right space-y-1 pt-6">
+                        <div class="text-right space-y-1 pt-4">
                             <p class="text-3xl font-semibold" id="portalGeneratedCount">{{ $stats['generated_total'] ?? ($stats['generated'] ?? 0) }}</p>
-                            <p class="text-[11px] text-white/70">Today {{ $stats['generated_today'] ?? 0 }} · Month {{ $stats['generated_month'] ?? 0 }}</p>
+                            <p class="text-[11px] text-white/80">Today {{ $stats['generated_today'] ?? 0 }} · Month {{ $stats['generated_month'] ?? 0 }}</p>
                         </div>
                     </div>
                 </a>
 
-                <a href="{{ route('register.index') }}" class="group relative overflow-hidden rounded-2xl shadow-lg p-4 lg:p-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 bg-blue-600 text-white">
+                <a href="{{ route('register.index') }}" class="group relative overflow-hidden rounded-2xl shadow-lg p-3 sm:p-4 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0085DC] bg-[#00A2FE] text-white">
                     <div class="relative flex h-full flex-col justify-between">
                         <div class="flex items-start gap-3">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20">
-                                <x-heroicon-o-user-plus class="w-6 h-6" />
+                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-white/25">
+                                <x-heroicon-o-user-plus class="w-5 h-5" />
                             </div>
                             <div class="space-y-1">
-                                <p class="text-[11px] uppercase tracking-[0.2em] text-white/70">New registrations</p>
+                                <p class="text-[11px] uppercase tracking-[0.2em] text-white/80">New registrations</p>
                                 <p class="text-sm font-semibold text-white">Customers added</p>
                             </div>
                         </div>
-                        <div class="text-right space-y-1 pt-6">
+                        <div class="text-right space-y-1 pt-4">
                             <p class="text-3xl font-semibold">{{ $stats['new_customers_today'] ?? 0 }}</p>
-                            <p class="text-[11px] text-white/70">This month {{ $stats['new_customers_month'] ?? 0 }}</p>
+                            <p class="text-[11px] text-white/80">This month {{ $stats['new_customers_month'] ?? 0 }}</p>
                         </div>
                     </div>
                 </a>
 
-                <a href="{{ route('records.billing') }}" class="group relative overflow-hidden rounded-2xl shadow-lg p-4 lg:p-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 bg-blue-600 text-white">
+                <a href="{{ route('records.billing') }}" class="group relative overflow-hidden rounded-2xl shadow-lg p-3 sm:p-4 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0085DC] bg-[#00A2FE] text-white">
                     <div class="relative flex h-full flex-col justify-between">
                         <div class="flex items-start gap-3">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20">
-                                <x-heroicon-o-exclamation-triangle class="w-6 h-6" />
+                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-white/25">
+                                <x-heroicon-o-exclamation-triangle class="w-5 h-5" />
                             </div>
                             <div class="space-y-1">
-                                <p class="text-[11px] uppercase tracking-[0.2em] text-white/70">Disconnection risk</p>
+                                <p class="text-[11px] uppercase tracking-[0.2em] text-white/80">Disconnection risk</p>
                                 <p class="text-sm font-semibold text-white">Notice issued accounts</p>
                             </div>
                         </div>
-                        <div class="text-right space-y-1 pt-6">
+                        <div class="text-right space-y-1 pt-4">
                             <p class="text-3xl font-semibold">{{ $stats['overdue'] ?? 0 }}</p>
-                            <p class="text-[11px] text-white/70">Flagged with "Notice of Disconnection"</p>
+                            <p class="text-[11px] text-white/80">Flagged with "Notice of Disconnection"</p>
                         </div>
                     </div>
                 </a>
             </div>
-            <div class="flex flex-wrap items-center gap-4 -mt-2 text-sm">
+            <div class="flex flex-wrap items-center gap-4 -mt-1 text-sm">
                 <a href="{{ route('billing.generation') }}" class="inline-flex items-center gap-1.5 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100/70 dark:hover:bg-gray-700/60 px-2 py-1 rounded">
                     <x-heroicon-o-document-plus class="w-4 h-4" />
                     <span>New Bill</span>

@@ -1,83 +1,83 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="w-full mx-auto px-4 sm:px-6 py-4 sm:py-5 lg:py-6 font-[Poppins] space-y-4 lg:space-y-6">
+<div class="w-full mx-auto px-4 sm:px-6 py-3 sm:py-4 lg:py-5 font-[Poppins] space-y-4 lg:space-y-6">
 
     <!-- KPI block moved below as its own row -->
-    <div class="grid grid-cols-12 gap-6 mt-2 md:mt-3">
+    <div class="grid grid-cols-12 gap-5 mt-1 md:mt-2">
         <div class="col-span-12 grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
             <!-- Billed (This Month) -->
-            <div class="group relative overflow-hidden rounded-2xl shadow-lg p-4 lg:p-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 bg-blue-600 text-white">
+            <div class="group relative overflow-hidden rounded-2xl shadow-lg p-2.5 sm:p-3.5 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 bg-sky-500 text-sky-50">
                 <div class="relative flex h-full flex-col justify-between">
                     <div class="flex items-start gap-3">
-                        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20">
-                            <x-heroicon-o-document-text class="w-6 h-6" />
+                        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-white/30">
+                            <x-heroicon-o-document-text class="w-4 h-4" />
                         </div>
                         <div class="space-y-1">
-                            <p class="text-[11px] uppercase tracking-[0.2em] text-white/70">Billed revenue</p>
-                            <p class="text-sm font-semibold text-white">Invoices this month</p>
+                            <p class="text-[11px] uppercase tracking-[0.2em] text-sky-100/80">Billed revenue</p>
+                            <p class="text-sm font-semibold text-sky-50">Invoices this month</p>
                         </div>
                     </div>
-                    <div class="text-right space-y-1 pt-6">
-                        <p class="text-3xl font-semibold">₱{{ number_format($stats['month_billed'] ?? 0, 2) }}</p>
-                        <p class="text-[11px] text-white/70">Live total billed</p>
+                    <div class="text-right space-y-1 pt-3">
+                        <p class="text-2xl sm:text-3xl font-semibold">₱{{ number_format($stats['month_billed'] ?? 0, 2) }}</p>
+                        <p class="text-[11px] text-sky-100/80">Live total billed</p>
                     </div>
                 </div>
             </div>
 
             <!-- Collected (This Month) -->
-            <a href="{{ route('records.payments') }}" class="group relative overflow-hidden rounded-2xl shadow-lg p-4 lg:p-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 bg-blue-600 text-white">
+            <a href="{{ route('records.payments') }}" class="group relative overflow-hidden rounded-2xl shadow-lg p-2.5 sm:p-3.5 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-sky-400 bg-sky-500 text-sky-50">
                 <div class="relative flex h-full flex-col justify-between">
                     <div class="flex items-start gap-3">
-                        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20">
-                            <x-heroicon-o-banknotes class="w-6 h-6" />
+                        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-white/30">
+                            <x-heroicon-o-banknotes class="w-4 h-4" />
                         </div>
                         <div class="space-y-1">
-                            <p class="text-[11px] uppercase tracking-[0.2em] text-white/70">Collections</p>
-                            <p class="text-sm font-semibold text-white">Posted receipts</p>
+                            <p class="text-[11px] uppercase tracking-[0.2em] text-sky-100/80">Collections</p>
+                            <p class="text-sm font-semibold text-sky-50">Posted receipts</p>
                         </div>
                     </div>
-                    <div class="text-right space-y-1 pt-6">
-                        <p class="text-3xl font-semibold">₱{{ number_format($stats['month_collected'] ?? 0, 2) }}</p>
-                        <p class="text-[11px] text-white/70">Settled ledger payments</p>
+                    <div class="text-right space-y-1 pt-3">
+                        <p class="text-2xl sm:text-3xl font-semibold">₱{{ number_format($stats['month_collected'] ?? 0, 2) }}</p>
+                        <p class="text-[11px] text-sky-100/80">Settled ledger payments</p>
                     </div>
                 </div>
             </a>
 
             <!-- Customers -->
-            <a href="{{ route('admin.customers') }}" class="group relative overflow-hidden rounded-2xl shadow-lg p-4 lg:p-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 bg-blue-600 text-white">
+            <a href="{{ route('admin.customers') }}" class="group relative overflow-hidden rounded-2xl shadow-lg p-2.5 sm:p-3.5 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-sky-400 bg-sky-500 text-sky-50">
                 <div class="relative flex h-full flex-col justify-between">
                     <div class="flex items-start gap-3">
-                        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20">
-                            <x-heroicon-o-users class="w-6 h-6" />
+                        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-white/30">
+                            <x-heroicon-o-users class="w-4 h-4" />
                         </div>
                         <div class="space-y-1">
-                            <p class="text-[11px] uppercase tracking-[0.2em] text-white/70">Active customers</p>
-                            <p class="text-sm font-semibold text-white">Accounts in good standing</p>
+                            <p class="text-[11px] uppercase tracking-[0.2em] text-sky-100/80">Active customers</p>
+                            <p class="text-sm font-semibold text-sky-50">Accounts in good standing</p>
                         </div>
                     </div>
-                    <div class="text-right space-y-1 pt-6">
-                        <p class="text-4xl font-semibold">{{ number_format($stats['customers'] ?? 0) }}</p>
-                        <p class="text-[11px] text-white/70">Profiles in good standing</p>
+                    <div class="text-right space-y-1 pt-3">
+                        <p class="text-3xl sm:text-4xl font-semibold">{{ number_format($stats['customers'] ?? 0) }}</p>
+                        <p class="text-[11px] text-sky-100/80">Profiles in good standing</p>
                     </div>
                 </div>
             </a>
 
             <!-- Collection Rate -->
-            <div class="group relative overflow-hidden rounded-2xl shadow-lg p-4 lg:p-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 bg-blue-600 text-white">
+            <div class="group relative overflow-hidden rounded-2xl shadow-lg p-2.5 sm:p-3.5 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 bg-sky-500 text-sky-50">
                 <div class="relative flex h-full flex-col justify-between">
                     <div class="flex items-start gap-3">
-                        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20">
-                            <x-heroicon-o-arrow-trending-up class="w-6 h-6" />
+                        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-white/30">
+                            <x-heroicon-o-arrow-trending-up class="w-4 h-4" />
                         </div>
                         <div class="space-y-1">
-                            <p class="text-[11px] uppercase tracking-[0.2em] text-white/70">Collection rate</p>
-                            <p class="text-sm font-semibold text-white">Paid vs billed</p>
+                            <p class="text-[11px] uppercase tracking-[0.2em] text-sky-100/80">Collection rate</p>
+                            <p class="text-sm font-semibold text-sky-50">Paid vs billed</p>
                         </div>
                     </div>
-                    <div class="text-right space-y-1 pt-6">
-                        <p class="text-3xl font-semibold">{{ number_format(($stats['collection_rate'] ?? 0) * 100, 1) }}%</p>
-                        <p class="text-[11px] text-white/70">Target ≥ 90%</p>
+                    <div class="text-right space-y-1 pt-3">
+                        <p class="text-2xl sm:text-3xl font-semibold">{{ number_format(($stats['collection_rate'] ?? 0) * 100, 1) }}%</p>
+                        <p class="text-[11px] text-sky-100/80">Target ≥ 90%</p>
                     </div>
                 </div>
             </div>
@@ -97,10 +97,12 @@
                         <button type="button" id="metricCustomers" class="px-3 py-1.5 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 border border-transparent dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 dark:border-gray-700">Customers</button>
                         <button type="button" id="metricUsage" class="px-3 py-1.5 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 border border-transparent dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 dark:border-gray-700">Avg Usage</button>
                     </div>
-                    <div class="inline-flex flex-wrap items-center gap-1">
+                    <div class="inline-flex flex-wrap items-center gap-2">
                         <span class="text-gray-500 dark:text-gray-300">Range:</span>
-                        <button type="button" id="btnMonth" class="px-3 py-1.5 rounded-md bg-blue-600 text-white hover:bg-blue-700 dark:hover:bg-blue-500">Monthly</button>
-                        <button type="button" id="btnYear" class="px-3 py-1.5 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 border border-transparent dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 dark:border-gray-700">Yearly</button>
+                        <input type="date" id="rangeStart" class="px-3 py-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-700 dark:text-gray-200" />
+                        <span class="text-gray-400">to</span>
+                        <input type="date" id="rangeEnd" class="px-3 py-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-700 dark:text-gray-200" />
+                        <button type="button" id="applyRange" class="px-3 py-1.5 rounded-md bg-blue-600 text-white hover:bg-blue-700 dark:hover:bg-blue-500">Apply</button>
                     </div>
                     <div class="hidden">
                         <span class="text-gray-500 dark:text-gray-300">Type:</span>
@@ -114,6 +116,16 @@
                     <div id="revChart" class="absolute inset-0 w-full h-full"></div>
                 </div>
             </div>
+            <div id="rangeSummaryWrapper" class="mt-4 space-y-3">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">Monthly breakdown</h3>
+                    <span id="rangeSummaryCount" class="text-xs text-gray-400"></span>
+                </div>
+                <div id="rangeSummary" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3"></div>
+            </div>
+        </div>
+
+    </div>
 @php
 // Labels
 $monthsShort = array('Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec');
@@ -149,7 +161,6 @@ if (count($seriesYearUsage) !== 5) { $seriesYearUsage = array_pad($seriesYearUsa
             (function(){
               var el = document.getElementById('revChart');
               if (!el) return;
-              var mode = 'month';
               var labelsMonth = @json($labelsMonth);
               var labelsYear = @json($labelsYear);
               var metric = 'revenue';
@@ -170,13 +181,35 @@ if (count($seriesYearUsage) !== 5) { $seriesYearUsage = array_pad($seriesYearUsa
               function num(v){ if (v>=1e6) return (v/1e6).toFixed(1)+'M'; if (v>=1e3) return (v/1e3).toFixed(1)+'K'; return (''+Math.round(v)); }
               function m3(v){ return num(v)+' m³'; }
               function isDark(){ return document.documentElement.classList.contains('dark'); }
-              function activeData(){
-                var d, l = (mode==='year')?labelsYear:labelsMonth;
-                if (metric==='revenue') d = (mode==='year')?yearRevenue:monthRevenue;
-                else if (metric==='customers') d = (mode==='year')?yearCustomers:monthCustomers;
-                else d = (mode==='year')?yearUsage:monthUsage;
-                return {d:d,l:l};
+              function buildTimeSeries(){
+                function toNumberArray(arr){ return (arr || []).map(function(v){ var n = parseFloat(v); return isFinite(n) ? n : 0; }); }
+                var baseRevenue = toNumberArray(monthRevenue);
+                var baseCustomers = toNumberArray(monthCustomers);
+                var baseUsage = toNumberArray(monthUsage);
+                var baseRevSum = baseRevenue.reduce(function(a,b){ return a + b; }, 0) || 1;
+                var baseCustSum = baseCustomers.reduce(function(a,b){ return a + b; }, 0) || 1;
+                var baseUsageSum = baseUsage.reduce(function(a,b){ return a + b; }, 0) || 1;
+                var series = [];
+                for (var yi = 0; yi < labelsYear.length; yi++){
+                  var year = parseInt(labelsYear[yi], 10);
+                  if (!isFinite(year)) continue;
+                  var revFactor = baseRevSum ? (parseFloat(yearRevenue[yi]) || 0) / baseRevSum : 1;
+                  var custFactor = baseCustSum ? (parseFloat(yearCustomers[yi]) || 0) / baseCustSum : 1;
+                  var usageFactor = baseUsageSum ? (parseFloat(yearUsage[yi]) || 0) / baseUsageSum : 1;
+                  for (var mi = 0; mi < labelsMonth.length; mi++){
+                    var date = new Date(year, mi, 1);
+                    var isCurrentYear = (year === (new Date()).getFullYear());
+                    series.push({
+                      date: date,
+                      revenue: isCurrentYear ? baseRevenue[mi] : baseRevenue[mi] * revFactor,
+                      customers: isCurrentYear ? baseCustomers[mi] : baseCustomers[mi] * custFactor,
+                      usage: isCurrentYear ? baseUsage[mi] : baseUsage[mi] * usageFactor
+                    });
+                  }
+                }
+                return series.sort(function(a,b){ return a.date - b.date; });
               }
+              var timeSeries = buildTimeSeries();
               function yFormatter(){
                 if (metric==='revenue') return function(v){ return peso(v); };
                 if (metric==='customers') return function(v){ return num(v); };
@@ -190,15 +223,70 @@ if (count($seriesYearUsage) !== 5) { $seriesYearUsage = array_pad($seriesYearUsa
                 if (isDark()) return { dark:darkBlue, blue:'#60a5fa', sky:sky, grid:'rgba(255,255,255,0.10)', tick:'#cbd5e1', bg:'#0b1f3a' };
                 return { dark:darkBlue, blue:blue, sky:sky, grid:'#E5E7EB', tick:'#6B7280', bg:'#F3F4F6' };
               }
+              function formatDateInput(dt){ var y = dt.getFullYear(); var m = String(dt.getMonth()+1).padStart(2,'0'); var d = String(dt.getDate()).padStart(2,'0'); return y+'-'+m+'-'+d; }
+              function formatLabel(dt){ return dt.toLocaleString(undefined, { month:'short', year:'numeric' }); }
+
+              var currentRange = { start: null, end: null };
+
+              function setDefaultRange(){
+                if (!timeSeries.length) return;
+                var now = new Date();
+                var start = new Date(now.getFullYear(), 0, 1);
+                var end = new Date(now.getFullYear(), 11, 31);
+                currentRange.start = start;
+                currentRange.end = end;
+                var startInput = document.getElementById('rangeStart');
+                var endInput = document.getElementById('rangeEnd');
+                if (startInput) startInput.value = formatDateInput(start);
+                if (endInput) endInput.value = formatDateInput(end);
+              }
+
+              function activeData(){
+                var filtered = timeSeries.filter(function(point){
+                  var afterStart = !currentRange.start || point.date >= currentRange.start;
+                  var beforeEnd = !currentRange.end || point.date <= currentRange.end;
+                  return afterStart && beforeEnd;
+                });
+                if (!filtered.length && timeSeries.length){ filtered = timeSeries.slice(-12); }
+                var items = filtered.map(function(p){
+                  var label = formatLabel(p.date);
+                  var value = metric==='revenue' ? p.revenue : (metric==='customers' ? p.customers : p.usage);
+                  return { label: label, value: value };
+                });
+                var labels = items.map(function(p){ return p.label; });
+                var data = items.map(function(p){ return p.value; });
+                return { l: labels, d: data, items: items };
+              }
+              function updateSummary(items){
+                var wrap = document.getElementById('rangeSummaryWrapper');
+                var target = document.getElementById('rangeSummary');
+                var count = document.getElementById('rangeSummaryCount');
+                if (!wrap || !target) return;
+                if (!items || !items.length){
+                  wrap.classList.add('hidden');
+                  if (count) count.textContent = '';
+                  return;
+                }
+                wrap.classList.remove('hidden');
+                if (count) count.textContent = items.length + ' month' + (items.length === 1 ? '' : 's');
+                target.innerHTML = items.map(function(item){
+                  var formatted = metric==='revenue' ? peso(item.value) : (metric==='customers' ? num(item.value) : m3(item.value));
+                  return '<div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/70 dark:bg-gray-900/60 px-3 py-2 shadow-sm flex flex-col gap-1">'
+                         + '<span class="text-xs font-medium text-gray-500 dark:text-gray-400">' + item.label + '</span>'
+                         + '<span class="text-sm font-semibold text-gray-800 dark:text-gray-100">' + formatted + '</span>'
+                         + '</div>';
+                }).join('');
+              }
               function buildOptions(){
                 var pal = palette();
                 var pack = activeData();
-                var name = (mode==='year') ? (metric==='revenue'?'Yearly Revenue':(metric==='customers'?'Yearly Customers':'Yearly Avg Usage')) : (metric==='revenue'?'Monthly Revenue':(metric==='customers'?'Monthly Customers':'Monthly Avg Usage'));
+                updateSummary(pack.items);
+                var name = metric==='revenue' ? 'Revenue' : (metric==='customers' ? 'Customers' : 'Avg Usage');
                 return {
                   chart: { type: 'area', height: '100%', toolbar: { show: false }, animations: { enabled: true }, dropShadow: { enabled: true, top: 6, left: 0, blur: 6, color: pal.blue, opacity: 0.35 } },
                   theme: { mode: isDark() ? 'dark' : 'light' },
                   series: [{ name: name, data: pack.d }],
-                  xaxis: { categories: pack.l, labels: { style: { colors: pal.tick } }, axisBorder: { color: pal.grid }, axisTicks: { color: pal.grid } },
+                  xaxis: { categories: pack.l, labels: { rotate: -45, style: { colors: pal.tick } }, axisBorder: { color: pal.grid }, axisTicks: { color: pal.grid } },
                   yaxis: { labels: { formatter: yFormatter(), style: { colors: pal.tick } } },
                   grid: { borderColor: pal.grid },
                   stroke: { curve: 'smooth', width: 2, colors: [pal.blue] },
@@ -230,11 +318,12 @@ if (count($seriesYearUsage) !== 5) { $seriesYearUsage = array_pad($seriesYearUsa
               function updateChart(){
                 var pal = palette();
                 var pack = activeData();
-                var name = (mode==='year') ? (metric==='revenue'?'Yearly Revenue':(metric==='customers'?'Yearly Customers':'Yearly Avg Usage')) : (metric==='revenue'?'Monthly Revenue':(metric==='customers'?'Monthly Customers':'Monthly Avg Usage'));
+                updateSummary(pack.items);
+                var name = metric==='revenue' ? 'Revenue' : (metric==='customers' ? 'Customers' : 'Avg Usage');
                 chart.updateOptions({
                   chart: { dropShadow: { enabled: true, top: 6, left: 0, blur: 6, color: pal.blue, opacity: 0.35 } },
                   theme: { mode: isDark() ? 'dark' : 'light' },
-                  xaxis: { categories: pack.l, labels: { style: { colors: pal.tick } }, axisBorder: { color: pal.grid }, axisTicks: { color: pal.grid } },
+                  xaxis: { categories: pack.l, labels: { rotate: -45, style: { colors: pal.tick } }, axisBorder: { color: pal.grid }, axisTicks: { color: pal.grid } },
                   yaxis: { labels: { formatter: yFormatter(), style: { colors: pal.tick } } },
                   grid: { borderColor: pal.grid },
                   stroke: { colors: [pal.blue] },
@@ -244,20 +333,33 @@ if (count($seriesYearUsage) !== 5) { $seriesYearUsage = array_pad($seriesYearUsa
                 chart.updateSeries([{ name: name, data: pack.d }]);
               }
 
-              // Bind toggles
-              var bM = document.getElementById('btnMonth');
-              var bY = document.getElementById('btnYear');
               var mR = document.getElementById('metricRevenue');
               var mC = document.getElementById('metricCustomers');
               var mU = document.getElementById('metricUsage');
-              if (bM && bY){
-                bM.onclick = function(){ mode='month'; setActive(bM,bY); updateChart(); };
-                bY.onclick = function(){ mode='year'; setActive(bY,bM); updateChart(); };
-              }
               if (mR && mC && mU){
                 mR.onclick = function(){ metric='revenue'; setMetricActive(mR,mC,mU); updateChart(); };
                 mC.onclick = function(){ metric='customers'; setMetricActive(mC,mR,mU); updateChart(); };
                 mU.onclick = function(){ metric='usage'; setMetricActive(mU,mR,mC); updateChart(); };
+              }
+
+              setDefaultRange();
+
+              var applyBtn = document.getElementById('applyRange');
+              if (applyBtn){
+                applyBtn.addEventListener('click', function(){
+                  var startInput = document.getElementById('rangeStart');
+                  var endInput = document.getElementById('rangeEnd');
+                  var startVal = startInput && startInput.value ? new Date(startInput.value) : null;
+                  var endVal = endInput && endInput.value ? new Date(endInput.value) : null;
+                  if (startVal && endVal && startVal > endVal){
+                    var tmp = startVal; startVal = endVal; endVal = tmp;
+                    if (startInput) startInput.value = formatDateInput(startVal);
+                    if (endInput) endInput.value = formatDateInput(endVal);
+                  }
+                  currentRange.start = startVal;
+                  currentRange.end = endVal;
+                  updateChart();
+                });
               }
 
               // Observe theme changes to update colors
@@ -270,10 +372,10 @@ if (count($seriesYearUsage) !== 5) { $seriesYearUsage = array_pad($seriesYearUsa
     </div>
 
     <!-- Second row: Admin Tasks (8) + Analytics (4) -->
-    <div class="grid grid-cols-12 gap-6">
+    <div class="grid grid-cols-12 gap-4 lg:gap-5">
         <!-- Admin Tasks -->
-        <div class="col-span-12 lg:col-span-8 bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-200 dark:border-gray-700 p-4 lg:p-5">
-            <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+        <div class="col-span-12 lg:col-span-8 bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-200 dark:border-gray-700 p-4 lg:p-5 space-y-4">
+            <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Admin Tasks</h2>
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Stay on top of new applications that still need approvals or installations.</p>
@@ -283,12 +385,11 @@ if (count($seriesYearUsage) !== 5) { $seriesYearUsage = array_pad($seriesYearUsa
                     <x-heroicon-o-arrow-top-right-on-square class="w-4 h-4" />
                 </a>
             </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
-                <a href="{{ route('admin.applicants.index', ['status' => 'pending']) }}" class="group relative overflow-hidden rounded-xl border border-amber-200 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-900/10 p-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <a href="{{ route('admin.applicants.index', ['status' => 'pending']) }}" class="group relative overflow-hidden rounded-2xl border border-amber-200 dark:border-amber-500/40 bg-amber-50 dark:bg-amber-900/10 p-4">
                     <div class="absolute inset-y-0 left-0 w-1 bg-amber-500/80 group-hover:bg-amber-500 transition-all"></div>
                     <div class="relative flex items-center gap-3">
-                        <div class="rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-200 p-2">
+                        <div class="rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-200 p-2.5">
                             <x-heroicon-o-clipboard-document-check class="w-5 h-5" />
                         </div>
                         <div class="space-y-1">
@@ -298,10 +399,10 @@ if (count($seriesYearUsage) !== 5) { $seriesYearUsage = array_pad($seriesYearUsa
                         </div>
                     </div>
                 </a>
-                <a href="{{ route('admin.applicants.index', ['status' => 'scheduled']) }}" class="group relative overflow-hidden rounded-xl border border-sky-200 dark:border-sky-500/40 bg-sky-50 dark:bg-sky-900/10 p-4">
+                <a href="{{ route('admin.applicants.index', ['status' => 'scheduled']) }}" class="group relative overflow-hidden rounded-2xl border border-sky-200 dark:border-sky-500/40 bg-sky-50 dark:bg-sky-900/10 p-4">
                     <div class="absolute inset-y-0 left-0 w-1 bg-sky-500/80 group-hover:bg-sky-500 transition-all"></div>
                     <div class="relative flex items-center gap-3">
-                        <div class="rounded-full bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-200 p-2">
+                        <div class="rounded-full bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-200 p-2.5">
                             <x-heroicon-o-wrench-screwdriver class="w-5 h-5" />
                         </div>
                         <div class="space-y-1">
@@ -312,16 +413,15 @@ if (count($seriesYearUsage) !== 5) { $seriesYearUsage = array_pad($seriesYearUsa
                     </div>
                 </a>
             </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="space-y-3">
-                    <div class="flex items-center justify-between">
+                    <div class="flex items-center justify_between">
                         <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">Awaiting approval</h3>
                         <span class="inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-200 px-2 py-0.5 text-[11px] font-medium">{{ number_format($applicationsPendingApprovalCount ?? 0) }}</span>
                     </div>
-                    <ul class="space-y-3">
+                    <ul class="space-y-2">
                         @forelse($applicationsPendingApprovalList as $application)
-                            <li class="rounded-xl border border-gray-100 dark:border-gray-700/70 bg-white dark:bg-gray-900/40 px-3 py-2.5 shadow-sm">
+                            <li class="rounded-xl border border-gray-100 dark:border-gray-700/70 bg-white dark:bg-gray-900/40 px-3.5 py-1.5 shadow-sm">
                                 @php($statusLabel = \Illuminate\Support\Str::headline($application->status ?? 'pending'))
                                 <div class="flex items-start justify-between gap-3">
                                     <div class="min-w-0">
@@ -341,14 +441,14 @@ if (count($seriesYearUsage) !== 5) { $seriesYearUsage = array_pad($seriesYearUsa
                     </ul>
                 </div>
 
-                <div class="space-y-3">
+                <div class="space-y-4">
                     <div class="flex items-center justify-between">
                         <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">Awaiting installation</h3>
                         <span class="inline-flex items-center rounded-full bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-200 px-2 py-0.5 text-[11px] font-medium">{{ number_format($applicationsPendingInstallationCount ?? 0) }}</span>
                     </div>
-                    <ul class="space-y-3">
+                    <ul class="space-y-2">
                         @forelse($applicationsPendingInstallationList as $application)
-                            <li class="rounded-xl border border-gray-100 dark:border-gray-700/70 bg-white dark:bg-gray-900/40 px-3 py-2.5 shadow-sm">
+                            <li class="rounded-xl border border-gray-100 dark:border-gray-700/70 bg-white dark:bg-gray-900/40 px-3.5 py-1.5 shadow-sm">
                                 @php($statusLabel = \Illuminate\Support\Str::headline($application->status ?? 'scheduled'))
                                 <div class="flex items-start justify-between gap-3">
                                     <div class="min-w-0">
@@ -371,8 +471,8 @@ if (count($seriesYearUsage) !== 5) { $seriesYearUsage = array_pad($seriesYearUsa
         </div>
 
         <!-- Analytics donut -->
-        <div class="col-span-12 lg:col-span-4 bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-200 dark:border-gray-700 p-4 lg:p-6">
-            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div class="col-span-12 lg:col-span-4 bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-200 dark:border-gray-700 p-4 lg:p-5 space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <h2 class="text-base lg:text-lg font-semibold text-gray-800 dark:text-gray-100">Connection Analytics</h2>
                     <p class="text-xs text-gray-500 dark:text-gray-400">Live mix of connection classifications.</p>
@@ -382,7 +482,7 @@ if (count($seriesYearUsage) !== 5) { $seriesYearUsage = array_pad($seriesYearUsa
                     <button type="button" data-connection-mode="percentage" class="px-3 py-1.5 text-gray-500 dark:text-gray-400 hover:text-blue-500">Share</button>
                 </div>
             </div>
-            <div class="h-[12rem] md:h-[14rem] lg:h-[18rem] flex items-center justify-center">
+            <div class="h-[11rem] md:h-[13rem] lg:h-[18rem] flex items-center justify-center">
                 <div id="connectionChart" class="w-full h-full"></div>
             </div>
             <div class="mt-4 space-y-3">
