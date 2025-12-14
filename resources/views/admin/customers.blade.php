@@ -59,47 +59,44 @@
         </div>
     </div>
 
-    <!-- Assign Meter Modal -->
-    <div id="assignMeterModal" class="hidden fixed inset-0 bg-black/50 z-50 items-center justify-center p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg">
+    <!-- Transfer Meter Modal -->
+    <div id="transferMeterModal" class="hidden fixed inset-0 bg-black/50 z-50 items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg" data-transfer-modal-content>
             <div class="flex items-center justify-between px-5 py-3 border-b border-gray-200 dark:border-gray-700">
-                <h3 class="text-base md:text-lg font-semibold text-gray-800 dark:text-gray-100">Assign Meter</h3>
-                <button id="amClose" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">Close</button>
+                <h3 class="text-base md:text-lg font-semibold text-gray-800 dark:text-gray-100">Transfer Meter Ownership</h3>
+                <button id="tmClose" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">Close</button>
             </div>
             <div class="px-5 py-4 space-y-3">
-                <input type="hidden" id="amAccountId" />
+                <input type="hidden" id="tmAccountId" />
                 <div>
-                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Customer</label>
-                    <input id="amAccountName" type="text" class="w-full border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 bg-gray-100 dark:bg-gray-900 text-sm" readonly />
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Current Customer</label>
+                    <input id="tmAccountName" type="text" class="w-full border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 bg-gray-100 dark:bg-gray-900 text-sm" readonly />
                 </div>
                 <div>
-                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Find Meter (Inventory)</label>
-                    <div class="flex items-center gap-2">
-                        <input id="amSearch" type="text" placeholder="Search serial or address" class="flex-1 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 bg-white dark:bg-gray-900 text-sm" />
-                        <button id="amSearchBtn" class="px-3 py-2 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm">Search</button>
-                    </div>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Meter Serial</label>
+                    <input id="tmMeterSerial" type="text" class="w-full border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 bg-gray-100 dark:bg-gray-900 text-sm" readonly />
                 </div>
                 <div>
-                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Select Meter</label>
-                    <select id="amMeter" class="w-full border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 bg-white dark:bg-gray-900 text-sm"></select>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">New Account Owner</label>
+                    <input id="tmNewName" type="text" placeholder="Full name" class="w-full border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 bg-white dark:bg-gray-900 text-sm" />
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Assigned Date</label>
-                        <input id="amDate" type="date" class="w-full border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 bg-white dark:bg-gray-900 text-sm" />
+                        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">New Contact No.</label>
+                        <input id="tmNewContact" type="text" placeholder="09xx…" class="w-full border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 bg-white dark:bg-gray-900 text-sm" />
                     </div>
                     <div>
-                        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Reason (optional)</label>
-                        <input id="amReason" type="text" class="w-full border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 bg-white dark:bg-gray-900 text-sm" />
+                        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Transfer Date</label>
+                        <input id="tmDate" type="date" class="w-full border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 bg-white dark:bg-gray-900 text-sm" />
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Notes (optional)</label>
-                    <textarea id="amNotes" rows="2" class="w-full border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 bg-white dark:bg-gray-900 text-sm"></textarea>
+                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Reason / Notes</label>
+                    <textarea id="tmNotes" rows="2" class="w-full border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 bg-white dark:bg-gray-900 text-sm" placeholder="Describe why the ownership is being transferred"></textarea>
                 </div>
             </div>
             <div class="px-5 py-4 border-t border-gray-200 dark:border-gray-700 text-right">
-                <button id="amSave" class="px-3 py-2 rounded-md bg-blue-600 text-white text-sm">Assign</button>
+                <button id="tmSave" class="px-3 py-2 rounded-md bg-blue-600 text-white text-sm">Transfer</button>
             </div>
         </div>
     </div>
@@ -359,7 +356,7 @@
         const drawerExtra = document.getElementById('drawerExtra');
         const drawerAudit = document.getElementById('drawerAudit');
         const drawerAuditLink = document.getElementById('drawerAuditLink');
-        const drawerAssignBtn = document.getElementById('drawerAssignBtn');
+        const drawerTransferBtn = document.getElementById('drawerTransferBtn');
         const drawerReplaceBtn = document.getElementById('drawerReplaceBtn');
 
         function openModal(){ if (modal){ modal.classList.remove('hidden'); modal.classList.add('flex'); } }
@@ -429,14 +426,16 @@
                         drawerAudit.innerHTML = '<p class="text-gray-400">No recent activity for this customer.</p>';
                     }
                 }
-                if (drawerAssignBtn){
+                if (drawerTransferBtn){
                     const disabled = (cust.status || '').toLowerCase() !== 'active';
-                    drawerAssignBtn.dataset.accountId = cust.id || '';
-                    drawerAssignBtn.dataset.accountName = cust.name || '';
-                    drawerAssignBtn.dataset.custStatus = cust.status || '';
-                    drawerAssignBtn.classList.toggle('opacity-50', disabled);
-                    drawerAssignBtn.classList.toggle('cursor-not-allowed', disabled);
-                    drawerAssignBtn.title = disabled ? 'Customer not active. Complete registration/verification first.' : '';
+                    drawerTransferBtn.dataset.accountId = cust.id || '';
+                    drawerTransferBtn.dataset.accountName = cust.name || '';
+                    drawerTransferBtn.dataset.custStatus = cust.status || '';
+                    drawerTransferBtn.dataset.contactNo = cust.contact_no || '';
+                    drawerTransferBtn.dataset.meterSerial = cust.meter_no || '';
+                    drawerTransferBtn.classList.toggle('opacity-50', disabled);
+                    drawerTransferBtn.classList.toggle('cursor-not-allowed', disabled);
+                    drawerTransferBtn.title = disabled ? 'Customer not active. Complete registration/verification first.' : '';
                 }
                 if (drawerReplaceBtn){
                     const disabled = (cust.status || '').toLowerCase() !== 'active';
@@ -653,12 +652,14 @@
                                         @elseif (strtolower($c->status) === 'disconnected')
                                         <span class="block px-3 py-2 text-[11px] text-gray-400">Awaiting staff reconnect request</span>
                                         @endif
-                                        <button class="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700 assign-meter-btn {{ strtolower($c->status) !== 'active' ? 'opacity-50 cursor-not-allowed' : '' }}"
+                                        <button class="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700 transfer-meter-btn {{ strtolower($c->status) !== 'active' ? 'opacity-50 cursor-not-allowed' : '' }}"
                                             data-account-id="{{ $c->id }}"
                                             data-account-name="{{ $c->name }}"
+                                            data-contact-no="{{ $c->contact_no }}"
                                             data-cust-status="{{ $c->status }}"
+                                            data-meter-serial="{{ $c->meter_no }}"
                                             title="{{ strtolower($c->status) !== 'active' ? 'Customer not active. Complete registration/verification first.' : '' }}">
-                                            Assign meter
+                                            Transfer meter
                                         </button>
                                         <button class="w-full text-left px-3 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700 replace-meter-btn {{ strtolower($c->status) !== 'active' ? 'opacity-50 cursor-not-allowed' : '' }}"
                                             data-account-id="{{ $c->id }}"
@@ -964,7 +965,7 @@
         }
 
         row.querySelectorAll('.reconnect-customer-btn').forEach(btn => btn.remove());
-        row.querySelectorAll('.assign-meter-btn, .replace-meter-btn').forEach(btn => {
+        row.querySelectorAll('.transfer-meter-btn, .replace-meter-btn').forEach(btn => {
             btn.classList.remove('opacity-50','cursor-not-allowed');
             btn.removeAttribute('title');
         });
@@ -1023,6 +1024,115 @@
     const auditBtn = document.getElementById('openAuditLog');
     const auditModal = document.getElementById('customerAuditLogModal');
     const auditClose = document.getElementById('closeAuditLog');
+    const transferModal = document.getElementById('transferMeterModal');
+    const tmClose = document.getElementById('tmClose');
+    const tmSave = document.getElementById('tmSave');
+    const tmAccountId = document.getElementById('tmAccountId');
+    const tmAccountName = document.getElementById('tmAccountName');
+    const tmMeterSerial = document.getElementById('tmMeterSerial');
+    const tmNewName = document.getElementById('tmNewName');
+    const tmNewContact = document.getElementById('tmNewContact');
+    const tmDate = document.getElementById('tmDate');
+    const tmNotes = document.getElementById('tmNotes');
+
+    function openTransferModal(payload){
+        if (!transferModal) return;
+        tmAccountId.value = payload.id || '';
+        tmAccountName.value = payload.name || '';
+        tmMeterSerial.value = payload.meter || '';
+        tmNewName.value = payload.name || '';
+        tmNewContact.value = payload.contact || '';
+        tmDate.value = new Date().toISOString().slice(0,10);
+        tmNotes.value = '';
+        transferModal.classList.remove('hidden');
+        transferModal.classList.add('flex');
+    }
+
+    function closeTransferModal(){
+        if (!transferModal) return;
+        transferModal.classList.add('hidden');
+        transferModal.classList.remove('flex');
+    }
+
+    async function submitTransfer(){
+        const id = tmAccountId.value;
+        const newName = tmNewName.value.trim();
+        const newContact = tmNewContact.value.trim();
+        const transferDate = tmDate.value;
+
+        if (!id){ showToast('Missing customer id','error'); return; }
+        if (!newName){ showToast('Please enter the new account owner name.','error'); return; }
+        if (!transferDate){ showToast('Select a transfer date.','error'); return; }
+
+        try {
+            tmSave.disabled = true;
+            const payload = {
+                new_owner_name: newName,
+                new_contact_no: newContact || null,
+                transfer_date: transferDate,
+                notes: tmNotes.value.trim() || null,
+            };
+
+            const res = await fetch(`/admin/customers/${id}/transfer-meter`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok){
+                throw new Error(data.message || data.error || 'Transfer failed');
+            }
+
+            showToast(data.message || 'Meter transferred successfully.','success');
+            closeTransferModal();
+            setTimeout(() => window.location.reload(), 400);
+        } catch (error) {
+            console.error(error);
+            showToast(error.message || 'Meter transfer failed.','error');
+        } finally {
+            tmSave.disabled = false;
+        }
+    }
+
+    document.addEventListener('click', function(event){
+        const target = event.target.closest('.transfer-meter-btn');
+        if (!target) return;
+        event.preventDefault();
+        const disabled = target.classList.contains('opacity-50');
+        if (disabled) return;
+        openTransferModal({
+            id: target.dataset.accountId,
+            name: target.dataset.accountName,
+            status: target.dataset.custStatus,
+            contact: target.dataset.contactNo || '',
+            meter: target.dataset.meterSerial || '',
+        });
+        target.closest('details')?.removeAttribute('open');
+    });
+
+    if (transferModal){
+        const transferModalContent = transferModal.querySelector('[data-transfer-modal-content]');
+        transferModal.addEventListener('click', function(event){
+            if (!transferModalContent) {
+                return;
+            }
+            if (!transferModalContent.contains(event.target)){
+                closeTransferModal();
+            }
+        });
+    }
+    if (tmClose){
+        tmClose.addEventListener('click', closeTransferModal);
+    }
+    if (tmSave){
+        tmSave.addEventListener('click', submitTransfer);
+    }
+
     const form = document.querySelector('form[method="GET"]');
     const toggleFilters = document.getElementById('toggleCustomerFilters');
     const advancedFilters = document.getElementById('customerAdvancedFilters');

@@ -95,11 +95,7 @@
                             <td class="px-4 py-2 whitespace-nowrap text-xs md:text-sm">{{ $log->action }}</td>
                             <td class="px-4 py-2 text-xs md:text-sm max-w-md truncate" title="{{ $log->description }}">{{ $log->description }}</td>
                             <td class="px-4 py-2 whitespace-nowrap text-xs md:text-sm">
-                                @if($log->meta)
-                                    <button type="button" onclick="showActivityMeta({{ $log->id }})" class="px-3 py-1 rounded-md text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600">View</button>
-                                @else
-                                    <span class="text-gray-400 text-xs">—</span>
-                                @endif
+                                <button type="button" onclick="showActivityMeta({{ $log->id }})" class="px-3 py-1 rounded-md text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600">View</button>
                             </td>
                         </tr>
                     @empty
@@ -116,27 +112,157 @@
     </div>
 </div>
 
+<div id="activityDetailModal" class="hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-sm">
+    <div class="absolute inset-0" onclick="closeActivityMeta()"></div>
+    <div class="relative max-w-3xl mx-auto h-full flex items-center justify-center px-4">
+        <div class="w-full max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-800">
+                <h3 class="text-base font-semibold text-gray-800 dark:text-gray-100">Activity details</h3>
+                <button type="button" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" onclick="closeActivityMeta()" aria-label="Close details">
+                    &times;
+                </button>
+            </div>
+            <div id="activityDetailContent" class="px-5 py-4 space-y-4 text-sm text-gray-700 dark:text-gray-200"></div>
+        </div>
+    </div>
+</div>
+
+@php
+    $activityMeta = $logs->count()
+        ? $logs->keyBy('id')->map(function($log){
+            return [
+                'id' => $log->id,
+                'module' => $log->module,
+                'action' => $log->action,
+                'description' => $log->description,
+                'user' => $log->user->name ?? 'System',
+                'timestamp' => $log->created_at->format('Y-m-d H:i:s'),
+                'target_type' => $log->target_type ? class_basename($log->target_type) : null,
+                'target_id' => $log->target_id,
+                'meta' => $log->meta ?? (object) [],
+            ];
+        })->toArray()
+        : [];
+@endphp
+
 <script>
-@if($logs->count())
-    window.__activityMeta = @json($logs->keyBy('id')->map->meta);
+    window.__activityMeta = @json($activityMeta);
+
     function showActivityMeta(id){
-        const data = window.__activityMeta[id] || null;
-        if (!data) { alert('No additional details.'); return; }
-        alert(JSON.stringify(data, null, 2));
+        const modal = document.getElementById('activityDetailModal');
+        const content = document.getElementById('activityDetailContent');
+        if (!modal || !content) {
+            alert('Unable to open details right now.');
+            return;
+        }
+
+        const entry = window.__activityMeta[id];
+        if (!entry) {
+            content.innerHTML = '<p class="text-gray-500 dark:text-gray-400">No additional details recorded for this action.</p>';
+        } else {
+            const baseInfo = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Performed by</p>
+                        <p class="font-medium text-gray-900 dark:text-gray-100">${entry.user}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">When</p>
+                        <p class="font-medium text-gray-900 dark:text-gray-100">${entry.timestamp}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Module</p>
+                        <p class="font-medium text-gray-900 dark:text-gray-100">${entry.module}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Action</p>
+                        <p class="font-medium text-gray-900 dark:text-gray-100">${entry.action}</p>
+                    </div>
+                </div>
+            `;
+
+            const description = `
+                <div class="rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/60 px-4 py-3">
+                    <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">Summary</p>
+                    <p class="text-gray-800 dark:text-gray-100">${entry.description}</p>
+                </div>
+            `;
+
+            let targetBlock = '';
+            if (entry.target_type || entry.target_id) {
+                const targetItems = [];
+                if (entry.target_type) targetItems.push(`<span class="font-medium">Type:</span> ${entry.target_type}`);
+                if (entry.target_id) targetItems.push(`<span class="font-medium">ID:</span> ${entry.target_id}`);
+                targetBlock = `
+                    <div class="rounded-lg border border-gray-200 dark:border-gray-800 px-4 py-3">
+                        <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">Target</p>
+                        <p class="space-x-4 text-gray-800 dark:text-gray-100">${targetItems.join(' | ')}</p>
+                    </div>
+                `;
+            }
+
+            const metaEntries = formatMetaEntries(entry.meta);
+
+            content.innerHTML = `${baseInfo}${description}${targetBlock}${metaEntries}`;
+        }
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.body.classList.add('overflow-hidden');
     }
-@else
-    function showActivityMeta(id){
-        alert('No additional details.');
+
+    function closeActivityMeta(){
+        const modal = document.getElementById('activityDetailModal');
+        if (!modal) return;
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.classList.remove('overflow-hidden');
     }
-@endif
+
+    function formatMetaEntries(meta) {
+        if (!meta || (typeof meta === 'object' && Object.keys(meta).length === 0)) {
+            return '<p class="text-xs text-gray-500 dark:text-gray-400">No additional metadata was captured for this action.</p>';
+        }
+
+        const renderValue = (value) => {
+            if (value === null || value === undefined) {
+                return '<span class="italic text-gray-500 dark:text-gray-400">n/a</span>';
+            }
+            if (Array.isArray(value) || typeof value === 'object') {
+                return `<pre class="mt-1 text-xs bg-gray-100 dark:bg-gray-800 rounded-lg px-3 py-2 overflow-auto">${JSON.stringify(value, null, 2)}</pre>`;
+            }
+            return `<span class="text-gray-800 dark:text-gray-100">${value}</span>`;
+        };
+
+        if (Array.isArray(meta)) {
+            if (!meta.length) {
+                return '<p class="text-xs text-gray-500 dark:text-gray-400">No additional metadata was captured for this action.</p>';
+            }
+            const items = meta.map((item, index) => `<li class="border border-gray-200 dark:border-gray-800 rounded-md px-3 py-2">${renderValue(item)}</li>`).join('');
+            return `<div><p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Metadata</p><ul class="space-y-2">${items}</ul></div>`;
+        }
+
+        const entries = Object.entries(meta).map(([key, value]) => {
+            const label = key.replace(/[_-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            return `<div class="border border-gray-200 dark:border-gray-800 rounded-md px-3 py-2"><p class="text-xs font-medium text-gray-500 dark:text-gray-400">${label}</p>${renderValue(value)}</div>`;
+        }).join('');
+
+        return `<div class="space-y-2"><p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Metadata</p>${entries}</div>`;
+    }
 
     document.addEventListener('DOMContentLoaded', function(){
         var btn = document.getElementById('toggleFilters');
         var panel = document.getElementById('filtersPanel');
-        if (!btn || !panel) return;
-        btn.addEventListener('click', function(){
-            var hidden = panel.classList.contains('hidden');
-            panel.classList.toggle('hidden', !hidden);
+        if (btn && panel) {
+            btn.addEventListener('click', function(){
+                panel.classList.toggle('hidden');
+            });
+        }
+
+        document.addEventListener('keydown', function(event){
+            if (event.key === 'Escape') {
+                closeActivityMeta();
+            }
         });
     });
 </script>

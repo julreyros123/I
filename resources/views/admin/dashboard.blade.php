@@ -14,13 +14,13 @@
                             <x-heroicon-o-document-text class="w-4 h-4" />
                         </div>
                         <div class="space-y-1">
-                            <p class="text-[11px] uppercase tracking-[0.2em] text-sky-100/80">Billed revenue</p>
-                            <p class="text-sm font-semibold text-sky-50">Invoices this month</p>
+                            <p class="text-xs uppercase tracking-[0.18em] text-sky-100 font-semibold">Billed revenue</p>
+                            <p class="text-base font-semibold text-sky-50">Invoices this month</p>
                         </div>
                     </div>
                     <div class="text-right space-y-1 pt-3">
                         <p class="text-2xl sm:text-3xl font-semibold">₱{{ number_format($stats['month_billed'] ?? 0, 2) }}</p>
-                        <p class="text-[11px] text-sky-100/80">Live total billed</p>
+                        <p class="text-xs font-semibold text-sky-100">Live total billed</p>
                     </div>
                 </div>
             </div>
@@ -33,13 +33,13 @@
                             <x-heroicon-o-banknotes class="w-4 h-4" />
                         </div>
                         <div class="space-y-1">
-                            <p class="text-[11px] uppercase tracking-[0.2em] text-sky-100/80">Collections</p>
-                            <p class="text-sm font-semibold text-sky-50">Posted receipts</p>
+                            <p class="text-xs uppercase tracking-[0.18em] text-sky-100 font-semibold">Collections</p>
+                            <p class="text-base font-semibold text-sky-50">Posted receipts</p>
                         </div>
                     </div>
                     <div class="text-right space-y-1 pt-3">
                         <p class="text-2xl sm:text-3xl font-semibold">₱{{ number_format($stats['month_collected'] ?? 0, 2) }}</p>
-                        <p class="text-[11px] text-sky-100/80">Settled ledger payments</p>
+                        <p class="text-xs font-semibold text-sky-100">Settled ledger payments</p>
                     </div>
                 </div>
             </a>
@@ -52,13 +52,13 @@
                             <x-heroicon-o-users class="w-4 h-4" />
                         </div>
                         <div class="space-y-1">
-                            <p class="text-[11px] uppercase tracking-[0.2em] text-sky-100/80">Active customers</p>
-                            <p class="text-sm font-semibold text-sky-50">Accounts in good standing</p>
+                            <p class="text-xs uppercase tracking-[0.18em] text-sky-100 font-semibold">Active customers</p>
+                            <p class="text-base font-semibold text-sky-50">Accounts in good standing</p>
                         </div>
                     </div>
                     <div class="text-right space-y-1 pt-3">
                         <p class="text-3xl sm:text-4xl font-semibold">{{ number_format($stats['customers'] ?? 0) }}</p>
-                        <p class="text-[11px] text-sky-100/80">Profiles in good standing</p>
+                        <p class="text-xs font-semibold text-sky-100">Profiles in good standing</p>
                     </div>
                 </div>
             </a>
@@ -71,13 +71,13 @@
                             <x-heroicon-o-arrow-trending-up class="w-4 h-4" />
                         </div>
                         <div class="space-y-1">
-                            <p class="text-[11px] uppercase tracking-[0.2em] text-sky-100/80">Collection rate</p>
-                            <p class="text-sm font-semibold text-sky-50">Paid vs billed</p>
+                            <p class="text-xs uppercase tracking-[0.18em] text-sky-100 font-semibold">Collection rate</p>
+                            <p class="text-base font-semibold text-sky-50">Paid vs billed</p>
                         </div>
                     </div>
                     <div class="text-right space-y-1 pt-3">
                         <p class="text-2xl sm:text-3xl font-semibold">{{ number_format(($stats['collection_rate'] ?? 0) * 100, 1) }}%</p>
-                        <p class="text-[11px] text-sky-100/80">Target ≥ 90%</p>
+                        <p class="text-xs font-semibold text-sky-100">Target ≥ 90%</p>
                     </div>
                 </div>
             </div>

@@ -14,7 +14,10 @@ use App\Models\CustomerApplication;
 use App\Models\Register;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
 use App\Models\TransferReconnectAudit;
+use App\Models\MeterAssignment;
+use App\Models\Meter;
 
 class AdminController extends Controller
 {
@@ -465,6 +468,100 @@ class AdminController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    public function transferMeterOwnership(Customer $customer, Request $request)
+    {
+        abort_unless(auth()->check() && auth()->user()->role === 'admin', 403);
+
+        $validated = $request->validate([
+            'new_owner_name' => ['required','string','max:255'],
+            'new_contact_no' => ['nullable','string','max:50'],
+            'transfer_date' => ['nullable','date'],
+            'notes' => ['nullable','string','max:1000'],
+        ]);
+
+        $transferDate = $validated['transfer_date'] ? Carbon::parse($validated['transfer_date']) : now();
+
+        try {
+            DB::transaction(function () use ($customer, $validated, $transferDate) {
+                $this->applyCustomerOwnershipTransfer($customer, $validated, $transferDate);
+            });
+        } catch (\Throwable $e) {
+            Log::error('Transfer meter ownership failed', [
+                'customer_id' => $customer->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'Failed to transfer ownership. Please try again.',
+            ], 500);
+        }
+
+        return response()->json([
+            'message' => 'Meter ownership transferred successfully.',
+        ]);
+    }
+
+    protected function applyCustomerOwnershipTransfer(Customer $customer, array $validated, Carbon $transferDate): void
+    {
+        $oldName = $customer->name;
+        $oldContact = $customer->contact_no;
+        $meterSerial = $customer->meter_no;
+
+        $customer->name = $validated['new_owner_name'];
+        $customer->contact_no = $validated['new_contact_no'] ?? null;
+        $customer->status = 'Active';
+        $customer->save();
+
+        if ($meterSerial) {
+            $meter = Meter::where('serial', $meterSerial)->first();
+            if ($meter) {
+                $meter->current_account_id = $customer->id;
+                $meter->status = 'active';
+                if (!$meter->install_date) {
+                    $meter->install_date = $transferDate;
+                }
+                $meter->save();
+
+                $activeAssignment = MeterAssignment::where('meter_id', $meter->id)
+                    ->whereNull('unassigned_at')
+                    ->latest('assigned_at')
+                    ->first();
+
+                if ($activeAssignment && $activeAssignment->account_id !== $customer->id) {
+                    $activeAssignment->update([
+                        'unassigned_at' => $transferDate,
+                        'unassigned_by' => optional(auth()->user())->id,
+                        'notes' => trim(($activeAssignment->notes ? $activeAssignment->notes . ' | ' : '') . 'Auto-closed due to ownership transfer'),
+                    ]);
+                }
+
+                MeterAssignment::create([
+                    'meter_id' => $meter->id,
+                    'account_id' => $customer->id,
+                    'assigned_at' => $transferDate,
+                    'reason' => 'Ownership transfer',
+                    'notes' => $validated['notes'] ?? null,
+                    'assigned_by' => optional(auth()->user())->id,
+                ]);
+            }
+        }
+
+        Register::where('account_no', $customer->account_no)->update([
+            'name' => $validated['new_owner_name'],
+            'contact_no' => $validated['new_contact_no'] ?? $oldContact,
+        ]);
+
+        TransferReconnectAudit::create([
+            'account_no' => $customer->account_no,
+            'action' => 'transfer',
+            'old_value' => trim($oldName . ($oldContact ? " ({$oldContact})" : '')),
+            'new_value' => trim($validated['new_owner_name'] . ($validated['new_contact_no'] ? " ({$validated['new_contact_no']})" : '')),
+            'notes' => $validated['notes'] ?? null,
+            'performed_by' => optional(auth()->user())->id,
+            'performed_at' => $transferDate,
+        ]);
     }
 
     public function meters()

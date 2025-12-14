@@ -48,6 +48,7 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/admin/meters/{meter}', [MeterController::class, 'destroy'])->name('admin.meters.destroy');
     Route::post('/admin/meters/{meter}/assign', [MeterController::class, 'assign'])->name('admin.meters.assign');
     Route::post('/admin/meters/{meter}/unassign', [MeterController::class, 'unassign'])->name('admin.meters.unassign');
+    Route::post('/admin/customers/{customer}/transfer-meter', [AdminController::class, 'transferMeterOwnership'])->name('admin.customers.transfer-meter');
     Route::get('/admin/meters/api', [MeterController::class, 'apiIndex'])->name('admin.meters.api');
     Route::get('/admin/meters/current', [MeterController::class, 'apiCurrentByAccount'])->name('admin.meters.current');
     Route::get('/admin/meters/export', [MeterController::class, 'export'])->name('admin.meters.export');

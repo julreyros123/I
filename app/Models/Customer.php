@@ -54,6 +54,12 @@ class Customer extends Model
         return $this->hasMany(BillingRecord::class);
     }
 
+    public function unpaidBillingRecords(): HasMany
+    {
+        return $this->hasMany(BillingRecord::class)
+            ->whereDoesntHave('paymentRecords');
+    }
+
     public function paymentRecords()
     {
         return $this->hasMany(PaymentRecord::class);

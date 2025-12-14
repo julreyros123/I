@@ -129,41 +129,41 @@
 </div>
 
     <!-- Customer Payments Tab -->
-    <div id="tabCustomer">
-    <!-- Quick actions / helper text -->
-    <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
-        <p class="text-sm text-gray-600 dark:text-gray-400">Guide: Search an account, review unpaid bills, then process payment.</p>
-    </div>
+    <div id="tabCustomer" class="space-y-5">
+        <!-- Quick actions / helper text -->
+        <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
+            <p class="text-sm text-gray-600 dark:text-gray-400">Guide: Search an account, review unpaid bills, then process payment.</p>
+        </div>
 
-    <!-- Alert Box -->
-    <div id="alertBox" class="hidden p-4 rounded-lg"></div>
+        <!-- Alert Box -->
+        <div id="alertBox" class="hidden p-4 rounded-lg"></div>
 
-    <!-- Search Customer (Account No.) -->
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-4 space-y-3">
-        <div class="flex flex-col lg:flex-row lg:items-end lg:gap-4">
-            <div class="w-full md:w-auto md:max-w-md">
-                <label class="block text-sm text-gray-600 dark:text-gray-400">Search Customer</label>
-                <div class="relative">
-                    <x-ui.input id="unifiedSearch" placeholder="Account no. or customer name" class="w-full" />
-                    <div id="quickSuggest" class="hidden absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow"></div>
+        <!-- Search Customer (Account No.) -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-end sm:gap-3 lg:items-center lg:justify-between">
+                <div class="w-full sm:max-w-lg">
+                    <label class="block text-sm text-gray-600 dark:text-gray-400">Search Customer</label>
+                    <div class="relative">
+                        <x-ui.input id="unifiedSearch" placeholder="Account no. or customer name" class="w-full h-11 text-sm" />
+                        <div id="quickSuggest" class="hidden absolute z-30 mt-2 w-full max-h-72 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl"></div>
+                    </div>
+                </div>
+                <div class="mt-3 sm:mt-0 flex gap-2 w-full sm:w-auto">
+                    <x-primary-button type="button" id="searchBtn" class="w-full sm:w-auto h-11 px-6">Search</x-primary-button>
                 </div>
             </div>
-            <div class="mt-3 md:mt-0 flex gap-2">
-                <x-primary-button type="button" id="searchBtn" class="h-[42px]">Search</x-primary-button>
+            <p class="text-xs text-gray-500">Tip: Type at least 2 characters — we’ll match either account numbers or customer names.</p>
+            <div id="searchResults" class="hidden mt-2 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-white dark:bg-gray-900">
+                <div class="flex items-center justify-between px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-800">
+                    <span>Search Results</span>
+                    <button type="button" id="clearResults" class="text-xs text-blue-600 dark:text-blue-400 hover:underline">Clear</button>
+                </div>
+                <ul id="searchResultsList" class="divide-y divide-gray-200 dark:divide-gray-800"></ul>
             </div>
         </div>
-        <p class="text-xs text-gray-500">Tip: Type at least 2 characters — we’ll match either account numbers or customer names.</p>
-        <div id="searchResults" class="hidden mt-3 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-white dark:bg-gray-900">
-            <div class="flex items-center justify-between px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-800">
-                <span>Search Results</span>
-                <button type="button" id="clearResults" class="text-xs text-blue-600 dark:text-blue-400 hover:underline">Clear</button>
-            </div>
-            <ul id="searchResultsList" class="divide-y divide-gray-200 dark:divide-gray-800"></ul>
-        </div>
-    </div>
 
     <!-- Payment Summary Layout: Current Bill + Quick Links + Recent Activity -->
-    <div id="paymentSummary" class="mt-4 bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-200 dark:border-gray-700 p-5 space-y-4">
+    <div id="paymentSummary" class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-200 dark:border-gray-700 p-5 space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 flex items-center justify-center">
@@ -386,6 +386,75 @@ function showAlert(msg, type = 'success') {
         alertBox.innerText = msg;
         setTimeout(() => alertBox.classList.add('hidden'), 3000);
     }
+
+function resetCustomerWorkspace(){
+    hideSuggest();
+    hideResults();
+
+    if (unifiedInput) unifiedInput.value = '';
+    if (acctInput) acctInput.value = '';
+    if (nameInputHidden) nameInputHidden.value = '';
+
+    const paymentSummary = document.getElementById('paymentSummary');
+    if (paymentSummary) paymentSummary.classList.add('hidden');
+
+    const unpaidListCard = document.getElementById('unpaidListCard');
+    if (unpaidListCard) unpaidListCard.classList.add('hidden');
+    const unpaidTbody = document.getElementById('unpaidTbody');
+    if (unpaidTbody) unpaidTbody.innerHTML = '';
+
+    const selectAll = document.getElementById('selectAllBills');
+    if (selectAll) {
+        selectAll.checked = false;
+        selectAll.indeterminate = false;
+    }
+
+    const latestOnlyToggle = document.getElementById('latestOnly');
+    if (latestOnlyToggle) latestOnlyToggle.checked = false;
+
+    [
+        ['account_no', ''],
+        ['customer_name', ''],
+        ['customer_address', ''],
+        ['classification', ''],
+        ['meter_no', ''],
+        ['meter_size', ''],
+        ['delivery_date', ''],
+        ['previous_reading', ''],
+        ['current_reading', ''],
+        ['calc_subtotal', '₱0.00'],
+        ['calc_advance', '₱0.00'],
+        ['calc_latefee', '₱0.00'],
+        ['total', '₱0.00'],
+        ['amount_paid', ''],
+        ['change', '₱0.00'],
+    ].forEach(([id, value]) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if ('value' in el) {
+            el.value = value;
+        } else {
+            el.textContent = value;
+        }
+    });
+
+    const summaryFields = [
+        ['summaryCustomerName', '—'],
+        ['unpaidCount', '0'],
+        ['latestBillAmount', '₱0.00'],
+        ['totalOutstanding', '₱0.00'],
+        ['currentDueDate', '—'],
+    ];
+    summaryFields.forEach(([id, value]) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value;
+    });
+
+    window.__unpaidBills = [];
+    window.__totalOutstanding = 0;
+    window.__latestAmount = 0;
+    window.__manualSelectionTotal = 0;
+}
 }
 
 // --- Customer Search Functionality ---
@@ -439,7 +508,7 @@ async function searchByAccount(account){
 
         // Set transaction metrics
         const unpaidCount = (data.unpaid_bills || []).length;
-        const totalOutstanding = Number(data.total_outstanding || 0);
+        const totalOutstanding = Number(data.total_outstanding || data.payment_details?.total_outstanding || 0);
         const latestBill = data.latest_bill || null;
         const latestAmount = latestBill ? Number(latestBill.total_amount || 0) : 0;
         var unpaidCountEl = document.getElementById('unpaidCount');
@@ -493,15 +562,37 @@ async function searchByAccount(account){
         if (chkMaint) chkMaint.checked = maint > 0; // default include if present
 
         function peso(v){ return `₱${Number(v||0).toFixed(2)}`; }
+        function computeSelectedSum(){
+            return Array.from(document.querySelectorAll('.bill-check:checked'))
+                .reduce((acc, c) => acc + Number(c.dataset.amount || 0), 0);
+        }
+
         function recalcTotal(){
+            const totalInput = document.getElementById('total');
+            const latestOnlyChecked = document.getElementById('latestOnly')?.checked;
             const incMaint = (document.getElementById('chkMaintenance') && document.getElementById('chkMaintenance').checked) ? maint : 0;
-            const total = Math.max(0, subtotal + incMaint + lateFee - advance);
+            const latestTotal = latestBill ? Number(latestBill.total_amount || 0) : Math.max(0, subtotal + incMaint + lateFee - advance);
+            const manualSum = computeSelectedSum();
+            let totalDue = latestTotal;
+
+            if (!latestOnlyChecked) {
+                if (manualSum > 0) {
+                    totalDue = manualSum;
+                } else if (Number(window.__totalOutstanding || 0) > 0) {
+                    totalDue = Number(window.__totalOutstanding || 0);
+                }
+            }
+
+            window.__manualSelectionTotal = manualSum;
+
             document.getElementById('calc_subtotal').value = peso(subtotal);
             document.getElementById('calc_advance').value = peso(advance);
             document.getElementById('calc_latefee').value = peso(lateFee);
-            document.getElementById('total').value = peso(total);
+            totalInput.value = peso(totalDue);
+            totalInput.dataset.baseTotal = latestTotal;
+
             const amountPaid = parseFloat(document.getElementById('amount_paid').value) || 0;
-            document.getElementById('change').value = peso(Math.max(0, amountPaid - total));
+            document.getElementById('change').value = peso(Math.max(0, amountPaid - totalDue));
         }
         if (chkMaint) chkMaint.addEventListener('change', recalcTotal);
         const tenderEl = document.getElementById('amount_paid');
@@ -513,6 +604,7 @@ async function searchByAccount(account){
         window.__latestAmount = latestAmount;
         window.__totalOutstanding = totalOutstanding;
         window.__unpaidBills = data.unpaid_bills || [];
+        window.__manualSelectionTotal = 0;
 
         // Notices and button states
         const paidNotice = document.getElementById('paidNotice');
@@ -553,18 +645,64 @@ async function searchByAccount(account){
 
         showAlert('Customer found!');
         try { loadApplicantFeesForAccount(data.customer.account_no || '', data.customer.name || ''); } catch(_){}
+        return data;
     } catch (e) {
         showAlert('Customer not found.', 'error');
         var paymentSummary = document.getElementById('paymentSummary');
         if (paymentSummary) paymentSummary.classList.add('hidden');
+        throw e;
     }
 }
 
+function resetUI() {
+    const paymentSummary = document.getElementById('paymentSummary');
+    if (paymentSummary) paymentSummary.classList.add('hidden');
+    const listCard = document.getElementById('unpaidListCard');
+    if (listCard) listCard.classList.add('hidden');
+    const tbody = document.getElementById('unpaidTbody');
+    if (tbody) tbody.innerHTML = '';
+    const paidNotice = document.getElementById('paidNotice');
+    if (paidNotice) paidNotice.classList.add('hidden');
+    const partialWarning = document.getElementById('partialWarning');
+    if (partialWarning) partialWarning.classList.add('hidden');
+    const processBtn = document.getElementById('processPayment');
+    if (processBtn) processBtn.disabled = true;
+    const clearResultsBtn = document.getElementById('clearResults');
+    if (clearResultsBtn) clearResultsBtn.click();
+    const unifiedInput = document.getElementById('unifiedSearch');
+    if (unifiedInput) unifiedInput.value = '';
+    const acctInput = document.getElementById('account_no');
+    if (acctInput) acctInput.value = '';
+    const nameInputHidden = document.getElementById('customer_name');
+    if (nameInputHidden) nameInputHidden.value = '';
+    const suggestBox = document.getElementById('quickSuggest');
+    if (suggestBox) suggestBox.classList.add('hidden');
+    const resultsPanel = document.getElementById('searchResults');
+    if (resultsPanel) resultsPanel.classList.add('hidden');
+    const resultsList = document.getElementById('searchResultsList');
+    if (resultsList) resultsList.innerHTML = '';
+    window.__unpaidBills = [];
+    window.__totalOutstanding = 0;
+    window.__latestAmount = 0;
+    window.__manualSelectionTotal = 0;
+    showAlert('Payment successful! Outstanding balance is now ₱0.00.');
+}
+
 var searchBtnEl = document.getElementById('searchBtn');
-if (searchBtnEl && acctInput){
+if (searchBtnEl){
     searchBtnEl.addEventListener('click', async () => {
-        const account = (acctInput.value || '').trim();
-        searchByAccount(account);
+        const unifiedValue = (unifiedInput?.value || '').trim();
+        if (unifiedValue) {
+            await searchUnified(unifiedValue);
+            return;
+        }
+
+        const account = (acctInput?.value || '').trim();
+        if (account) {
+            await searchByAccount(account);
+        } else {
+            showAlert('Please enter an account number or customer name.', 'error');
+        }
     });
 }
 
@@ -584,21 +722,32 @@ function renderResults(customers){
     if (!resultsPanel || !resultsList) return;
     resultsList.innerHTML = '';
     if (!customers.length) {
-        hideResults();
+        resultsList.innerHTML = `
+            <li class="px-4 py-6 text-xs text-gray-500 dark:text-gray-400 text-center">
+                No matching customers with unpaid balances yet. Try another name or account number.
+            </li>
+        `;
+        resultsPanel.classList.remove('hidden');
         return;
     }
     customers.forEach(customer => {
-        const { account_no, name, address, classification } = customer;
+        const { account_no, name, address, classification, unpaid_count, formatted_unpaid_total } = customer;
         const li = document.createElement('li');
-        li.className = 'px-4 py-3 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer transition';
+        li.className = 'px-4 py-3 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer transition space-y-1';
         li.innerHTML = `
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                <div>
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                <div class="space-y-0.5">
                     <p class="font-semibold text-gray-800 dark:text-gray-100">${escapeHtml(name || '—')}</p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">${escapeHtml(account_no || '—')}</p>
-                    <p class="text-[11px] text-gray-400 dark:text-gray-500 truncate">${escapeHtml(address || '—')}</p>
+                    <div class="flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
+                        <span class="font-medium text-blue-600 dark:text-blue-300">${escapeHtml(account_no || '—')}</span>
+                        ${classification ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-200 text-[10px] uppercase">${escapeHtml(classification)}</span>` : ''}
+                    </div>
+                    <p class="text-[11px] text-gray-400 dark:text-gray-500 truncate max-w-[320px]">${escapeHtml(address || '—')}</p>
                 </div>
-                ${classification ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-200 text-[10px] uppercase">${escapeHtml(classification)}</span>` : ''}
+                <div class="flex flex-col items-start lg:items-end text-xs text-gray-600 dark:text-gray-300">
+                    <span>${unpaid_count ? `${unpaid_count} unpaid bill${unpaid_count === 1 ? '' : 's'}` : 'Up to date'}</span>
+                    <span class="font-semibold text-gray-900 dark:text-gray-100">${formatted_unpaid_total || '₱0.00'}</span>
+                </div>
             </div>
         `;
         li.addEventListener('click', async () => {
@@ -614,11 +763,50 @@ function renderResults(customers){
     resultsPanel.classList.remove('hidden');
 }
 
+function buildSuggestionItem(customer){
+    const { account_no, name, address, classification, unpaid_count, formatted_unpaid_total } = customer;
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'w-full text-left px-4 py-3 space-y-1 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg';
+    item.innerHTML = `
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div class="space-y-1">
+                <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">${escapeHtml(name || '—')}</p>
+                <div class="flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
+                    <span class="font-medium text-blue-600 dark:text-blue-300">${escapeHtml(account_no || '—')}</span>
+                    ${classification ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-200 text-[10px] uppercase">${escapeHtml(classification)}</span>` : ''}
+                </div>
+                <p class="text-[11px] text-gray-400 dark:text-gray-500 truncate max-w-[360px]">${escapeHtml(address || '—')}</p>
+            </div>
+            <div class="flex flex-col items-start sm:items-end text-xs text-gray-600 dark:text-gray-300">
+                <span>${unpaid_count ? `${unpaid_count} unpaid bill${unpaid_count === 1 ? '' : 's'}` : 'Up to date'}</span>
+                <span class="font-semibold text-gray-900 dark:text-gray-50">${formatted_unpaid_total || '₱0.00'}</span>
+            </div>
+        </div>
+    `;
+
+    item.addEventListener('click', async () => {
+        if (unifiedInput) unifiedInput.value = account_no || name || '';
+        if (acctInput) acctInput.value = account_no || '';
+        if (nameInputHidden) nameInputHidden.value = name || '';
+        hideSuggest();
+        hideResults();
+        await searchByAccount(account_no || '');
+    });
+
+    return item;
+}
+
 function renderSuggestions(customers){
     if (!suggestBox) return;
     suggestBox.innerHTML = '';
     if (!customers.length) {
-        hideSuggest();
+        suggestBox.innerHTML = `
+            <div class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
+                No customers with unpaid balances found for that search.
+            </div>
+        `;
+        suggestBox.classList.remove('hidden');
         return;
     }
     customers.forEach(customer => suggestBox.appendChild(buildSuggestionItem(customer)));
@@ -694,7 +882,7 @@ if (acctInput){
             acctDebounce = setTimeout(() => searchByAccount(account), 400);
             hideSuggest();
         } else {
-            const nameHint = nameInput ? nameInput.value.trim() : '';
+            const nameHint = nameInputHidden ? nameInputHidden.value.trim() : '';
             if ((account || '').replace(/\D+/g,'').length >= 2 || account.length >= 2) {
                 acctDebounce = setTimeout(() => quickSuggest(account, nameHint), 250);
             } else {
@@ -708,6 +896,36 @@ if (acctInput){
             const account = (acctInput.value || '').trim();
             if (!account) return;
             searchByAccount(account);
+        }
+    });
+}
+
+if (unifiedInput){
+    unifiedInput.addEventListener('input', () => {
+        clearTimeout(nameDebounce);
+        const value = (unifiedInput.value || '').trim();
+        if (value.length >= 2) {
+            nameDebounce = setTimeout(() => quickSuggest(value), 250);
+        } else {
+            hideSuggest();
+            hideResults();
+        }
+    });
+
+    unifiedInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const value = (unifiedInput.value || '').trim();
+            if (value) {
+                searchUnified(value);
+            }
+        }
+    });
+
+    unifiedInput.addEventListener('focus', () => {
+        const value = (unifiedInput.value || '').trim();
+        if (value.length >= 2) {
+            quickSuggest(value);
         }
     });
 }
@@ -773,17 +991,30 @@ function hookSelectionHandlers() {
 }
 
 function updateManualSelectionTotal() {
-    const useLatest = document.getElementById('latestOnly').checked;
-    if (useLatest) return; // latest-only controls total
-    const checks = Array.from(document.querySelectorAll('.bill-check'));
-    const sum = checks.filter(c => c.checked).reduce((acc, c) => acc + Number(c.dataset.amount || 0), 0);
     const totalField = document.getElementById('total');
-    if (sum > 0) {
-        totalField.value = `₱${sum.toFixed(2)}`;
-        document.getElementById('partialWarning').classList.toggle('hidden', true);
-    } else {
-        const totalOutstanding = Number(window.__totalOutstanding || 0);
-        totalField.value = `₱${totalOutstanding.toFixed(2)}`;
+    const useLatest = document.getElementById('latestOnly').checked;
+    const sum = Array.from(document.querySelectorAll('.bill-check:checked'))
+        .reduce((acc, c) => acc + Number(c.dataset.amount || 0), 0);
+
+    window.__manualSelectionTotal = useLatest ? 0 : sum;
+
+    const baseTotal = Number(totalField?.dataset.baseTotal || 0);
+    let displayedTotal = baseTotal;
+
+    if (!useLatest) {
+        if (sum > 0) {
+            displayedTotal = sum;
+            document.getElementById('partialWarning').classList.add('hidden');
+        } else {
+            displayedTotal = Number(window.__totalOutstanding || baseTotal || 0);
+        }
+    }
+
+    if (totalField) totalField.value = `₱${Number(displayedTotal || 0).toFixed(2)}`;
+
+    const tenderEl = document.getElementById('amount_paid');
+    if (tenderEl) {
+        tenderEl.dispatchEvent(new Event('input'));
     }
 }
 
@@ -793,8 +1024,9 @@ document.getElementById('processPayment').addEventListener('click', async () => 
     const totalRaw = document.getElementById('total').value || '0';
     const totalAmount = parseFloat(String(totalRaw).replace(/[^0-9.-]+/g, '')) || 0;
     const amountPaid = parseFloat(document.getElementById('amount_paid').value) || 0;
-    if (window.__totalOutstanding <= 0) return; // guarded earlier
-    if (!amountPaid || amountPaid < totalAmount) return;
+    if (window.__totalOutstanding <= 0) return showAlert('This account is already fully paid. Refresh or search another account.', 'error');
+    if (!amountPaid) return showAlert('Please enter payment amount.', 'error');
+    if (amountPaid < totalAmount) return showAlert('Amount tendered must at least cover the selected bills.', 'error');
 
     // collect selection
     const latestOnly = document.getElementById('latestOnly').checked;
@@ -827,12 +1059,38 @@ document.getElementById('processPayment').addEventListener('click', async () => 
         if (amountInput) amountInput.value = '';
         if (changeInput) changeInput.value = '₱0.00';
 
-        // Refresh customer data so unpaid bills table updates (paid bills removed)
         if (accountNo) {
             try {
-                await searchByAccount(accountNo);
-            } catch(_) {}
+                const refreshed = await searchByAccount(accountNo);
+                const updatedOutstanding = refreshed && typeof refreshed.total_outstanding !== 'undefined'
+                    ? Number(refreshed.total_outstanding || 0)
+                    : Number(refreshed?.payment_details?.total_outstanding || 0);
+
+                const paidNotice = document.getElementById('paidNotice');
+                const processBtn = document.getElementById('processPayment');
+                if (!isNaN(updatedOutstanding)) {
+                    window.__totalOutstanding = updatedOutstanding;
+                    const totalOutstandingEl = document.getElementById('totalOutstanding');
+                    if (totalOutstandingEl) totalOutstandingEl.textContent = `₱${updatedOutstanding.toFixed(2)}`;
+                    if (paidNotice) paidNotice.classList.toggle('hidden', updatedOutstanding > 0);
+                    if (processBtn) processBtn.disabled = updatedOutstanding <= 0;
+                }
+
+                if (updatedOutstanding <= 0) {
+                    resetCustomerWorkspace();
+                    showAlert('Payment processed successfully! Outstanding balance is now ₱0.00.');
+                } else {
+                    updateManualSelectionTotal();
+                    showAlert('Payment processed successfully! Outstanding balance updated.');
+                }
+            } catch(err) {
+                showAlert('Payment completed, but failed to refresh customer data automatically. Please search again.', 'warning');
+                resetCustomerWorkspace();
+            }
+        } else {
+            resetCustomerWorkspace();
         }
+
     } catch (err) {
         showAlert(String(err.message || err), 'error');
     }

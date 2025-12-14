@@ -135,91 +135,150 @@ class PaymentService
     public function processCustomerPayment(array $paymentData): array
     {
         return DB::transaction(function () use ($paymentData) {
-            $customer = Customer::where('account_no', $paymentData['account_no'])->first();
-            
+            $accountNo = $paymentData['account_no'];
+            $amountPaid = (float) ($paymentData['amount_paid'] ?? 0);
+            $latestOnly = (bool) ($paymentData['latest_only'] ?? false);
+            $selectedBillIds = collect($paymentData['bill_ids'] ?? [])
+                ->filter(fn ($id) => $id !== null)
+                ->map(fn ($id) => (int) $id)
+                ->unique()
+                ->values()
+                ->all();
+
+            $customer = Customer::where('account_no', $accountNo)->first();
+
             if (!$customer) {
                 throw new \Exception('Customer not found');
             }
 
-            // Get all unpaid bills for this customer
-            $unpaidBills = BillingRecord::where('account_no', $paymentData['account_no'])
-                ->whereDoesntHave('paymentRecords')
-                ->orderBy('created_at', 'asc')
-                ->get();
-
-            if ($unpaidBills->isEmpty()) {
-                throw new \Exception('No outstanding bills found for this customer');
+            if ($amountPaid <= 0) {
+                throw new \RuntimeException('Amount paid must be greater than zero.');
             }
 
-            // Check if any bills are already paid (prevent duplicate payments)
-            $paidBills = BillingRecord::where('account_no', $paymentData['account_no'])
-                ->whereHas('paymentRecords', function($query) {
-                    $query->where('payment_status', 'paid');
-                })
-                ->get();
+            $baseQuery = BillingRecord::where('account_no', $accountNo)
+                ->where(function ($qb) {
+                    $qb->whereNull('bill_status')
+                        ->orWhere('bill_status', '!=', 'Paid');
+                });
 
-            if ($paidBills->isNotEmpty()) {
-                throw new \Exception('Some bills for this customer are already paid. Cannot process duplicate payment.');
+            if ($latestOnly) {
+                $bills = (clone $baseQuery)
+                    ->orderByDesc('created_at')
+                    ->limit(1)
+                    ->lockForUpdate()
+                    ->get();
+            } elseif (!empty($selectedBillIds)) {
+                $bills = (clone $baseQuery)
+                    ->whereIn('id', $selectedBillIds)
+                    ->orderBy('created_at', 'asc')
+                    ->lockForUpdate()
+                    ->get();
+            } else {
+                $bills = (clone $baseQuery)
+                    ->orderBy('created_at', 'asc')
+                    ->lockForUpdate()
+                    ->get();
             }
 
-            $amountPaid = (float) $paymentData['amount_paid'];
-            $totalOutstanding = $unpaidBills->sum('total_amount');
+            if ($bills->isEmpty()) {
+                throw new \RuntimeException('No unpaid bills available for this account.');
+            }
+
+            $billsOutstandingAmounts = $bills->map(function ($bill) {
+                $alreadyPaid = (float) $bill->paymentRecords()->sum('amount_paid');
+                return max(0, (float) $bill->total_amount - $alreadyPaid);
+            });
+
+            $totalDue = $billsOutstandingAmounts->sum();
+            if ($totalDue <= 0) {
+                throw new \RuntimeException('The selected bills are already paid.');
+            }
+
+            if ($amountPaid + 0.01 < $totalDue) {
+                throw new \RuntimeException('Amount paid is insufficient to cover the selected bills.');
+            }
+
             $remainingAmount = $amountPaid;
             $paymentRecords = [];
-            $overpayment = 0;
+            $billsPaid = 0;
 
-            // Process payments for each bill
-            foreach ($unpaidBills as $bill) {
-                if ($remainingAmount <= 0) break;
-
-                $billAmount = $bill->total_amount;
-                $paymentForThisBill = min($remainingAmount, $billAmount);
-                $paymentStatus = 'paid';
-
-                // Check if this bill is fully paid
-                if ($paymentForThisBill < $billAmount) {
-                    $paymentStatus = 'partial';
+            foreach ($bills as $bill) {
+                if ($remainingAmount <= 0) {
+                    break;
                 }
 
-                // Create payment record for this bill
-                $paymentRecord = PaymentRecord::create([
+                $billAmount = (float) $bill->total_amount;
+                $alreadyPaid = (float) $bill->paymentRecords()->sum('amount_paid');
+                if ($alreadyPaid + 0.01 >= $billAmount) {
+                    continue; // this bill is already settled
+                }
+
+                $remainingForBill = max(0, $billAmount - $alreadyPaid);
+                if ($remainingForBill <= 0) {
+                    continue;
+                }
+
+                $amountForBill = min($remainingAmount, $remainingForBill);
+
+                $record = PaymentRecord::create([
                     'customer_id' => $customer->id,
                     'billing_record_id' => $bill->id,
-                    'account_no' => $paymentData['account_no'],
+                    'account_no' => $accountNo,
                     'bill_amount' => $billAmount,
-                    'amount_paid' => $paymentForThisBill,
+                    'amount_paid' => $amountForBill,
                     'overpayment' => 0,
                     'credit_applied' => 0,
-                    'payment_status' => $paymentStatus,
-                    'payment_method' => $paymentData['payment_method'] ?? 'cash',
-                    'reference_number' => $paymentData['reference_number'] ?? null,
-                    'notes' => $paymentData['notes'] ?? null,
+                    'payment_status' => 'partial',
+                    'notes' => 'Partial payment',
                 ]);
 
-                // Update bill status to Paid if fully paid
-                if ($paymentForThisBill >= $billAmount) {
-                    $bill->update(['bill_status' => 'Paid']);
+                $remainingAmount -= $amountForBill;
+                $paymentRecords[] = $record;
+
+                $newPaidTotal = $alreadyPaid + $amountForBill;
+                if ($newPaidTotal + 0.01 >= $billAmount) {
+                    $bill->bill_status = 'Paid';
+                    $bill->paid_at = now();
+                    $billsPaid++;
+                    $record->payment_status = 'paid';
+                    $record->notes = 'Standard payment';
+                    $record->save();
+                } else {
+                    $bill->bill_status = 'Outstanding Payment';
                 }
 
-                $paymentRecords[] = $paymentRecord;
-                $remainingAmount -= $paymentForThisBill;
+                $bill->save();
             }
 
-            // Handle overpayment
-            if ($remainingAmount > 0) {
-                $overpayment = $remainingAmount;
+            $overpayment = max(0, $remainingAmount);
+            if (!empty($paymentRecords)) {
+                $lastRecord = end($paymentRecords);
+                if ($overpayment > 0) {
+                    $lastRecord->overpayment = $overpayment;
+                    $lastRecord->payment_status = 'overpaid';
+                    $lastRecord->notes = $this->generatePaymentNotes($overpayment);
+                }
+                $lastRecord->save();
             }
+
+            $totalOutstanding = BillingRecord::where('account_no', $accountNo)
+                ->withSum('paymentRecords as amount_paid_sum', 'amount_paid')
+                ->get()
+                ->sum(function ($bill) {
+                    $paid = (float) ($bill->amount_paid_sum ?? 0);
+                    return max(0, (float) $bill->total_amount - $paid);
+                });
 
             return [
                 'success' => true,
-                'payment_record_id' => $paymentRecords[0]->id, // Return first payment record ID
-                'message' => $this->generateCustomerPaymentMessage(0, $overpayment, count($paymentRecords)),
+                'payment_record_id' => $paymentRecords[0]->id,
+                'message' => $this->generateCustomerPaymentMessage(0, $overpayment, $billsPaid),
                 'payment_details' => [
                     'total_outstanding' => $totalOutstanding,
                     'amount_paid' => $amountPaid,
                     'credit_applied' => 0,
                     'overpayment' => $overpayment,
-                    'bills_paid' => count($paymentRecords),
+                    'bills_paid' => $billsPaid,
                     'remaining_credit' => 0,
                 ],
             ];

@@ -41,21 +41,29 @@ class PaymentController extends Controller
             // Use the stored account number for consistency in downstream queries
             $acct = $customer->account_no;
             // Get all unpaid bills for this customer
-            $unpaidBills = BillingRecord::where('account_no', $acct)
-                ->whereDoesntHave('paymentRecords')
-                ->orderBy('created_at', 'asc')
+            $allBills = BillingRecord::where('account_no', $acct)
+                ->withSum('paymentRecords as amount_paid_sum', 'amount_paid')
+                ->orderByDesc('created_at')
                 ->get();
+
+            $unpaidBills = $allBills->filter(function ($bill) {
+                $paidSum = (float) ($bill->amount_paid_sum ?? 0);
+                return ($bill->total_amount - $paidSum) > 0.01;
+            })->values();
 
             // Calculate total outstanding amount
-            $totalOutstanding = $unpaidBills->sum('total_amount');
+            $totalOutstanding = $unpaidBills->reduce(function ($carry, $bill) {
+                $paidSum = (float) ($bill->amount_paid_sum ?? 0);
+                return $carry + max(0, (float) $bill->total_amount - $paidSum);
+            }, 0.0);
 
             // Get the latest unpaid bill for detailed information
-            $latestBill = $unpaidBills->first();
+            $latestBill = $unpaidBills->sortByDesc('created_at')->first();
 
             // Check if customer has any overdue bills (Notice of Disconnection)
-            $overdueBills = BillingRecord::where('account_no', $acct)
-                ->where('bill_status', 'Notice of Disconnection')
-                ->get();
+            $overdueBills = $unpaidBills->filter(function ($bill) {
+                return $bill->bill_status === 'Notice of Disconnection';
+            })->values();
 
             return response()->json([
                 'customer' => [
@@ -69,6 +77,8 @@ class PaymentController extends Controller
                     'classification' => optional(Register::where('account_no', $customer->account_no)->first())->connection_classification,
                 ],
                 'unpaid_bills' => $unpaidBills->map(function ($bill) {
+                    $paidSum = (float) ($bill->amount_paid_sum ?? 0);
+                    $outstanding = max(0, (float) $bill->total_amount - $paidSum);
                     return [
                         'id' => $bill->id,
                         'billing_date' => $bill->created_at->format('Y-m-d'),
@@ -79,9 +89,9 @@ class PaymentController extends Controller
                         'maintenance_charge' => $bill->maintenance_charge,
                         'advance_payment' => $bill->advance_payment,
                         'overdue_penalty' => $bill->overdue_penalty,
-                        'total_amount' => $bill->total_amount,
+                        'total_amount' => $outstanding,
                         'bill_status' => $bill->bill_status,
-                        'formatted_total' => '₱' . number_format($bill->total_amount, 2),
+                        'formatted_total' => '₱' . number_format($outstanding, 2),
                         'date_from' => $bill->date_from,
                         'date_to' => $bill->date_to,
                         'base_rate' => $bill->base_rate,
@@ -97,20 +107,22 @@ class PaymentController extends Controller
                     'maintenance_charge' => $latestBill->maintenance_charge,
                     'advance_payment' => $latestBill->advance_payment,
                     'overdue_penalty' => $latestBill->overdue_penalty,
-                    'total_amount' => $latestBill->total_amount,
+                    'total_amount' => max(0, (float) $latestBill->total_amount - (float) ($latestBill->amount_paid_sum ?? 0)),
                     'bill_status' => $latestBill->bill_status,
-                    'formatted_total' => '₱' . number_format($latestBill->total_amount, 2),
+                    'formatted_total' => '₱' . number_format(max(0, (float) $latestBill->total_amount - (float) ($latestBill->amount_paid_sum ?? 0)), 2),
                     'date_from' => $latestBill->date_from,
                     'date_to' => $latestBill->date_to,
                     'base_rate' => $latestBill->base_rate,
                     'delivery_date' => $latestBill->date_to ? $latestBill->date_to->format('Y-m-d') : null,
                 ] : null,
                 'overdue_bills' => $overdueBills->map(function ($bill) {
+                    $paidSum = (float) ($bill->amount_paid_sum ?? 0);
+                    $outstanding = max(0, (float) $bill->total_amount - $paidSum);
                     return [
                         'id' => $bill->id,
                         'bill_status' => $bill->bill_status,
-                        'total_amount' => $bill->total_amount,
-                        'formatted_total' => '₱' . number_format($bill->total_amount, 2),
+                        'total_amount' => $outstanding,
+                        'formatted_total' => '₱' . number_format($outstanding, 2),
                         'billing_date' => $bill->created_at->format('Y-m-d'),
                     ];
                 }),
@@ -138,27 +150,44 @@ class PaymentController extends Controller
         // Fast, limited search for registered (active) customers by account, name, or address
         $results = Customer::query()
             ->when(method_exists(Customer::class, 'scopeActive'), fn($qb) => $qb->active())
+            ->withCount(['unpaidBillingRecords as unpaid_count'])
+            ->withSum('unpaidBillingRecords as unpaid_total', 'total_amount')
             ->where(function ($qb) use ($query, $nameFilter) {
                 $qb->where('account_no', 'like', "%{$query}%")
-                   ->orWhere('name', 'like', "%{$query}%")
-                   ->orWhere('address', 'like', "%{$query}%");
+                    ->orWhere('name', 'like', "%{$query}%")
+                    ->orWhere('address', 'like', "%{$query}%");
 
                 if ($nameFilter !== '') {
                     $qb->orWhere('name', 'like', "%{$nameFilter}%")
-                       ->orWhere('address', 'like', "%{$nameFilter}%");
+                        ->orWhere('address', 'like', "%{$nameFilter}%");
                 }
             })
+            ->having('unpaid_count', '>', 0)
             // Prioritize starts-with matches on account_no, then name
             ->orderByRaw(
                 "CASE 
                     WHEN account_no LIKE ? THEN 0 
                     WHEN name LIKE ? THEN 1 
                     ELSE 2 
-                END, name ASC",
+                END, unpaid_total DESC, name ASC",
                 ["{$query}%", ($nameFilter !== '' ? "{$nameFilter}%" : "{$query}%")]
             )
             ->limit(10)
-            ->get(['id', 'account_no', 'name', 'address', 'meter_no', 'classification']);
+            ->get(['id', 'account_no', 'name', 'address', 'meter_no', 'classification'])
+            ->map(function ($customer) {
+                $unpaidTotal = (float) ($customer->unpaid_total ?? 0);
+                return [
+                    'id' => $customer->id,
+                    'account_no' => $customer->account_no,
+                    'name' => $customer->name,
+                    'address' => $customer->address,
+                    'meter_no' => $customer->meter_no,
+                    'classification' => $customer->classification,
+                    'unpaid_count' => (int) ($customer->unpaid_count ?? 0),
+                    'unpaid_total' => $unpaidTotal,
+                    'formatted_unpaid_total' => '₱' . number_format($unpaidTotal, 2),
+                ];
+            });
 
         return response()->json([
             'results' => $results,
