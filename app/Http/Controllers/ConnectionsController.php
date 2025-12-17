@@ -135,6 +135,9 @@ class ConnectionsController extends Controller
             ], 422);
         }
 
+        // Ensure a customer account exists so downstream workflows (scheduling, meter assignment) have an account ID
+        $app->ensureCustomerAccount(optional($request->user())->id);
+
         // Passed validation: mark as approved (eligible for assessment & payment)
         $app->approved_by = $request->user()->id;
         $app->approved_at = now();
@@ -272,6 +275,9 @@ class ConnectionsController extends Controller
             }
             return redirect()->back()->withErrors(['schedule_date' => $message]);
         }
+
+        $app->ensureCustomerAccount(optional($request->user())->id);
+
         $scheduleDate = Carbon::parse($request->input('schedule_date'));
         $app->schedule_date = $scheduleDate;
         $app->scheduled_by = $request->user()->id;

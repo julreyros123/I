@@ -1,5 +1,5 @@
 @page {
-    size: A5 portrait;
+    size: A5 landscape;
     margin: 0;
 }
 
@@ -21,10 +21,10 @@ body {
 
 .print-billing {
     position: relative;
-    max-width: 560px;
+    width: min(100%, 760px);
     margin: 12px auto;
     background: white;
-    padding: 22px 24px;
+    padding: 22px 26px;
     border-radius: 24px;
     box-shadow: 0 40px 80px rgba(17, 24, 39, 0.1);
     overflow: hidden;
@@ -58,8 +58,8 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 16px;
-    padding-bottom: 12px;
+    gap: 12px;
+    padding-bottom: 10px;
 }
 
 .brand {
@@ -69,14 +69,14 @@ body {
 }
 
 .brand-logo {
-    width: 62px;
-    height: 62px;
-    border-radius: 18px;
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
     background: linear-gradient(135deg, rgba(15,98,254,0.95), rgba(56,189,248,0.85));
     display: grid;
     place-items: center;
     box-shadow: 0 10px 22px rgba(15, 98, 254, 0.25);
-    padding: 10px;
+    padding: 8px;
 }
 
 .brand-logo img {
@@ -85,7 +85,7 @@ body {
 
 .brand-copy h1 {
     margin: 0;
-    font-size: 22px;
+    font-size: 20px;
     letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--print-primary);
@@ -93,12 +93,12 @@ body {
 
 .brand-copy p {
     margin: 2px 0;
-    font-size: 11px;
+    font-size: 10px;
     color: var(--print-muted);
 }
 
 .brand-copy .brand-site {
-    font-size: 9px;
+    font-size: 8px;
     text-transform: uppercase;
     letter-spacing: 0.28em;
     color: rgba(56, 189, 248, 0.9);
@@ -106,19 +106,19 @@ body {
 
 .invoice-meta {
     display: grid;
-    gap: 4px;
+    gap: 2px;
     text-align: right;
-    font-size: 10px;
+    font-size: 9px;
     color: var(--print-muted);
 }
 
 .invoice-meta .label {
     text-transform: uppercase;
-    letter-spacing: 0.22em;
+    letter-spacing: 0.2em;
 }
 
 .invoice-meta .value {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--print-text);
 }
@@ -127,26 +127,30 @@ body {
     height: 4px;
     border-radius: 999px;
     background: linear-gradient(90deg, rgba(15,98,254,0.9), rgba(56,189,248,0.65));
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .invoice-info {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
     margin-bottom: 14px;
 }
 
+.invoice-info .info-block:last-child {
+    grid-column: span 1;
+}
+
 .info-block h2 {
-    margin: 0 0 6px;
-    font-size: 11px;
+    margin: 0 0 4px;
+    font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.24em;
     color: var(--print-primary);
 }
 
 .info-block .name {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--print-text);
     margin: 0 0 4px;
@@ -154,7 +158,7 @@ body {
 
 .info-block p {
     margin: 0;
-    font-size: 10px;
+    font-size: 9px;
     color: var(--print-muted);
     line-height: 1.4;
 }
@@ -168,7 +172,7 @@ body {
 .info-block dl div {
     display: flex;
     justify-content: space-between;
-    font-size: 10px;
+    font-size: 9px;
     color: var(--print-text);
     gap: 8px;
 }
@@ -186,10 +190,10 @@ body {
 .charge-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 10px;
-    margin-bottom: 16px;
+    font-size: 9px;
+    margin-bottom: 0;
     border: 1px solid rgba(56,189,248,0.35);
-    border-radius: 14px;
+    border-radius: 16px;
     overflow: hidden;
 }
 
@@ -203,7 +207,7 @@ body {
 
 .charge-table th,
 .charge-table td {
-    padding: 8px 12px;
+    padding: 7px 10px;
     border-bottom: 1px solid rgba(56,189,248,0.25);
 }
 
@@ -219,18 +223,18 @@ body {
 .charge-table tfoot .label {
     text-transform: uppercase;
     letter-spacing: 0.24em;
-    font-size: 9px;
+    font-size: 8px;
     color: var(--print-muted);
 }
 
 .charge-table tfoot .total {
     color: var(--print-primary);
-    font-size: 12px;
+    font-size: 11px;
 }
 
 .charge-table tfoot .overdue {
     color: #dc2626;
-    font-size: 11px;
+    font-size: 10px;
 }
 
 .charge-table .text-left { text-align: left; }
@@ -288,9 +292,102 @@ body {
     color: var(--print-text);
 }
 
+
+.billing-content {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.9fr);
+    gap: 14px;
+    align-items: start;
+}
+
+.billing-column {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.billing-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.summary-highlight {
+    border-radius: 18px;
+    padding: 16px 16px;
+    background: linear-gradient(140deg, rgba(15,98,254,0.92), rgba(59,130,246,0.85));
+    color: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    box-shadow: 0 20px 35px -18px rgba(15, 98, 254, 0.45);
+    grid-column: span 2;
+}
+
+.summary-highlight .summary-label {
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-size: 9px;
+    opacity: 0.78;
+}
+
+.summary-highlight .summary-value {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+.summary-highlight .summary-note {
+    font-size: 9px;
+    letter-spacing: 0.06em;
+}
+
+.summary-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    grid-column: span 2;
+}
+
+.metric-card {
+    border-radius: 16px;
+    border: 1px solid rgba(56,189,248,0.28);
+    background: rgba(15,98,254,0.06);
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.summary-overdue {
+    grid-column: span 2;
+}
+
+.metric-card .metric-label {
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--print-muted);
+}
+
+.metric-card .metric-value {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--print-text);
+}
+
+.metric-card .metric-sub {
+    font-size: 9px;
+    color: var(--print-muted);
+}
+
+.metric-value--danger {
+    color: #dc2626;
+}
+
 .signature {
-    margin: 18px 0 12px;
     text-align: right;
+    margin-top: 4px;
 }
 
 .signature .sign-line {
@@ -317,20 +414,24 @@ body {
 }
 
 .usage-section {
-    margin-bottom: 12px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(56,189,248,0.28);
+    border-radius: 16px;
+    padding: 14px 16px;
+    background: rgba(15,98,254,0.05);
 }
 
 .usage-section h4 {
-    margin: 0 0 6px;
-    font-size: 11px;
+    margin: 0 0 8px;
+    font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.2em;
     color: var(--print-primary);
 }
 
 .usage-graph {
-    border: 1px solid rgba(56,189,248,0.25);
-    border-radius: 12px;
+    border: 1px solid rgba(56,189,248,0.2);
+    border-radius: 14px;
     padding: 12px 10px 14px;
     background: rgba(15,98,254,0.04);
 }
@@ -380,58 +481,163 @@ body {
 }
 
 .footer-bar {
-    margin-top: 14px;
-    padding-top: 10px;
+    margin-top: 10px;
+    padding-top: 8px;
     border-top: 1px solid rgba(56,189,248,0.2);
     display: flex;
     justify-content: space-between;
-    font-size: 9px;
+    font-size: 8px;
     color: var(--print-muted);
     text-transform: uppercase;
     letter-spacing: 0.18em;
 }
 
 .page-break {
-    page-break-before: always;
+    display: none;
 }
 
-.print-back {
-    background: rgba(255, 255, 255, 0.9);
-    padding: 26px 28px;
-    border-radius: 24px;
+.print-back-section {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px dashed rgba(56,189,248,0.25);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.back-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
 }
 
 .back-header h2 {
     margin: 0;
-    font-size: 16px;
+    font-size: 12px;
     text-transform: uppercase;
-    letter-spacing: 0.22em;
+    letter-spacing: 0.18em;
     color: var(--print-primary);
 }
 
 .back-header p {
-    margin: 6px 0 18px;
-    font-size: 10px;
+    margin: 6px 0 0;
+    font-size: 8px;
     color: var(--print-muted);
 }
 
-.back-columns {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+.back-hours {
+    border-radius: 18px;
+    padding: 14px 16px;
+    background: linear-gradient(150deg, rgba(15,98,254,0.12), rgba(56,189,248,0.08));
+    border: 1px solid rgba(56,189,248,0.25);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 210px;
+    font-size: 9px;
+}
+
+.back-hours .label {
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    font-size: 8px;
+    color: rgba(15,98,254,0.75);
+}
+
+.back-hours .value {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--print-text);
+}
+
+.back-hours .note {
+    font-size: 9px;
+    color: var(--print-muted);
+}
+
+.back-overview {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
     gap: 16px;
-    margin-bottom: 18px;
+    padding: 16px 18px;
+    border-radius: 20px;
+    border: 1px solid rgba(56,189,248,0.2);
+    background: rgba(15,98,254,0.05);
+}
+
+.back-overview-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-width: 60%;
+}
+
+.back-overview-copy h3 {
+    margin: 0;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--print-primary);
+}
+
+.back-overview-copy p {
+    margin: 0;
+    font-size: 9px;
+    color: var(--print-text);
+    line-height: 1.6;
+}
+
+.back-overview-cta {
+    border-radius: 18px;
+    padding: 14px 16px;
+    background: linear-gradient(160deg, rgba(15,98,254,0.25), rgba(59,130,246,0.18));
+    color: var(--print-text);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 210px;
+    align-self: center;
+}
+
+.back-overview-cta .cta-label {
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-size: 8px;
+    color: rgba(15,98,254,0.7);
+}
+
+.back-overview-cta .cta-value {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+}
+
+.back-overview-cta .cta-note {
+    font-size: 9px;
+    color: var(--print-muted);
+}
+
+.back-lower {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
 }
 
 .back-card {
     border: 1px solid rgba(56,189,248,0.3);
-    border-radius: 16px;
-    padding: 14px;
+    border-radius: 18px;
+    padding: 16px;
     background: rgba(15,98,254,0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .back-card h3 {
     margin: 0 0 6px;
-    font-size: 11px;
+    font-size: 9px;
     text-transform: uppercase;
     letter-spacing: 0.2em;
     color: var(--print-primary);
@@ -440,25 +646,26 @@ body {
 .back-card ul {
     margin: 0;
     padding-left: 14px;
-    font-size: 10px;
+    font-size: 9px;
     color: var(--print-text);
     line-height: 1.5;
 }
 
 .back-terms {
     border: 1px solid rgba(56,189,248,0.2);
-    border-radius: 16px;
-    padding: 14px 16px;
+    border-radius: 18px;
+    padding: 16px 18px;
     background: rgba(15,98,254,0.06);
-    margin-bottom: 16px;
+    margin-bottom: 0;
     font-size: 10px;
     color: var(--print-text);
-    line-height: 1.5;
+    line-height: 1.6;
+    grid-column: span 2;
 }
 
 .back-terms h3 {
     margin: 0 0 6px;
-    font-size: 11px;
+    font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.18em;
     color: var(--print-primary);
@@ -466,7 +673,7 @@ body {
 
 .back-footer {
     text-align: center;
-    font-size: 9px;
+    font-size: 8px;
     color: var(--print-muted);
     text-transform: uppercase;
     letter-spacing: 0.18em;
@@ -514,7 +721,9 @@ body {
         box-shadow: none;
         margin: 0;
         border-radius: 0;
-        padding: 32px;
+        width: 100%;
+        max-width: none;
+        padding: 20px 24px;
     }
 
     .print-footer {

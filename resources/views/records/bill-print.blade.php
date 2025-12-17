@@ -30,6 +30,29 @@
             color: var(--print-primary);
         }
 
+        .policy-callout {
+            margin-top: 18px;
+            padding: 16px 18px;
+            border-radius: 12px;
+            background: rgba(34, 197, 94, 0.08);
+            border: 1px solid rgba(22, 163, 74, 0.18);
+            color: #065f46;
+        }
+
+        .policy-callout h4 {
+            margin: 0 0 8px;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .policy-callout p {
+            margin: 0;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
         @media print {
             body {
                 background: white;
@@ -59,6 +82,12 @@
     $subtotal = $consumptionCost + $maintenanceCharge;
     $totalDue = $billingRecord->total_amount ?? ($subtotal + $overduePenalty - $advancePayment);
     $overdueTotal = max(0, $overduePenalty);
+
+    $previousReading = $billingRecord->previous_reading ?? 0;
+    $currentReading = $billingRecord->current_reading ?? 0;
+    $consumptionVolume = $billingRecord->consumption_cu_m ?? max(0, $currentReading - $previousReading);
+    $baseRate = $billingRecord->base_rate ?? 0;
+    $dueNote = $billingRecord->due_date ? 'Due ' . $dueDate : 'Due upon receipt';
 
     $usageSeries = $usageSeries ?? [];
     $graphCount = count($usageSeries);
@@ -136,78 +165,129 @@
                 <div><dt>Meter</dt><dd>{{ $customer->meter_no ?? '—' }} · {{ $customer->meter_size ?? '—' }}</dd></div>
             </dl>
         </div>
-    </section>
-
-    <table class="charge-table">
-        <thead>
-            <tr>
-                <th class="text-left">Description</th>
-                <th class="text-right">Amount</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>Water Consumption</td>
-                <td class="text-right">₱{{ number_format($consumptionCost, 2) }}</td>
-            </tr>
-            <tr>
-                <td>Maintenance Charge</td>
-                <td class="text-right">₱{{ number_format($maintenanceCharge, 2) }}</td>
-            </tr>
-            <tr>
-                <td>Overdue Penalty</td>
-                <td class="text-right">₱{{ number_format($overduePenalty, 2) }}</td>
-            </tr>
-            @if($advancePayment > 0)
-            <tr>
-                <td>Advance Payment (Credit)</td>
-                <td class="text-right">-₱{{ number_format($advancePayment, 2) }}</td>
-            </tr>
-            @endif
-        </tbody>
-        <tfoot>
-            <tr>
-                <td class="text-right label">Subtotal</td>
-                <td class="text-right">₱{{ number_format($subtotal, 2) }}</td>
-            </tr>
-            <tr>
-                <td class="text-right label">Total Amount Due</td>
-                <td class="text-right total">₱{{ number_format($totalDue, 2) }}</td>
-            </tr>
-            <tr>
-                <td class="text-right label">Overdue Total</td>
-                <td class="text-right overdue">₱{{ number_format($overdueTotal, 2) }}</td>
-            </tr>
-        </tfoot>
-    </table>
-
-    <section class="signature">
-        <div class="sign-line"></div>
-        <p class="name">{{ $billingRecord->prepared_by ?? 'MAWASA Billing Administrator' }}</p>
-        <p class="role">Authorized Signatory</p>
-    </section>
-
-    @if(!empty($usageSeries))
-    <section class="usage-section">
-        <h4>Usage (Last 5 Months)</h4>
-        <div class="usage-graph">
-            <div class="usage-bars">
-                @foreach($pointMeta as $meta)
-                    @php
-                        $barHeight = $maxUsage > 0 ? max(4, round(($meta['value'] / $maxUsage) * 100)) : 4;
-                    @endphp
-                    <div class="bar">
-                        <span class="bar-value">{{ number_format($meta['value'], 1) }}</span>
-                        <div class="bar-track">
-                            <div class="bar-fill" style="height: {{ $barHeight }}%;"></div>
-                        </div>
-                        <span class="bar-label">{{ $meta['label'] }}</span>
-                    </div>
-                @endforeach
-            </div>
+        <div class="info-block">
+            <h2>Account Snapshot</h2>
+            <dl>
+                <div><dt>Total Due</dt><dd>₱{{ number_format($totalDue, 2) }}</dd></div>
+                <div><dt>Overdue</dt><dd>₱{{ number_format($overdueTotal, 2) }}</dd></div>
+                <div><dt>Base Rate</dt><dd>₱{{ number_format($baseRate, 2) }} / cu m</dd></div>
+            </dl>
         </div>
     </section>
-    @endif
+
+    <div class="billing-content">
+        <div class="billing-column">
+            <table class="charge-table">
+                <thead>
+                    <tr>
+                        <th class="text-left">Description</th>
+                        <th class="text-right">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Water Consumption</td>
+                        <td class="text-right">₱{{ number_format($consumptionCost, 2) }}</td>
+                    </tr>
+                    <tr>
+                        <td>Maintenance Charge</td>
+                        <td class="text-right">₱{{ number_format($maintenanceCharge, 2) }}</td>
+                    </tr>
+                    <tr>
+                        <td>Overdue Penalty</td>
+                        <td class="text-right">₱{{ number_format($overduePenalty, 2) }}</td>
+                    </tr>
+                    @if($advancePayment > 0)
+                    <tr>
+                        <td>Advance Payment (Credit)</td>
+                        <td class="text-right">-₱{{ number_format($advancePayment, 2) }}</td>
+                    </tr>
+                    @endif
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td class="text-right label">Subtotal</td>
+                        <td class="text-right">₱{{ number_format($subtotal, 2) }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-right label">Total Amount Due</td>
+                        <td class="text-right total">₱{{ number_format($totalDue, 2) }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-right label">Overdue Total</td>
+                        <td class="text-right overdue">₱{{ number_format($overdueTotal, 2) }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <section class="signature">
+                <div class="sign-line"></div>
+                <p class="name">{{ $billingRecord->prepared_by ?? 'MAWASA Billing Administrator' }}</p>
+                <p class="role">Authorized Signatory</p>
+            </section>
+
+            @if(!empty($usageSeries))
+            <section class="usage-section">
+                <h4>Usage (Last 5 Months)</h4>
+                <div class="usage-graph">
+                    <div class="usage-bars">
+                        @foreach($pointMeta as $meta)
+                            @php
+                                $barHeight = $maxUsage > 0 ? max(4, round(($meta['value'] / $maxUsage) * 100)) : 4;
+                            @endphp
+                            <div class="bar">
+                                <span class="bar-value">{{ number_format($meta['value'], 1) }}</span>
+                                <div class="bar-track">
+                                    <div class="bar-fill" style="height: {{ $barHeight }}%;"></div>
+                                </div>
+                                <span class="bar-label">{{ $meta['label'] }}</span>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </section>
+            @endif
+        </div>
+
+        <aside class="billing-summary">
+            <div class="summary-highlight">
+                <span class="summary-label">Total Due</span>
+                <span class="summary-value">₱{{ number_format($totalDue, 2) }}</span>
+                <span class="summary-note">{{ $dueNote }}</span>
+            </div>
+
+            <div class="summary-metrics">
+                <div class="metric-card">
+                    <span class="metric-label">Previous Reading</span>
+                    <span class="metric-value">{{ number_format($previousReading, 0) }} m³</span>
+                    <span class="metric-sub">Last cycle</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">Current Reading</span>
+                    <span class="metric-value">{{ number_format($currentReading, 0) }} m³</span>
+                    <span class="metric-sub">This cycle</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">Consumption</span>
+                    <span class="metric-value">{{ number_format($consumptionVolume, 1) }} m³</span>
+                    <span class="metric-sub">Billed usage</span>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">Base Rate</span>
+                    <span class="metric-value">₱{{ number_format($baseRate, 2) }}</span>
+                    <span class="metric-sub">Per cubic meter</span>
+                </div>
+            </div>
+
+            @if($overdueTotal > 0)
+                <div class="metric-card">
+                    <span class="metric-label">Overdue Balance</span>
+                    <span class="metric-value metric-value--danger">₱{{ number_format($overdueTotal, 2) }}</span>
+                    <span class="metric-sub">Includes surcharge</span>
+                </div>
+            @endif
+        </aside>
+    </div>
 
     <footer class="footer-bar">
         <span>Thank you for choosing MAWASA</span>
@@ -215,13 +295,31 @@
     </footer>
 </section>
 
-<div class="page-break"></div>
-
-<section class="print-billing print-back">
+<section class="print-back-section">
     <header class="back-header">
-        <h2>Payment &amp; Support Information</h2>
-        <p>Please present this page when settling your account.</p>
+        <div>
+            <h2>Payment &amp; Support Information</h2>
+            <p>Please present this page when settling your account. Safekeeping of receipts expedites reconnection and billing inquiries.</p>
+        </div>
+        <div class="back-hours">
+            <span class="label">Office Hours</span>
+            <span class="value">Mon – Fri, 8:00 AM – 5:00 PM</span>
+            <span class="note">Saturday half-day: 8:00 AM – 12:00 NN</span>
+        </div>
     </header>
+
+    <section class="back-overview">
+        <div class="back-overview-copy">
+            <h3>Customer Reminders</h3>
+            <p>Bring this billing statement when paying over the counter. Bank deposits must include the account number and invoice reference for reconciliation.</p>
+            <p>Submit proofs of payment within the same day via email or hotline messaging so your account status can be updated without delay.</p>
+        </div>
+        <div class="back-overview-cta">
+            <span class="cta-label">Need Assistance?</span>
+            <span class="cta-value">service@mawasa.ph</span>
+            <span class="cta-note">We reply within the day during office hours.</span>
+        </div>
+    </section>
 
     <section class="back-columns">
         <div class="back-card">
@@ -236,18 +334,22 @@
         <div class="back-card">
             <h3>Contact Channels</h3>
             <ul>
-                <li>(082) 297-4521</li>
-                <li>+63 917 555 2300</li>
-                <li>service@mawasa.ph</li>
-                <li>Barangay Manambulan, Tugbok District, Davao City</li>
+                <li><strong>Hotline:</strong> (082) 297-4521</li>
+                <li><strong>Mobile:</strong> +63 917 555 2300</li>
+                <li><strong>Email:</strong> service@mawasa.ph</li>
+                <li><strong>Address:</strong> Barangay Manambulan, Tugbok District, Davao City</li>
             </ul>
         </div>
     </section>
 
     <section class="back-terms">
         <h3>Terms &amp; Conditions</h3>
-        <p>Payments are due within ten (10) days from the billing date. Overdue accounts are assessed a surcharge per MAWASA policy. Disconnections may be executed for bills more than 30 days past due. Keep your proof of payment for validation.</p>
+        <p>Payments are due within ten (10) days from the billing date. Overdue accounts are assessed a surcharge per MAWASA policy. Service disconnection may be executed one (1) day after the published due date if the account remains unpaid. Keep your proof of payment for validation.</p>
         <p>Report discrepancies immediately through our hotline or email. Consumption is based on actual meter readings; estimated bills are reconciled within the next billing cycle.</p>
+        <div class="policy-callout">
+            <h4>Disconnection &amp; Reconnection Policy</h4>
+            <p>Accounts that remain unpaid one (1) day after the due date are tagged for immediate service disconnection. Reconnection is scheduled within 24-48 hours after full payment of the outstanding balance plus the standard reconnection fee. Please coordinate with MAWASA billing staff to confirm clearance before resumption of water service.</p>
+        </div>
     </section>
 
     <footer class="back-footer">

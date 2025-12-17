@@ -365,27 +365,6 @@
                                                             </select>
                                                             <p class="text-[11px] text-gray-500 dark:text-gray-400">Pick a scheduled installation to auto-fill the application link.</p>
                                                         </div>
-                                                        @if(($recentCustomers ?? collect())->isNotEmpty())
-                                                            <hr class="border-gray-200 dark:border-gray-700" />
-                                                            <div class="space-y-2">
-                                                                <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">Or choose a recent customer</label>
-                                                                <select id="assignRecentCustomer-{{ $m->id }}" class="w-full rounded-xl border-gray-300 dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500" data-recent-select>
-                                                                    <option value="">Recent registrations...</option>
-                                                                    @foreach($recentCustomers as $recent)
-                                                                        <option value="{{ $recent->id }}">
-                                                                            {{ $recent->name }}
-                                                                            @if(!empty($recent->account_no))
-                                                                                · Acct {{ $recent->account_no }}
-                                                                            @endif
-                                                                            @if(!empty($recent->address))
-                                                                                · {{ $recent->address }}
-                                                                            @endif
-                                                                        </option>
-                                                                    @endforeach
-                                                                </select>
-                                                                <p class="text-[11px] text-gray-500 dark:text-gray-400">Use this when the customer was recently registered but the application isn’t linked yet.</p>
-                                                            </div>
-                                                        @endif
                                                         <div class="grid gap-3 md:grid-cols-2">
                                                             <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">
                                                                 Assigned at
@@ -630,7 +609,6 @@ document.addEventListener('DOMContentLoaded', function(){
             const accountInput = modal.querySelector('[data-account-input]');
             const applicationInput = modal.querySelector('[data-application-input]');
             const scheduleSelect = modal.querySelector('[data-scheduled-select]');
-            const recentSelect = modal.querySelector('[data-recent-select]');
             const form = modal.querySelector('form');
 
             const setAccount = (accountId = '', applicationId = '') => {
@@ -644,23 +622,9 @@ document.addEventListener('DOMContentLoaded', function(){
                 const accountId = option && option.value ? option.value : '';
                 const applicationId = option && option.dataset ? option.dataset.applicationId || '' : '';
                 setAccount(accountId, applicationId);
-                if (accountId && recentSelect) {
-                    recentSelect.value = '';
-                }
-            };
-
-            const handleRecentChange = () => {
-                if (!recentSelect) return;
-                const option = recentSelect.options[recentSelect.selectedIndex];
-                const accountId = option && option.value ? option.value : '';
-                setAccount(accountId, '');
-                if (accountId && scheduleSelect) {
-                    scheduleSelect.value = '';
-                }
             };
 
             if (scheduleSelect) scheduleSelect.addEventListener('change', handleScheduleChange);
-            if (recentSelect) recentSelect.addEventListener('change', handleRecentChange);
             if (form) {
                 form.addEventListener('submit', (e) => {
                     if (!accountInput || !accountInput.value) {
@@ -673,8 +637,6 @@ document.addEventListener('DOMContentLoaded', function(){
             modal.addEventListener('modal:shown', () => {
                 if (scheduleSelect && scheduleSelect.value) {
                     handleScheduleChange();
-                } else if (recentSelect && recentSelect.value) {
-                    handleRecentChange();
                 } else {
                     setAccount('', '');
                 }
@@ -683,8 +645,6 @@ document.addEventListener('DOMContentLoaded', function(){
             modalInitializers.set(modal.id, () => {
                 if (scheduleSelect && scheduleSelect.value) {
                     handleScheduleChange();
-                } else if (recentSelect && recentSelect.value) {
-                    handleRecentChange();
                 } else {
                     setAccount('', '');
                 }

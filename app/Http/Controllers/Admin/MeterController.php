@@ -42,14 +42,14 @@ class MeterController extends Controller
 
         $installationQueue = CustomerApplication::query()
             ->with(['customer:id,name,account_no,meter_no,meter_size'])
-            ->whereIn('status', ['paid', 'scheduled', 'installing'])
+            ->whereIn('status', ['paid', 'Paid', 'scheduled', 'Scheduled', 'installing', 'Installing'])
             ->orderByRaw("CASE WHEN status = 'paid' THEN 0 ELSE 1 END")
             ->orderBy('schedule_date')
             ->limit(25)
             ->get(['id', 'applicant_name', 'address', 'status', 'schedule_date', 'customer_id']);
 
         $assignmentOptions = CustomerApplication::query()
-            ->whereIn('status', ['scheduled', 'installing'])
+            ->whereIn('status', ['scheduled', 'installing', 'Scheduled', 'Installing'])
             ->with(['customer:id,name,account_no,address,meter_no'])
             ->orderByRaw("CASE WHEN status = 'scheduled' THEN 0 ELSE 1 END")
             ->orderBy('schedule_date')
@@ -57,6 +57,10 @@ class MeterController extends Controller
             ->get(['id', 'customer_id', 'applicant_name', 'address', 'status', 'schedule_date'])
             ->filter(function ($app) {
                 $customer = $app->customer;
+                $customerId = $customer?->id ?? $app->customer_id;
+                if (!$customerId) {
+                    return false;
+                }
                 if ($customer) {
                     if (!empty($customer->meter_no)) {
                         return false;
@@ -75,13 +79,14 @@ class MeterController extends Controller
             })
             ->map(function ($app) {
                 $customer = $app->customer;
+                $customerId = $customer?->id ?? $app->customer_id;
                 $status = Str::lower((string) ($customer?->status ?? ''));
                 if (in_array($status, ['active','validated','approved'], true)) {
                     return null;
                 }
                 return [
                     'application_id' => $app->id,
-                    'customer_id' => $customer?->id,
+                    'customer_id' => $customerId,
                     'customer_name' => $customer?->name ?? $app->applicant_name,
                     'account_no' => $customer?->account_no,
                     'address' => $customer?->address ?? $app->address,

@@ -4,6 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
+
+use App\Models\Customer;
+use App\Services\AccountNumberGenerator;
 
 class CustomerApplication extends Model
 {
@@ -84,6 +88,52 @@ class CustomerApplication extends Model
             return 'APP-NEW';
         }
         return 'APP-'.str_pad((string) $id, 6, '0', STR_PAD_LEFT);
+    }
+
+    public function ensureCustomerAccount(?int $createdBy = null): ?Customer
+    {
+        if ($this->relationLoaded('customer') && $this->getRelation('customer')) {
+            return $this->getRelation('customer');
+        }
+
+        if ($this->customer) {
+            return $this->customer;
+        }
+
+        $name = trim((string) $this->applicant_name);
+        if ($name === '') {
+            return null;
+        }
+
+        $address = trim((string) ($this->address ?? ''));
+
+        $query = Customer::query()->whereRaw('LOWER(name) = ?', [Str::lower($name)]);
+        if ($address !== '') {
+            $query->whereRaw('LOWER(address) = ?', [Str::lower($address)]);
+        }
+
+        $customer = $query->first();
+
+        if (!$customer) {
+            $generator = app(AccountNumberGenerator::class);
+
+            $customer = Customer::create([
+                'account_no' => $generator->next(),
+                'name' => $name,
+                'address' => $address ?: null,
+                'contact_no' => $this->contact_no,
+                'status' => 'Pending',
+                'previous_reading' => 0,
+                'created_by' => $createdBy,
+            ]);
+        }
+
+        $this->customer_id = $customer->id;
+        $this->save();
+
+        $this->setRelation('customer', $customer);
+
+        return $customer;
     }
 
     public function getDocumentsAttribute($value): array
