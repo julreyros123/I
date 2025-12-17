@@ -55,9 +55,9 @@
                             </div>
                         </header>
                         <div class="space-y-2">
-                            <label class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Account Number <span class="text-sky-500">●</span></label>
+                            <label class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Customer Name or Account Number <span class="text-sky-500">●</span></label>
                             <div class="relative">
-                                <x-ui.input id="account_no" placeholder="22-123456-1" class="uppercase tracking-wide pr-12" />
+                                <x-ui.input id="account_no" placeholder="22-000187" class="uppercase tracking-wide pr-12" />
                                 <div class="absolute inset-y-0 right-3 flex items-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
                                         <path fill-rule="evenodd" d="M12.9 14.32a8 8 0 111.414-1.414l3.387 3.387a1 1 0 01-1.414 1.414l-3.387-3.387zM14 8a6 6 0 11-12 0 6 6 0 0112 0z" clip-rule="evenodd" />
@@ -65,7 +65,7 @@
                                 </div>
                                 <div id="accountSuggestions" class="absolute z-20 top-full left-0 right-0 mt-2 hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xl overflow-hidden"></div>
                             </div>
-                            <p class="text-[11px] text-gray-400">Format: 22-XXXXXX-X</p>
+                            <p class="text-[11px] text-gray-400">Format: 22-XXXXXX (optional trailing -X check digit)</p>
                             <p id="accountSelectionHint" class="text-[11px] text-gray-500 dark:text-gray-400 hidden"></p>
                         </div>
                     </section>
@@ -391,6 +391,10 @@
                                             class="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-200 hover:bg-blue-600 hover:text-white transition {{ $printed ? 'opacity-50 cursor-not-allowed hover:bg-white hover:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-gray-500' : '' }}" {{ $printed ? 'disabled' : '' }}>
                                         <x-heroicon-o-printer class="w-4 h-4" />
                                     </button>
+                                    <a href="{{ route('payment.index', ['account' => $record->account_no]) }}" title="Collect payment"
+                                       class="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-200 hover:bg-emerald-600 hover:text-white transition">
+                                        <x-heroicon-o-credit-card class="w-4 h-4" />
+                                    </a>
                                     @if($printed)
                                         <a href="{{ route('records.billing.print', $record->id) }}" target="_blank" title="Open printed bill"
                                            class="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-200 hover:bg-emerald-600 hover:text-white transition">
@@ -960,7 +964,7 @@ document.getElementById('statusForm').addEventListener('submit', async function(
   }
 
   function isValidAccount(value) {
-    return /^22-[0-9]{6}-[0-9]$/i.test(value || '');
+    return /^22-[0-9]{6}(-[0-9])?$/i.test((value || '').trim());
   }
 
   function pad(num) {
@@ -1073,7 +1077,7 @@ document.getElementById('statusForm').addEventListener('submit', async function(
       const accountEl = $('account_no');
       const accountNo = (accountEl && accountEl.value ? accountEl.value : '').trim().toUpperCase();
       if (!isValidAccount(accountNo)) {
-        return showAlert('Invalid account number. Expected format is 22-123456-1.', 'error');
+        return showAlert('Invalid account number. Use 22-XXXXXX with an optional -X suffix (e.g., 22-000187 or 22-000187-1).', 'error');
       }
 
       const previousEl = $('previous_reading');

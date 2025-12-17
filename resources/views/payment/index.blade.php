@@ -374,7 +374,9 @@
 </div>
 
 <script>
+const prefillAccount = @json($prefillAccount ?? null);
 const alertBox = document.getElementById('alertBox');
+let currentAccountNo = null;
 function showAlert(msg, type = 'success') {
     if (window.showToast) {
         showToast(type === 'error' ? 'error' : (type === 'warning' ? 'warning' : 'success'), String(msg));
@@ -500,6 +502,7 @@ async function searchByAccount(account){
 
         // Populate customer info fields
         document.getElementById('account_no').value = data.customer.account_no || '';
+        currentAccountNo = data.customer.account_no || null;
         document.getElementById('customer_name').value = data.customer.name || '';
         document.getElementById('customer_address').value = data.customer.address || '';
         document.getElementById('classification').value = (data.customer.classification || '').toString();
@@ -992,7 +995,8 @@ function hookSelectionHandlers() {
 
 function updateManualSelectionTotal() {
     const totalField = document.getElementById('total');
-    const useLatest = document.getElementById('latestOnly').checked;
+    const latestToggle = document.getElementById('latestOnly');
+    const useLatest = latestToggle ? latestToggle.checked : false;
     const sum = Array.from(document.querySelectorAll('.bill-check:checked'))
         .reduce((acc, c) => acc + Number(c.dataset.amount || 0), 0);
 
@@ -1020,7 +1024,7 @@ function updateManualSelectionTotal() {
 
 // Submit payment to API and open receipt, then refresh unpaid bills
 document.getElementById('processPayment').addEventListener('click', async () => {
-    const accountNo = (document.getElementById('account_no').value || '').trim();
+    const accountNo = (document.getElementById('account_no').value || currentAccountNo || '').trim();
     const totalRaw = document.getElementById('total').value || '0';
     const totalAmount = parseFloat(String(totalRaw).replace(/[^0-9.-]+/g, '')) || 0;
     const amountPaid = parseFloat(document.getElementById('amount_paid').value) || 0;
@@ -1029,7 +1033,8 @@ document.getElementById('processPayment').addEventListener('click', async () => 
     if (amountPaid < totalAmount) return showAlert('Amount tendered must at least cover the selected bills.', 'error');
 
     // collect selection
-    const latestOnly = document.getElementById('latestOnly').checked;
+    const latestToggle = document.getElementById('latestOnly');
+    const latestOnly = !!(latestToggle && latestToggle.checked);
     const selectedIds = Array.from(document.querySelectorAll('.bill-check:checked')).map(c => Number(c.getAttribute('data-id')));
 
     try {
@@ -1153,6 +1158,19 @@ function showTab(which){
 initTabFromUrl();
 window.addEventListener('hashchange', initTabFromUrl);
 window.addEventListener('popstate', initTabFromUrl);
+
+document.addEventListener('DOMContentLoaded', async () => {
+    if (!prefillAccount) return;
+    try {
+        const unifiedField = document.getElementById('unifiedSearch');
+        if (unifiedField) {
+            unifiedField.value = prefillAccount;
+            await searchUnified(prefillAccount);
+        }
+    } catch (error) {
+        console.error('Failed to prefill payment search', error);
+    }
+});
 
 // --- Applicant fee directory & payment flow ---
 const feesCard = document.getElementById('feesCard');

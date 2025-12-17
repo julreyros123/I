@@ -13,9 +13,13 @@ use App\Models\ActivityLog;
 
 class PaymentController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return view('payment.index');
+        $prefillAccount = $request->query('account');
+
+        return view('payment.index', [
+            'prefillAccount' => $prefillAccount,
+        ]);
     }
 
     public function searchCustomer(Request $request): JsonResponse
@@ -208,12 +212,18 @@ class PaymentController extends Controller
         ]);
 
         try {
-            // Prevent duplicate full payments: if fully paid, block new payment
-            $unpaidBills = BillingRecord::where('account_no', $data['account_no'])
-                ->whereDoesntHave('paymentRecords')
+            // Prevent duplicate full payments: compute true outstanding balance including partially paid bills
+            $billingRecords = BillingRecord::where('account_no', $data['account_no'])
+                ->withSum('paymentRecords as amount_paid_sum', 'amount_paid')
                 ->get();
-            $totalOutstanding = $unpaidBills->sum('total_amount');
-            if ($totalOutstanding <= 0) {
+
+            $totalOutstanding = $billingRecords->reduce(function ($carry, $bill) {
+                $paid = (float) ($bill->amount_paid_sum ?? 0);
+                $due = max(0, (float) $bill->total_amount - $paid);
+                return $carry + $due;
+            }, 0.0);
+
+            if ($totalOutstanding <= 0.0) {
                 return response()->json([
                     'success' => false,
                     'error' => 'This customer has no outstanding balance. Payment is not allowed.',

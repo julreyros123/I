@@ -71,8 +71,8 @@
 
                             <div class="space-y-2">
                                 <label class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Account Number <span class="text-sky-500">●</span></label>
-                                <x-ui.input id="account_no" placeholder="22-123456-1" class="uppercase tracking-wide" />
-                                <p class="text-[11px] text-gray-400">Format: 22-XXXXXX-X</p>
+                                <x-ui.input id="account_no" placeholder="22-000187" class="uppercase tracking-wide" />
+                                <p class="text-[11px] text-gray-400">Format: 22-XXXXXX (optional trailing -X check digit)</p>
                             </div>
                         </section>
 
@@ -257,7 +257,7 @@
   }
 
   function isValidAccount(value) {
-    return /^22-[0-9]{6}-[0-9]$/i.test(value || '');
+    return /^22-[0-9]{6}(-[0-9])?$/i.test((value || '').trim());
   }
 
   function pad(num) {
@@ -344,7 +344,7 @@
   $('saveBillBtn').addEventListener('click', async () => {
     const accountNo = ($('account_no').value || '').trim().toUpperCase();
     if (!isValidAccount(accountNo)) {
-      return showAlert('Invalid account number. Expected format is 22-123456-1.', 'error');
+      return showAlert('Invalid account number. Use 22-XXXXXX with an optional -X suffix (e.g., 22-000187 or 22-000187-1).', 'error');
     }
 
     const previous = sanitizeNumber($('previous_reading').value);

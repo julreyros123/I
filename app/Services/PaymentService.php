@@ -200,6 +200,7 @@ class PaymentService
 
             $remainingAmount = $amountPaid;
             $paymentRecords = [];
+            $processedBillIds = [];
             $billsPaid = 0;
 
             foreach ($bills as $bill) {
@@ -234,11 +235,11 @@ class PaymentService
 
                 $remainingAmount -= $amountForBill;
                 $paymentRecords[] = $record;
+                $processedBillIds[] = $bill->id;
 
                 $newPaidTotal = $alreadyPaid + $amountForBill;
                 if ($newPaidTotal + 0.01 >= $billAmount) {
                     $bill->bill_status = 'Paid';
-                    $bill->paid_at = now();
                     $billsPaid++;
                     $record->payment_status = 'paid';
                     $record->notes = 'Standard payment';
@@ -259,6 +260,25 @@ class PaymentService
                     $lastRecord->notes = $this->generatePaymentNotes($overpayment);
                 }
                 $lastRecord->save();
+            }
+
+            // Re-sync bill statuses to reflect their latest outstanding balance
+            if (!empty($processedBillIds)) {
+                BillingRecord::whereIn('id', $processedBillIds)
+                    ->withSum('paymentRecords as amount_paid_sum', 'amount_paid')
+                    ->get()
+                    ->each(function (BillingRecord $bill) {
+                        $paid = (float) ($bill->amount_paid_sum ?? 0);
+                        $outstanding = max(0, (float) $bill->total_amount - $paid);
+
+                        if ($outstanding <= 0.01) {
+                            $bill->bill_status = 'Paid';
+                        } elseif ($paid > 0 && $bill->bill_status === 'Pending') {
+                            $bill->bill_status = 'Outstanding Payment';
+                        }
+
+                        $bill->save();
+                    });
             }
 
             $totalOutstanding = BillingRecord::where('account_no', $accountNo)

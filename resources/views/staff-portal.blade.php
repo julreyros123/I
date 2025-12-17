@@ -84,7 +84,7 @@
                 </a>
             </div>
             <div class="flex flex-wrap items-center gap-4 -mt-1 text-sm">
-                <a href="{{ route('billing.generation') }}" class="inline-flex items-center gap-1.5 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100/70 dark:hover:bg-gray-700/60 px-2 py-1 rounded">
+                <a href="{{ route('billing.management') }}" class="inline-flex items-center gap-1.5 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100/70 dark:hover:bg-gray-700/60 px-2 py-1 rounded">
                     <x-heroicon-o-document-plus class="w-4 h-4" />
                     <span>New Bill</span>
                 </a>
@@ -419,7 +419,7 @@
               }
 
               function isValidAccount(value) {
-                return /^22-[0-9]{6}-[0-9]$/i.test(value || '');
+                return /^22-[0-9]{6}(-[0-9])?$/i.test((value || '').trim());
               }
 
               function pad(num) {
@@ -526,7 +526,7 @@
                   const accountEl = $('account_no');
                   const accountNo = (accountEl && accountEl.value ? accountEl.value : '').trim().toUpperCase();
                   if (!isValidAccount(accountNo)) {
-                    return showAlert('Invalid account number. Expected format is 22-123456-1.', 'error');
+                    return showAlert('Invalid account number. Use 22-XXXXXX with an optional -X suffix (e.g., 22-000187 or 22-000187-1).', 'error');
                   }
 
                   const previousEl = $('previous_reading');

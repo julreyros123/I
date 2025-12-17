@@ -9,6 +9,7 @@ use App\Models\PaymentRecord;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Arr;
 use App\Models\ActivityLog;
 
 class RecordController extends Controller
@@ -17,7 +18,15 @@ class RecordController extends Controller
     {
         $this->applyOverdueRules();
         $q = trim((string) $request->get('q', ''));
+        $statusOptions = ['Pending','Outstanding Payment','Overdue','Notice of Disconnection','Disconnected','Paid'];
+        $statuses = array_values(array_unique(array_filter(array_map(function($value) use ($statusOptions) {
+            $value = trim((string) $value);
+            return in_array($value, $statusOptions, true) ? $value : null;
+        }, Arr::wrap($request->input('statuses', []))))));
         $status = $request->get('status', '');
+        if (empty($statuses) && $status && in_array($status, $statusOptions, true)) {
+            $statuses = [$status];
+        }
         $generated = $request->get('generated', ''); // '' | '0' | '1'
         $issueFrom = $request->filled('issue_from') ? Carbon::parse($request->get('issue_from'))->startOfDay() : null;
         $issueTo = $request->filled('issue_to') ? Carbon::parse($request->get('issue_to'))->endOfDay() : null;
@@ -30,8 +39,8 @@ class RecordController extends Controller
                               ->orWhere('address', 'like', "%{$q}%");
                       });
             })
-            ->when($status, function($query) use ($status) {
-                $query->where('bill_status', $status);
+            ->when($statuses, function($query) use ($statuses) {
+                $query->whereIn('bill_status', $statuses);
             })
             ->when($generated !== '' && Schema::hasColumn('billing_records','is_generated'), function($query) use ($generated){
                 $query->where('is_generated', $generated === '1');
@@ -77,7 +86,7 @@ class RecordController extends Controller
             ];
         }
 
-        return view('records.billing', compact('records', 'q', 'status', 'stats', 'generated', 'issueFrom', 'issueTo'));
+        return view('records.billing', compact('records', 'q', 'status', 'statuses', 'statusOptions', 'stats', 'generated', 'issueFrom', 'issueTo'));
     }
 
     public function archive($id): RedirectResponse
