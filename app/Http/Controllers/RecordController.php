@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use App\Models\BillingRecord;
 use App\Models\Customer;
 use App\Models\PaymentRecord;
@@ -11,6 +12,9 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Arr;
 use App\Models\ActivityLog;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class RecordController extends Controller
 {
@@ -32,6 +36,9 @@ class RecordController extends Controller
         $issueTo = $request->filled('issue_to') ? Carbon::parse($request->get('issue_to'))->endOfDay() : null;
         
         $records = BillingRecord::with('customer', 'paymentRecords')
+            ->when(Schema::hasColumn('billing_records', 'deleted_at'), function ($query) {
+                $query->whereNull('billing_records.deleted_at');
+            })
             ->when($q, function($query) use ($q) {
                 $query->where('account_no', 'like', "%{$q}%")
                       ->orWhereHas('customer', function($sub) use ($q){
@@ -87,6 +94,129 @@ class RecordController extends Controller
         }
 
         return view('records.billing', compact('records', 'q', 'status', 'statuses', 'statusOptions', 'stats', 'generated', 'issueFrom', 'issueTo'));
+    }
+
+    public function bulkArchive(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'archive_ids' => ['required', 'array'],
+            'archive_ids.*' => ['integer', 'distinct'],
+        ]);
+
+        $ids = array_unique(array_map('intval', $validated['archive_ids'] ?? []));
+
+        if (empty($ids)) {
+            return back()->with('error', 'Select at least one paid record to archive.');
+        }
+
+        $records = BillingRecord::whereIn('id', $ids)
+            ->where('bill_status', 'Paid')
+            ->get(['id', 'account_no', 'total_amount', 'bill_status']);
+
+        if ($records->isEmpty()) {
+            return back()->with('error', 'No eligible paid records found for archiving.');
+        }
+
+        DB::transaction(function () use ($records, $request) {
+            foreach ($records as $record) {
+                $record->delete();
+
+                ActivityLog::create([
+                    'user_id' => optional($request->user())->id,
+                    'module' => 'Billing',
+                    'action' => 'BILL_ARCHIVED',
+                    'description' => sprintf('Bulk archived bill #%d for account %s', $record->id, $record->account_no),
+                    'target_type' => BillingRecord::class,
+                    'target_id' => $record->id,
+                    'meta' => [
+                        'account_no' => $record->account_no,
+                        'total_amount' => $record->total_amount,
+                        'bill_status' => $record->bill_status,
+                        'bulk' => true,
+                    ],
+                ]);
+            }
+        });
+
+        return back()->with('status', sprintf('%d record(s) archived.', $records->count()));
+    }
+
+    public function billingCustomerSearch(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'q' => ['required', 'string', 'max:100'],
+        ]);
+
+        $query = trim($validated['q']);
+
+        if ($query === '') {
+            return response()->json(['results' => []]);
+        }
+
+        $normalized = preg_replace('/[^A-Za-z0-9]/', '', $query);
+
+        $customers = Customer::query()
+            ->where(function ($qb) use ($query, $normalized) {
+                $qb->where('account_no', 'like', "%{$query}%")
+                    ->orWhere('name', 'like', "%{$query}%")
+                    ->orWhere('address', 'like', "%{$query}%");
+
+                if ($normalized !== '' && $normalized !== $query) {
+                    $qb->orWhereRaw("REPLACE(REPLACE(account_no,'-',''),' ','') LIKE ?", ["%{$normalized}%"]);
+                }
+            })
+            ->orderByRaw(
+                "CASE WHEN account_no LIKE ? THEN 0 WHEN name LIKE ? THEN 1 ELSE 2 END, name ASC",
+                ["{$query}%", "{$query}%"]
+            )
+            ->limit(8)
+            ->get(['id', 'account_no', 'name', 'address', 'status']);
+
+        if ($customers->isEmpty()) {
+            return response()->json(['results' => []]);
+        }
+
+        $accounts = $customers->pluck('account_no')->filter()->values();
+
+        $billingSnapshots = BillingRecord::whereIn('account_no', $accounts)
+            ->withSum('paymentRecords as amount_paid_sum', 'amount_paid')
+            ->get(['id', 'account_no', 'total_amount', 'bill_status']);
+
+        $grouped = $billingSnapshots->groupBy('account_no')->map(function ($records) {
+            $outstanding = 0.0;
+            $unpaidCount = 0;
+
+            foreach ($records as $record) {
+                $paid = (float) ($record->amount_paid_sum ?? 0);
+                $due = max(0.0, (float) $record->total_amount - $paid);
+                if ($due > 0.009) {
+                    $unpaidCount++;
+                }
+                $outstanding += $due;
+            }
+
+            return [
+                'outstanding' => $outstanding,
+                'unpaid_count' => $unpaidCount,
+            ];
+        });
+
+        $results = $customers->map(function ($customer) use ($grouped) {
+            $snapshot = $grouped->get($customer->account_no, ['outstanding' => 0.0, 'unpaid_count' => 0]);
+            $outstanding = (float) ($snapshot['outstanding'] ?? 0.0);
+            $unpaidCount = (int) ($snapshot['unpaid_count'] ?? 0);
+            return [
+                'id' => $customer->id,
+                'account_no' => $customer->account_no,
+                'name' => $customer->name,
+                'address' => $customer->address,
+                'status' => $customer->status,
+                'unpaid_count' => $unpaidCount,
+                'formatted_unpaid_total' => '₱' . number_format($outstanding, 2),
+            ];
+        })->values();
+
+        return response()->json(['results' => $results]);
     }
 
     public function archive($id): RedirectResponse
@@ -246,20 +376,96 @@ class RecordController extends Controller
     public function archivedBilling(Request $request)
     {
         $q = trim((string) $request->get('q', ''));
-        $records = BillingRecord::onlyTrashed()
+        $statusOptions = ['Paid','Outstanding Payment','Overdue','Notice of Disconnection','Disconnected'];
+        $statuses = array_values(array_unique(array_filter(array_map(function($value) use ($statusOptions) {
+            $value = trim((string) $value);
+            return in_array($value, $statusOptions, true) ? $value : null;
+        }, Arr::wrap($request->input('statuses', []))))));
+        $status = $request->get('status', '');
+        if (empty($statuses) && $status && in_array($status, $statusOptions, true)) {
+            $statuses = [$status];
+        }
+
+        $baseQuery = BillingRecord::onlyTrashed()
             ->with('customer')
-            ->when($q, function($query) use ($q) {
+            ->when($q, function ($query) use ($q) {
                 $query->where('account_no', 'like', "%{$q}%")
-                      ->orWhereHas('customer', function($sub) use ($q){
-                          $sub->where('name', 'like', "%{$q}%")
-                              ->orWhere('address', 'like', "%{$q}%");
-                      });
+                    ->orWhereHas('customer', function ($sub) use ($q) {
+                        $sub->where('name', 'like', "%{$q}%")
+                            ->orWhere('address', 'like', "%{$q}%");
+                    });
             })
+            ->when($statuses, function ($query) use ($statuses) {
+                $query->whereIn('bill_status', $statuses);
+            });
+
+        $records = (clone $baseQuery)
             ->orderByDesc('deleted_at')
             ->paginate(15)
             ->withQueryString();
 
-        return view('records.archived-billing', compact('records', 'q'));
+        $archivedCount = (clone $baseQuery)->count();
+        if ($archivedCount > 100) {
+            $backupPath = $this->backupArchivedBillingRecords();
+            if ($backupPath) {
+                session()->flash('status', sprintf('Archived billing backup saved to storage/app/%s', $backupPath));
+            } else {
+                session()->flash('error', 'Archived records exceed 100 but automatic backup failed. Please check the logs.');
+            }
+        }
+
+        return view('records.archived-billing', compact('records', 'q', 'archivedCount', 'statusOptions', 'statuses'));
+    }
+
+    public function exportArchivedBilling(Request $request): StreamedResponse
+    {
+        $q = trim((string) $request->get('q', ''));
+        $statusOptions = ['Paid','Outstanding Payment','Overdue','Notice of Disconnection','Disconnected'];
+        $statuses = array_values(array_unique(array_filter(array_map(function($value) use ($statusOptions) {
+            $value = trim((string) $value);
+            return in_array($value, $statusOptions, true) ? $value : null;
+        }, Arr::wrap($request->input('statuses', []))))));
+        $status = $request->get('status', '');
+        if (empty($statuses) && $status && in_array($status, $statusOptions, true)) {
+            $statuses = [$status];
+        }
+
+        $query = BillingRecord::onlyTrashed()
+            ->with('customer')
+            ->when($q, function($qb) use ($q) {
+                $qb->where('account_no', 'like', "%{$q}%")
+                    ->orWhereHas('customer', function($sub) use ($q) {
+                        $sub->where('name', 'like', "%{$q}%")
+                            ->orWhere('address', 'like', "%{$q}%");
+                    });
+            })
+            ->when($statuses, function ($query) use ($statuses) {
+                $query->whereIn('bill_status', $statuses);
+            })
+            ->orderByDesc('deleted_at');
+
+        $filename = sprintf('archived-billing-%s.csv', Carbon::now()->format('Ymd-His'));
+
+        return response()->streamDownload(function () use ($query) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, ['ID', 'Invoice', 'Account No', 'Customer Name', 'Total Amount', 'Status', 'Deleted At']);
+            $query->chunk(500, function ($chunk) use ($handle) {
+                foreach ($chunk as $record) {
+                    fputcsv($handle, [
+                        $record->id,
+                        $record->invoice_number ?? sprintf('INV-%04d', $record->id),
+                        $record->account_no,
+                        optional($record->customer)->name,
+                        number_format((float) $record->total_amount, 2, '.', ''),
+                        $record->bill_status,
+                        optional($record->deleted_at)->format('Y-m-d H:i:s'),
+                    ]);
+                }
+            });
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'text/csv',
+        ]);
     }
 
     public function history()

@@ -8,6 +8,7 @@ use App\Models\BillingRecord;
 use App\Models\Customer;
 use App\Services\PaymentService;
 use Illuminate\Support\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 
 class BillingController extends Controller
 {
@@ -67,6 +68,27 @@ class BillingController extends Controller
         ]);
 
         try {
+            $targetCycleDate = Carbon::parse($data['date_to'] ?? $data['issued_at'] ?? Carbon::now());
+            $monthStart = $targetCycleDate->copy()->startOfMonth();
+            $monthEnd = $targetCycleDate->copy()->endOfMonth();
+            $monthLabel = $monthStart->format('F Y');
+
+            $cycleConstraint = function (Builder $query) use ($monthStart, $monthEnd) {
+                $query->where(function ($cycle) use ($monthStart, $monthEnd) {
+                    $cycle->whereNotNull('date_to')->whereBetween('date_to', [$monthStart, $monthEnd])
+                        ->orWhere(function ($fallback) use ($monthStart, $monthEnd) {
+                            $fallback->whereNull('date_to')
+                                ->whereNotNull('issued_at')
+                                ->whereBetween('issued_at', [$monthStart, $monthEnd]);
+                        })
+                        ->orWhere(function ($fallback) use ($monthStart, $monthEnd) {
+                            $fallback->whereNull('date_to')
+                                ->whereNull('issued_at')
+                                ->whereBetween('created_at', [$monthStart, $monthEnd]);
+                        });
+                });
+            };
+
             // Check for duplicate bill for the same account with same current reading
             $existingBill = BillingRecord::where('account_no', $data['account_no'])
                 ->where('current_reading', $data['current_reading'])
@@ -76,6 +98,37 @@ class BillingController extends Controller
                 return response()->json([
                     'ok' => false,
                     'error' => 'A bill with this current reading already exists for this account.'
+                ], 400);
+            }
+
+            $pendingStatuses = ['Pending','Outstanding Payment','Overdue','Notice of Disconnection','Disconnected'];
+            $existingUnpaidForCycle = BillingRecord::where('account_no', $data['account_no'])
+                ->where(function ($query) use ($cycleConstraint) {
+                    $cycleConstraint($query);
+                })
+                ->where(function ($query) use ($pendingStatuses) {
+                    $query->whereNull('bill_status')->orWhereIn('bill_status', $pendingStatuses);
+                })
+                ->first();
+
+            if ($existingUnpaidForCycle) {
+                return response()->json([
+                    'ok' => false,
+                    'error' => "Cannot create a new billing record for {$monthLabel} while a previous invoice remains unpaid."
+                ], 400);
+            }
+
+            $existingCycle = BillingRecord::withTrashed()
+                ->where('account_no', $data['account_no'])
+                ->where(function ($query) use ($cycleConstraint) {
+                    $cycleConstraint($query);
+                })
+                ->first();
+
+            if ($existingCycle) {
+                return response()->json([
+                    'ok' => false,
+                    'error' => "An invoice for {$monthLabel} already exists for this account. Please update the existing bill instead of creating a duplicate."
                 ], 400);
             }
 
@@ -134,6 +187,137 @@ class BillingController extends Controller
                 'error' => $e->getMessage()
             ], 400);
         }
+    }
+
+    public function status(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'account_no' => ['required','string','max:50'],
+            'target_date' => ['nullable','date'],
+        ]);
+
+        $accountNo = trim($data['account_no']);
+        $customer = Customer::where('account_no', $accountNo)->first();
+
+        if (!$customer) {
+            return response()->json([
+                'ok' => false,
+                'error' => 'Customer not found for this account number.'
+            ]);
+        }
+
+        $targetCycleDate = isset($data['target_date'])
+            ? Carbon::parse($data['target_date'])
+            : Carbon::now();
+
+        $monthStart = $targetCycleDate->copy()->startOfMonth();
+        $monthEnd = $targetCycleDate->copy()->endOfMonth();
+        $monthLabel = $monthStart->format('F Y');
+
+        $cycleConstraint = function (Builder $query) use ($monthStart, $monthEnd) {
+            $query->where(function ($cycle) use ($monthStart, $monthEnd) {
+                $cycle->whereNotNull('date_to')->whereBetween('date_to', [$monthStart, $monthEnd])
+                    ->orWhere(function ($fallback) use ($monthStart, $monthEnd) {
+                        $fallback->whereNull('date_to')
+                            ->whereNotNull('issued_at')
+                            ->whereBetween('issued_at', [$monthStart, $monthEnd]);
+                    })
+                    ->orWhere(function ($fallback) use ($monthStart, $monthEnd) {
+                        $fallback->whereNull('date_to')
+                            ->whereNull('issued_at')
+                            ->whereBetween('created_at', [$monthStart, $monthEnd]);
+                    });
+            });
+        };
+
+        $pendingStatuses = ['Pending','Outstanding Payment','Overdue','Notice of Disconnection','Disconnected'];
+
+        $cycleInvoice = BillingRecord::withTrashed()
+            ->where('account_no', $accountNo)
+            ->where(function ($query) use ($cycleConstraint) {
+                $cycleConstraint($query);
+            })
+            ->orderByDesc('issued_at')
+            ->orderByDesc('created_at')
+            ->first();
+
+        $unpaidForCycle = BillingRecord::where('account_no', $accountNo)
+            ->where(function ($query) use ($cycleConstraint) {
+                $cycleConstraint($query);
+            })
+            ->where(function ($query) use ($pendingStatuses) {
+                $query->whereNull('bill_status')->orWhereIn('bill_status', $pendingStatuses);
+            })
+            ->first();
+
+        $latestInvoice = BillingRecord::withTrashed()
+            ->where('account_no', $accountNo)
+            ->orderByDesc('issued_at')
+            ->orderByDesc('created_at')
+            ->first();
+
+        $latestInvoiceData = null;
+        if ($latestInvoice) {
+            $latestInvoiceData = [
+                'invoice_number' => $latestInvoice->invoice_number ?? ('INV-' . str_pad($latestInvoice->id, 4, '0', STR_PAD_LEFT)),
+                'bill_status' => $latestInvoice->bill_status,
+                'is_generated' => (bool) ($latestInvoice->is_generated ?? false),
+                'issued_at' => optional($latestInvoice->issued_at ?? $latestInvoice->created_at)->format('M d, Y'),
+                'deleted_at' => optional($latestInvoice->deleted_at)->toAtomString(),
+                'amount' => $latestInvoice->total_amount,
+            ];
+        }
+
+        $cycleInvoiceData = null;
+        if ($cycleInvoice) {
+            $cycleInvoiceData = [
+                'invoice_number' => $cycleInvoice->invoice_number ?? ('INV-' . str_pad($cycleInvoice->id, 4, '0', STR_PAD_LEFT)),
+                'bill_status' => $cycleInvoice->bill_status,
+                'is_generated' => (bool) ($cycleInvoice->is_generated ?? false),
+                'issued_at' => optional($cycleInvoice->issued_at ?? $cycleInvoice->created_at)->format('M d, Y'),
+                'deleted_at' => optional($cycleInvoice->deleted_at)->toAtomString(),
+                'amount' => $cycleInvoice->total_amount,
+            ];
+        }
+
+        $messages = [];
+        if ($unpaidForCycle && $cycleInvoiceData) {
+            $messages[] = sprintf(
+                'Invoice %s for %s is still marked %s. Collect payment before issuing another bill for this cycle.',
+                $cycleInvoiceData['invoice_number'],
+                $monthLabel,
+                $cycleInvoiceData['bill_status'] ?? 'Pending'
+            );
+        } elseif ($cycleInvoiceData) {
+            $messages[] = sprintf(
+                'Invoice %s already exists for %s (status: %s).',
+                $cycleInvoiceData['invoice_number'],
+                $monthLabel,
+                $cycleInvoiceData['bill_status'] ?? 'Pending'
+            );
+        } elseif ($latestInvoiceData) {
+            $messages[] = sprintf(
+                'Latest invoice %s was issued on %s (status: %s).',
+                $latestInvoiceData['invoice_number'],
+                $latestInvoiceData['issued_at'],
+                $latestInvoiceData['bill_status'] ?? 'Pending'
+            );
+        }
+
+        return response()->json([
+            'ok' => true,
+            'customer' => [
+                'id' => $customer->id,
+                'account_no' => $customer->account_no,
+                'name' => $customer->name,
+                'address' => $customer->address,
+            ],
+            'month_label' => $monthLabel,
+            'has_unpaid_for_cycle' => (bool) $unpaidForCycle,
+            'cycle_invoice' => $cycleInvoiceData,
+            'latest_invoice' => $latestInvoiceData,
+            'messages' => $messages,
+        ]);
     }
 
     private function generateInvoiceNumber(): string

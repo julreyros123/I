@@ -6,6 +6,9 @@ use App\Models\Customer;
 use App\Models\BillingRecord;
 use App\Models\PaymentRecord;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Collection;
 
 class PaymentService
 {
@@ -184,6 +187,19 @@ class PaymentService
                 throw new \RuntimeException('No unpaid bills available for this account.');
             }
 
+            if (Schema::hasColumn('billing_records', 'is_generated')) {
+                $unprinted = $bills->filter(fn (BillingRecord $bill) => !($bill->is_generated ?? false));
+                if ($unprinted->isNotEmpty()) {
+                    $labels = $unprinted->map(function (BillingRecord $bill) {
+                        return $bill->invoice_number ?? ('INV-' . str_pad($bill->id, 4, '0', STR_PAD_LEFT));
+                    })->implode(', ');
+
+                    throw new \RuntimeException(
+                        'Payment is blocked until the billing statement is printed. Please generate and print the following invoice(s): ' . $labels
+                    );
+                }
+            }
+
             $billsOutstandingAmounts = $bills->map(function ($bill) {
                 $alreadyPaid = (float) $bill->paymentRecords()->sum('amount_paid');
                 return max(0, (float) $bill->total_amount - $alreadyPaid);
@@ -202,6 +218,8 @@ class PaymentService
             $paymentRecords = [];
             $processedBillIds = [];
             $billsPaid = 0;
+            $autoArchivedIds = [];
+            $archiveBackups = [];
 
             foreach ($bills as $bill) {
                 if ($remainingAmount <= 0) {
@@ -279,6 +297,14 @@ class PaymentService
 
                         $bill->save();
                     });
+
+                $paidBills = BillingRecord::whereIn('id', $processedBillIds)
+                    ->where('bill_status', 'Paid')
+                    ->get();
+
+                if ($paidBills->isNotEmpty()) {
+                    [$autoArchivedIds, $archiveBackups] = $this->autoArchivePaidBills($paidBills);
+                }
             }
 
             $totalOutstanding = BillingRecord::where('account_no', $accountNo)
@@ -300,6 +326,10 @@ class PaymentService
                     'overpayment' => $overpayment,
                     'bills_paid' => $billsPaid,
                     'remaining_credit' => 0,
+                ],
+                'auto_archived' => [
+                    'bill_ids' => $autoArchivedIds,
+                    'backup_paths' => $archiveBackups,
                 ],
             ];
         });
@@ -331,6 +361,109 @@ class PaymentService
         }
         
         return $message;
+    }
+
+    /**
+     * Automatically archive paid bills and enforce archive retention policy.
+     *
+     * @param  Collection  $paidBills
+     * @return array{0: array<int>, 1: array<string>}
+     */
+    private function autoArchivePaidBills(Collection $paidBills): array
+    {
+        $archivedIds = [];
+
+        $paidBills->each(function (BillingRecord $bill) use (&$archivedIds) {
+            if (!$bill->trashed()) {
+                $bill->delete();
+                $archivedIds[] = $bill->id;
+            }
+        });
+
+        if (empty($archivedIds)) {
+            return [[], []];
+        }
+
+        $backupPaths = $this->enforceArchiveRetention();
+
+        return [$archivedIds, $backupPaths];
+    }
+
+    /**
+     * Keeps archived billing records within the configured limit and backs up excess.
+     *
+     * @param  int  $limit
+     * @return array<string>
+     */
+    private function enforceArchiveRetention(int $limit = 100): array
+    {
+        $archived = BillingRecord::onlyTrashed()
+            ->orderByDesc('deleted_at')
+            ->get();
+
+        if ($archived->count() <= $limit) {
+            return [];
+        }
+
+        $excess = $archived->slice($limit);
+        if ($excess->isEmpty()) {
+            return [];
+        }
+
+        $backupPaths = $this->backupArchivedRecords($excess);
+
+        $excess->each(function (BillingRecord $record) {
+            $record->forceDelete();
+        });
+
+        return $backupPaths;
+    }
+
+    /**
+     * Export archived billing records before permanent deletion.
+     *
+     * @param  Collection  $records
+     * @return array<string>
+     */
+    private function backupArchivedRecords(Collection $records): array
+    {
+        if ($records->isEmpty()) {
+            return [];
+        }
+
+        $timestamp = now()->format('Ymd_His');
+        $payload = $records->map(function (BillingRecord $record) {
+            $record->loadMissing('customer', 'paymentRecords');
+
+            return [
+                'id' => $record->id,
+                'account_no' => $record->account_no,
+                'bill_status' => $record->bill_status,
+                'total_amount' => $record->total_amount,
+                'issued_at' => optional($record->issued_at ?? $record->created_at)->toAtomString(),
+                'deleted_at' => optional($record->deleted_at)->toAtomString(),
+                'customer' => [
+                    'id' => optional($record->customer)->id,
+                    'name' => optional($record->customer)->name,
+                    'address' => optional($record->customer)->address,
+                    'account_no' => optional($record->customer)->account_no,
+                ],
+                'payments' => $record->paymentRecords->map(function (PaymentRecord $payment) {
+                    return [
+                        'id' => $payment->id,
+                        'amount_paid' => $payment->amount_paid,
+                        'overpayment' => $payment->overpayment,
+                        'payment_status' => $payment->payment_status,
+                        'created_at' => optional($payment->created_at)->toAtomString(),
+                    ];
+                }),
+            ];
+        });
+
+        $path = sprintf('backups/archived-billing/archived_%s.json', $timestamp);
+        Storage::disk('local')->put($path, $payload->toJson(JSON_PRETTY_PRINT));
+
+        return [Storage::disk('local')->path($path)];
     }
 }
 

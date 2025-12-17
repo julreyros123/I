@@ -214,6 +214,7 @@
 <script>
 (function(){
   const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+  const statusEndpoint = '{{ route('api.billing.status') }}';
   const $ = id => document.getElementById(id);
   const alertBox = $('alertBox');
 
@@ -241,6 +242,8 @@
     alertBox.classList.add('rounded-xl','px-4','py-3','text-sm','font-medium','transition','duration-200');
     if (type === 'error') {
       alertBox.classList.add('bg-red-50','border-red-200','text-red-700','dark:bg-red-900/30','dark:border-red-800','dark:text-red-100');
+    } else if (type === 'warning') {
+      alertBox.classList.add('bg-amber-50','border-amber-200','text-amber-700','dark:bg-amber-900/30','dark:border-amber-800','dark:text-amber-100');
     } else {
       alertBox.classList.add('bg-emerald-50','border-emerald-200','text-emerald-700','dark:bg-emerald-900/30','dark:border-emerald-800','dark:text-emerald-100');
     }
@@ -283,6 +286,40 @@
       state.dueDatePreview.textContent = due.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
     } catch (_) {
       state.dueDatePreview.textContent = '—';
+    }
+  }
+
+  async function checkBillingStatus() {
+    const accountField = $('account_no');
+    if (!accountField) return;
+    const accountNo = (accountField.value || '').trim().toUpperCase();
+    if (!isValidAccount(accountNo)) {
+      return;
+    }
+
+    const dateTo = $('date_to')?.value;
+    const issuedAt = $('issued_at')?.value;
+    const targetDate = dateTo || issuedAt || null;
+
+    try {
+      const qs = new URLSearchParams({ account_no: accountNo });
+      if (targetDate) {
+        qs.append('target_date', targetDate);
+      }
+      const res = await fetch(`${statusEndpoint}?${qs.toString()}`, {
+        headers: { 'Accept': 'application/json' }
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || 'Unable to verify billing status for this account.');
+      }
+
+      if ((data.messages || []).length) {
+        const tone = data.has_unpaid_for_cycle ? 'error' : 'warning';
+        showAlert(data.messages.join(' '), tone);
+      }
+    } catch (err) {
+      showAlert(err.message || 'Failed to verify billing status.', 'error');
     }
   }
 
@@ -333,6 +370,19 @@
     $('invoice_number').value = generateInvoiceNumber();
     showAlert('Generated a fresh invoice number.');
   });
+
+  const accountField = $('account_no');
+  if (accountField) {
+    ['blur','change'].forEach(evt => accountField.addEventListener(evt, checkBillingStatus));
+  }
+
+  const dateToField = $('date_to');
+  if (dateToField) {
+    dateToField.addEventListener('change', () => {
+      updateDueDate();
+      checkBillingStatus();
+    });
+  }
 
   fields.forEach(id => {
     const el = $(id);

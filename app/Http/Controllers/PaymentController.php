@@ -253,6 +253,7 @@ class PaymentController extends Controller
                     'payment_method' => $data['payment_method'] ?? null,
                     'reference_number' => $data['reference_number'] ?? null,
                     'payment_details' => $result['payment_details'] ?? null,
+                    'auto_archived' => $result['auto_archived'] ?? null,
                 ],
             ]);
 
@@ -261,6 +262,7 @@ class PaymentController extends Controller
                 'message' => $result['message'],
                 'payment_record_id' => $result['payment_record_id'],
                 'payment_details' => $result['payment_details'],
+                'auto_archived' => $result['auto_archived'] ?? null,
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -273,7 +275,12 @@ class PaymentController extends Controller
     public function getPaymentReceipt($paymentRecordId)
     {
         try {
-            $paymentRecord = PaymentRecord::with(['customer', 'billingRecord'])
+            $paymentRecord = PaymentRecord::with([
+                    'customer',
+                    'billingRecord' => function ($query) {
+                        $query->withTrashed();
+                    }
+                ])
                 ->findOrFail($paymentRecordId);
 
             return view('payment.receipt', compact('paymentRecord'));
@@ -285,7 +292,12 @@ class PaymentController extends Controller
     public function printReceipt($paymentRecordId)
     {
         try {
-            $paymentRecord = PaymentRecord::with(['customer', 'billingRecord'])
+            $paymentRecord = PaymentRecord::with([
+                    'customer',
+                    'billingRecord' => function ($query) {
+                        $query->withTrashed();
+                    }
+                ])
                 ->findOrFail($paymentRecordId);
 
             return view('payment.print-receipt', compact('paymentRecord'));

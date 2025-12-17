@@ -8,15 +8,23 @@
             <p class="text-gray-600 dark:text-gray-400 mt-2">MAWASA - Brgy. Manambulan Tugbok District, Davao City</p>
         </div>
 
+        @php
+            $customer = $paymentRecord->customer;
+            $billingRecord = $paymentRecord->billingRecord;
+            $billingDate = $billingRecord?->issued_at ?? $billingRecord?->created_at;
+            $billingDateFormatted = $billingDate ? $billingDate->format('M d, Y') : '—';
+            $paymentMethod = $paymentRecord->payment_method ? ucfirst($paymentRecord->payment_method) : '—';
+        @endphp
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
             <!-- Customer Information -->
             <div>
                 <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Customer Information</h3>
                 <div class="space-y-2">
-                    <p><span class="font-medium">Account No:</span> {{ $paymentRecord->customer->account_no }}</p>
-                    <p><span class="font-medium">Name:</span> {{ $paymentRecord->customer->name }}</p>
-                    <p><span class="font-medium">Address:</span> {{ $paymentRecord->customer->address }}</p>
-                    <p><span class="font-medium">Meter No:</span> {{ $paymentRecord->customer->meter_no }}</p>
+                    <p><span class="font-medium">Account No:</span> {{ $customer->account_no ?? '—' }}</p>
+                    <p><span class="font-medium">Name:</span> {{ $customer->name ?? '—' }}</p>
+                    <p><span class="font-medium">Address:</span> {{ $customer->address ?? '—' }}</p>
+                    <p><span class="font-medium">Meter No:</span> {{ $customer->meter_no ?? '—' }}</p>
                 </div>
             </div>
 
@@ -27,7 +35,7 @@
                     <p><span class="font-medium">Payment Date:</span> {{ $paymentRecord->created_at->format('M d, Y h:i A') }}</p>
                     <p><span class="font-medium">Payment ID:</span> #{{ $paymentRecord->id }}</p>
                     <p><span class="font-medium">Amount Paid:</span> <span class="text-green-600 font-bold">₱{{ number_format($paymentRecord->amount_paid, 2) }}</span></p>
-                    <p><span class="font-medium">Payment Method:</span> {{ ucfirst($paymentRecord->payment_method) }}</p>
+                    <p><span class="font-medium">Payment Method:</span> {{ $paymentMethod }}</p>
                     @if($paymentRecord->reference_number)
                         <p><span class="font-medium">Reference:</span> {{ $paymentRecord->reference_number }}</p>
                     @endif
@@ -49,12 +57,20 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                        <tr>
-                            <td class="px-4 py-2 text-sm text-gray-900 dark:text-gray-100">#{{ $paymentRecord->billing_record_id }}</td>
-                            <td class="px-4 py-2 text-sm text-gray-900 dark:text-gray-100">{{ $paymentRecord->billingRecord->created_at->format('M d, Y') }}</td>
-                            <td class="px-4 py-2 text-sm text-gray-900 dark:text-gray-100">{{ $paymentRecord->billingRecord->consumption_cu_m }} m³</td>
-                            <td class="px-4 py-2 text-sm text-gray-900 dark:text-gray-100">₱{{ number_format($paymentRecord->billingRecord->total_amount, 2) }}</td>
-                        </tr>
+                        @if($billingRecord)
+                            <tr>
+                                <td class="px-4 py-2 text-sm text-gray-900 dark:text-gray-100">{{ $billingRecord->invoice_number ? '#' . $billingRecord->invoice_number : '#'. $paymentRecord->billing_record_id }}</td>
+                                <td class="px-4 py-2 text-sm text-gray-900 dark:text-gray-100">{{ $billingDateFormatted }}</td>
+                                <td class="px-4 py-2 text-sm text-gray-900 dark:text-gray-100">{{ number_format($billingRecord->consumption_cu_m ?? 0, 2) }} m³</td>
+                                <td class="px-4 py-2 text-sm text-gray-900 dark:text-gray-100">₱{{ number_format($billingRecord->total_amount ?? 0, 2) }}</td>
+                            </tr>
+                        @else
+                            <tr>
+                                <td colspan="4" class="px-4 py-4 text-sm text-gray-600 dark:text-gray-300">
+                                    Billing record details are unavailable (this invoice may have been permanently archived).
+                                </td>
+                            </tr>
+                        @endif
                     </tbody>
                 </table>
             </div>
@@ -67,6 +83,14 @@
                 <span class="text-2xl font-bold text-green-600 dark:text-green-400">₱{{ number_format($paymentRecord->amount_paid, 2) }}</span>
             </div>
         </div>
+
+        @if($billingRecord?->trashed())
+            <div class="mt-6 p-4 border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                <p class="text-sm text-blue-800 dark:text-blue-200">
+                    Note: This billing record has been archived for safekeeping.
+                </p>
+            </div>
+        @endif
 
         <!-- Policy Notice -->
         <div class="mt-6 p-4 border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg">

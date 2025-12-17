@@ -101,6 +101,7 @@ Route::post('/api/customer/delete-multiple', [CustomerController::class, 'delete
 Route::get('/billing', [RecordController::class, 'billingManagement'])->middleware('auth')->name('billing.management');
 Route::get('/records/billing', [RecordController::class, 'billing'])->middleware('auth')->name('records.billing');
 Route::get('/records/billing/archived', [RecordController::class, 'archivedBilling'])->middleware('auth')->name('records.billing.archived');
+Route::get('/records/billing/archived/export', [RecordController::class, 'exportArchivedBilling'])->middleware('auth')->name('records.billing.export-archived');
 Route::post('/records/billing/{id}/archive', [RecordController::class, 'archive'])->middleware('auth')->name('records.billing.archive');
 Route::post('/records/billing/{id}/restore', [RecordController::class, 'restore'])->middleware('auth')->name('records.billing.restore');
 Route::delete('/records/billing/{id}/force', [RecordController::class, 'forceDelete'])->middleware('auth')->name('records.billing.force');
@@ -108,6 +109,7 @@ Route::get('/records/billing/{id}/generate', [RecordController::class, 'generate
 Route::post('/records/billing/{id}/status', [RecordController::class, 'updateBillStatus'])->middleware('auth')->name('records.billing.status');
 Route::get('/records/billing/{id}/print', [RecordController::class, 'printBill'])->middleware('auth')->name('records.billing.print');
 Route::post('/records/billing/bulk-generate', [RecordController::class, 'bulkGenerate'])->middleware('auth')->name('records.billing.bulk-generate');
+Route::post('/records/billing/bulk-archive', [RecordController::class, 'bulkArchive'])->middleware('auth')->name('records.billing.bulk-archive');
 Route::get('/records/billing/print-batch', [RecordController::class, 'printBatch'])->middleware('auth')->name('records.billing.print-batch');
 Route::get('/records/payments', [RecordController::class, 'payments'])->middleware('auth')->name('records.payments');
 Route::get('/records/reports', [RecordController::class, 'reports'])->middleware('auth')->name('records.reports');
@@ -115,6 +117,7 @@ Route::post('/reports', [ReportController::class, 'store'])->middleware('auth')-
 Route::get('/records/history', [RecordController::class, 'history'])->middleware('auth')->name('records.history');
 Route::get('/api/records/history', [RecordController::class, 'historyApi'])->middleware('auth')->name('api.records.history');
 Route::get('/api/records/billing-stats', [RecordController::class, 'billingStats'])->middleware('auth')->name('api.records.billing-stats');
+Route::get('/api/records/customers', [RecordController::class, 'billingCustomerSearch'])->middleware('auth')->name('api.records.customers');
 
 // Notifications
 Route::get('/api/notifications', [NotificationController::class, 'index'])->middleware('auth')->name('api.notifications.index');
@@ -125,6 +128,7 @@ Route::get('/api/notifications/recent', [NotificationController::class, 'recent'
 // Billing compute API
 Route::post('/api/billing/compute', [BillingController::class, 'compute'])->middleware('auth')->name('api.billing.compute');
 Route::post('/api/billing/store', [BillingController::class, 'store'])->middleware('auth')->name('api.billing.store');
+Route::get('/api/billing/status', [BillingController::class, 'status'])->middleware('auth')->name('api.billing.status');
 Route::get('/api/billing/payment-history', [BillingController::class, 'getPaymentHistory'])->middleware('auth')->name('api.billing.payment-history');
 // Billing events (generate, deliver)
 Route::post('/api/billing/generate', [BillEventController::class, 'generate'])->middleware('auth')->name('api.billing.generate');
