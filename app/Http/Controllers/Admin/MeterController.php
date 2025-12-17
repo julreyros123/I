@@ -15,6 +15,7 @@ use App\Application\Meter\UseCases\CreateMeterUseCase;
 use App\Application\Meter\DTO\ListMetersQuery;
 use App\Application\Meter\DTO\CreateMeterCommand;
 use App\Http\Requests\Meter\StoreMeterRequest;
+use Illuminate\Support\Str;
 
 class MeterController extends Controller
 {
@@ -74,6 +75,10 @@ class MeterController extends Controller
             })
             ->map(function ($app) {
                 $customer = $app->customer;
+                $status = Str::lower((string) ($customer?->status ?? ''));
+                if (in_array($status, ['active','validated','approved'], true)) {
+                    return null;
+                }
                 return [
                     'application_id' => $app->id,
                     'customer_id' => $customer?->id,
@@ -84,15 +89,26 @@ class MeterController extends Controller
                     'status' => $app->status,
                 ];
             })
+            ->filter()
             ->filter(function ($option) {
                 return !empty($option['application_id']);
             })
             ->values();
 
+        $assignmentCustomerIds = $assignmentOptions->pluck('customer_id')->filter()->unique()->all();
+
         $recentCustomers = Customer::query()
             ->orderByDesc('created_at')
             ->limit(50)
-            ->get(['id','name','account_no','address']);
+            ->get(['id','name','account_no','address','status'])
+            ->filter(function ($customer) {
+                $status = Str::lower((string) ($customer->status ?? ''));
+                return !in_array($status, ['active','validated','approved'], true);
+            })
+            ->reject(function ($customer) use ($assignmentCustomerIds) {
+                return in_array($customer->id, $assignmentCustomerIds, true);
+            })
+            ->values();
 
         return view('admin.meters', array_merge($result, [
             'inventoryMeters' => $inventoryMeters,
@@ -152,58 +168,87 @@ class MeterController extends Controller
     public function assign(Request $request, Meter $meter)
     {
         $data = $request->validate([
-            'account_id' => 'required|integer|exists:customers,id',
+            'account_id' => 'nullable|integer|exists:customers,id',
             'application_id' => 'nullable|integer|exists:customer_applications,id',
             'assigned_at' => 'required|date',
             'reason' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
         ]);
 
-        // Guard: only allow meter assignment when latest application has been paid and reached paid/scheduled/installed stage
-        $customer = Customer::find($data['account_id']);
+        // Resolve customer/application context
+        $customer = null;
         $targetApp = null;
-        if ($customer) {
-            $alreadyMetered = !empty($customer->meter_no)
-                || MeterAssignment::query()
-                    ->where('account_id', $customer->id)
-                    ->whereNull('unassigned_at')
-                    ->exists();
 
-            if ($alreadyMetered) {
-                $message = 'This customer already has a meter assigned. Unassign it first before linking a new one.';
-                if ($request->expectsJson() || $request->wantsJson()) {
-                    return response()->json([
-                        'ok' => false,
-                        'message' => $message,
-                        'code' => 'CUSTOMER_ALREADY_METERED',
-                    ], 422);
-                }
+        if (!empty($data['account_id'])) {
+            $customer = Customer::find($data['account_id']);
+        }
 
-                return back()->withErrors([
-                    'account_id' => $message,
-                ])->withInput();
+        if (!empty($data['application_id'])) {
+            $targetApp = CustomerApplication::with('customer')->find($data['application_id']);
+            if ($targetApp && $targetApp->customer) {
+                $customer = $customer ?: $targetApp->customer;
+            }
+        }
+
+        if (!$customer && $targetApp && $targetApp->customer) {
+            $customer = $targetApp->customer;
+        }
+
+        if (!$customer) {
+            return back()->withErrors([
+                'account_id' => 'Select a customer or ensure the scheduled application is linked to a verified customer account.',
+            ])->withInput();
+        }
+
+        $data['account_id'] = $customer->id;
+
+        if (!$targetApp) {
+            $targetApp = CustomerApplication::where('customer_id', $customer->id)
+                ->orderByDesc('created_at')
+                ->first();
+        }
+
+        if (!$targetApp) {
+            return back()->withErrors([
+                'account_id' => 'Cannot assign meter: no eligible application was found for this customer.',
+            ])->withInput();
+        }
+
+        $customerStatus = Str::lower((string) ($customer->status ?? ''));
+        if (in_array($customerStatus, ['active','validated','approved'], true)) {
+            return back()->withErrors([
+                'account_id' => 'Meters can only be assigned to newly registered customers awaiting validation.',
+            ])->withInput();
+        }
+
+        $alreadyMetered = !empty($customer->meter_no)
+            || MeterAssignment::query()
+                ->where('account_id', $customer->id)
+                ->whereNull('unassigned_at')
+                ->exists();
+
+        if ($alreadyMetered) {
+            $message = 'This customer already has a meter assigned. Unassign it first before linking a new one.';
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => $message,
+                    'code' => 'CUSTOMER_ALREADY_METERED',
+                ], 422);
             }
 
-            if (!empty($data['application_id'])) {
-                $targetApp = CustomerApplication::where('id', $data['application_id'])
-                    ->where('customer_id', $customer->id)
-                    ->first();
-            }
+            return back()->withErrors([
+                'account_id' => $message,
+            ])->withInput();
+        }
 
-            if (!$targetApp) {
-                $targetApp = CustomerApplication::where('customer_id', $customer->id)
-                    ->orderByDesc('created_at')
-                    ->first();
-            }
+        $hasPaid = !is_null($targetApp->paid_at);
+        $stageOk = in_array($targetApp->status, ['paid', 'scheduled', 'installed'], true);
 
-            $hasPaid = $targetApp && !is_null($targetApp->paid_at);
-            $stageOk = $targetApp && in_array($targetApp->status, ['paid', 'scheduled', 'installed'], true);
-
-            if (!($hasPaid && $stageOk)) {
-                return back()->withErrors([
-                    'account_id' => 'Cannot assign meter: application fees are not fully paid or application is not yet in a paid state.',
-                ])->withInput();
-            }
+        if (!($hasPaid && $stageOk)) {
+            return back()->withErrors([
+                'account_id' => 'Cannot assign meter: application fees are not fully paid or application is not yet in a paid state.',
+            ])->withInput();
         }
 
         DB::transaction(function() use ($meter, $data, $targetApp) {

@@ -324,14 +324,13 @@
                                         </div>
                                     </div>
 
-                                    <div class="hidden fixed inset-0 z-50 overflow-y-auto" id="meter-assign-modal-{{ $m->id }}" data-modal aria-hidden="true">
+                                    <div class="hidden fixed inset-0 z-50 overflow-y-auto" id="meter-assign-modal-{{ $m->id }}" data-modal data-meter-assign-modal aria-hidden="true">
                                         <div class="absolute inset-0 bg-black/50" data-modal-backdrop data-modal-dismiss></div>
                                         <div class="relative mx-auto my-16 w-full max-w-2xl px-4">
                                             <div class="rounded-2xl bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
                                                 <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
                                                     <div>
                                                         <h2 class="text-base font-semibold text-gray-800 dark:text-gray-100">Assign meter {{ $m->serial }}</h2>
-                                                        <p class="text-xs text-gray-500 dark:text-gray-400">Link this meter to a scheduled installation.</p>
                                                     </div>
                                                     <button type="button" class="h-9 w-9 inline-flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500" data-modal-dismiss aria-label="Close">
                                                         <x-heroicon-o-x-mark class="w-5 h-5" />
@@ -339,36 +338,40 @@
                                                 </div>
                                                 <div class="px-5 py-6 space-y-4">
                                                     <form method="post" action="{{ route('admin.meters.assign', $m) }}" class="space-y-4" data-modal-autofocus>
-                                                            @csrf
-                                                            <input type="hidden" name="account_id" id="accountInput-{{ $m->id }}">
-                                                            <input type="hidden" name="application_id" id="applicationInput-{{ $m->id }}">
-                                                            <div class="space-y-2">
-                                                                <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">Select scheduled customer</label>
-                                                                <select id="scheduledSelect-{{ $m->id }}" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-100" data-app-select data-account-target="#accountInput-{{ $m->id }}" data-application-target="#applicationInput-{{ $m->id }}" data-fallback-reset="#recentCustomerSelect-{{ $m->id }}">
-                                                                    <option value="">Choose scheduled installation...</option>
-                                                                    @foreach($assignmentOptions as $option)
-                                                                        <option value="{{ $option['customer_id'] }}" data-application-id="{{ $option['application_id'] }}">
-                                                                            {{ $option['customer_name'] }}
-                                                                            @if(!empty($option['account_no']))
-                                                                                · Acct {{ $option['account_no'] }}
-                                                                            @endif
-                                                                            @if(!empty($option['address']))
-                                                                                · {{ $option['address'] }}
-                                                                            @endif
-                                                                            @if(!empty($option['scheduled_for']))
-                                                                                · Visit {{ $option['scheduled_for'] }}
-                                                                            @endif
-                                                                        </option>
-                                                                    @endforeach
-                                                                </select>
-                                                                <p class="text-[11px] text-gray-500 dark:text-gray-400">Pick a scheduled installation to auto-fill the application link.</p>
-                                                            </div>
+                                                        @csrf
+                                                        <input type="hidden" name="account_id" id="assignAccountId-{{ $m->id }}" data-account-input value="">
+                                                        <input type="hidden" name="application_id" id="applicationInput-{{ $m->id }}" data-application-input>
+                                                        <div class="space-y-2">
+                                                            <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">Select scheduled customer</label>
+                                                            <select id="assignCustomerSelect-{{ $m->id }}" class="w-full rounded-xl border-gray-300 dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500" data-scheduled-select>
+                                                                <option value="">Choose scheduled installation...</option>
+                                                                @foreach($assignmentOptions as $option)
+                                                                    @if(empty($option['customer_id']))
+                                                                        @continue
+                                                                    @endif
+                                                                    <option value="{{ $option['customer_id'] }}" data-application-id="{{ $option['application_id'] }}">
+                                                                        {{ $option['customer_name'] }}
+                                                                        @if(!empty($option['account_no']))
+                                                                            · Acct {{ $option['account_no'] }}
+                                                                        @endif
+                                                                        @if(!empty($option['address']))
+                                                                            · {{ $option['address'] }}
+                                                                        @endif
+                                                                        @if(!empty($option['scheduled_for']))
+                                                                            · Visit {{ $option['scheduled_for'] }}
+                                                                        @endif
+                                                                    </option>
+                                                                @endforeach
+                                                            </select>
+                                                            <p class="text-[11px] text-gray-500 dark:text-gray-400">Pick a scheduled installation to auto-fill the application link.</p>
+                                                        </div>
+                                                        @if(($recentCustomers ?? collect())->isNotEmpty())
                                                             <hr class="border-gray-200 dark:border-gray-700" />
                                                             <div class="space-y-2">
                                                                 <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">Or choose a recent customer</label>
-                                                                <select id="recentCustomerSelect-{{ $m->id }}" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-100" data-fallback-select data-account-target="#accountInput-{{ $m->id }}" data-application-target="#applicationInput-{{ $m->id }}" data-scheduled-reset="#scheduledSelect-{{ $m->id }}">
+                                                                <select id="assignRecentCustomer-{{ $m->id }}" class="w-full rounded-xl border-gray-300 dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500" data-recent-select>
                                                                     <option value="">Recent registrations...</option>
-                                                                    @foreach(($recentCustomers ?? collect()) as $recent)
+                                                                    @foreach($recentCustomers as $recent)
                                                                         <option value="{{ $recent->id }}">
                                                                             {{ $recent->name }}
                                                                             @if(!empty($recent->account_no))
@@ -382,31 +385,30 @@
                                                                 </select>
                                                                 <p class="text-[11px] text-gray-500 dark:text-gray-400">Use this when the customer was recently registered but the application isn’t linked yet.</p>
                                                             </div>
-                                                            <div class="grid gap-3 md:grid-cols-2">
-                                                                <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">
-                                                                    Assigned at
-                                                                    <input name="assigned_at" type="datetime-local" value="{{ now()->format('Y-m-d\TH:i') }}" required class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-100" />
-                                                                </label>
-                                                                <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">
-                                                                    Reason
-                                                                    <input name="reason" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-100" />
-                                                                </label>
-                                                                <label class="text-xs font-semibold text-gray-600 dark:text-gray-300 md:col-span-2">
-                                                                    Notes
-                                                                    <textarea name="notes" rows="2" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-100"></textarea>
-                                                                </label>
-                                                            </div>
-                                                            <div class="flex justify-end gap-2">
-                                                                <button type="button" class="inline-flex items-center justify-center h-10 px-4 rounded-lg border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800" data-modal-dismiss>Cancel</button>
-                                                                <button class="inline-flex items-center justify-center h-10 px-4 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-500">Assign meter</button>
-                                                            </div>
-                                                        </form>
-                                                    </div>
+                                                        @endif
+                                                        <div class="grid gap-3 md:grid-cols-2">
+                                                            <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">
+                                                                Assigned at
+                                                                <input name="assigned_at" type="datetime-local" value="{{ now()->format('Y-m-d\\TH:i') }}" required class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-100" />
+                                                            </label>
+                                                            <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">
+                                                                Reason
+                                                                <input name="reason" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-100" />
+                                                            </label>
+                                                            <label class="text-xs font-semibold text-gray-600 dark:text-gray-300 md:col-span-2">
+                                                                Notes
+                                                                <textarea name="notes" rows="2" class="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 px-3 py-2 text-sm text-gray-800 dark:text-gray-100"></textarea>
+                                                            </label>
+                                                        </div>
+                                                        <div class="flex justify-end gap-2">
+                                                            <button type="button" class="inline-flex items-center justify-center h-10 px-4 rounded-lg border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800" data-modal-dismiss>Cancel</button>
+                                                            <button class="inline-flex items-center justify-center h-10 px-4 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-500">Assign meter</button>
+                                                        </div>
+                                                    </form>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-
                                     <div class="hidden fixed inset-0 z-50 overflow-y-auto" id="meter-unassign-modal-{{ $m->id }}" data-modal aria-hidden="true">
                                         <div class="absolute inset-0 bg-black/50" data-modal-backdrop data-modal-dismiss></div>
                                         <div class="relative mx-auto my-16 w-full max-w-xl px-4">
@@ -610,6 +612,97 @@
 @endsection
 
 @push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    const scopeSelects = document.querySelectorAll('[data-scope-select]');
+    scopeSelects.forEach(sel => sel.addEventListener('change', () => {
+        const form = sel.closest('form');
+        if (form) form.submit();
+    }));
+
+    const modalInitializers = new Map();
+
+    document.querySelectorAll('[data-meter-assign-modal]').forEach(modal => {
+        const initModal = () => {
+            if (modal.dataset.assignWired === 'true') return;
+            modal.dataset.assignWired = 'true';
+
+            const accountInput = modal.querySelector('[data-account-input]');
+            const applicationInput = modal.querySelector('[data-application-input]');
+            const scheduleSelect = modal.querySelector('[data-scheduled-select]');
+            const recentSelect = modal.querySelector('[data-recent-select]');
+            const form = modal.querySelector('form');
+
+            const setAccount = (accountId = '', applicationId = '') => {
+                if (accountInput) accountInput.value = accountId || '';
+                if (applicationInput) applicationInput.value = applicationId || '';
+            };
+
+            const handleScheduleChange = () => {
+                if (!scheduleSelect) return;
+                const option = scheduleSelect.options[scheduleSelect.selectedIndex];
+                const accountId = option && option.value ? option.value : '';
+                const applicationId = option && option.dataset ? option.dataset.applicationId || '' : '';
+                setAccount(accountId, applicationId);
+                if (accountId && recentSelect) {
+                    recentSelect.value = '';
+                }
+            };
+
+            const handleRecentChange = () => {
+                if (!recentSelect) return;
+                const option = recentSelect.options[recentSelect.selectedIndex];
+                const accountId = option && option.value ? option.value : '';
+                setAccount(accountId, '');
+                if (accountId && scheduleSelect) {
+                    scheduleSelect.value = '';
+                }
+            };
+
+            if (scheduleSelect) scheduleSelect.addEventListener('change', handleScheduleChange);
+            if (recentSelect) recentSelect.addEventListener('change', handleRecentChange);
+            if (form) {
+                form.addEventListener('submit', (e) => {
+                    if (!accountInput || !accountInput.value) {
+                        e.preventDefault();
+                        alert('Select a scheduled installation linked to a customer before assigning the meter.');
+                    }
+                });
+            }
+
+            modal.addEventListener('modal:shown', () => {
+                if (scheduleSelect && scheduleSelect.value) {
+                    handleScheduleChange();
+                } else if (recentSelect && recentSelect.value) {
+                    handleRecentChange();
+                } else {
+                    setAccount('', '');
+                }
+            });
+
+            modalInitializers.set(modal.id, () => {
+                if (scheduleSelect && scheduleSelect.value) {
+                    handleScheduleChange();
+                } else if (recentSelect && recentSelect.value) {
+                    handleRecentChange();
+                } else {
+                    setAccount('', '');
+                }
+            });
+        };
+
+        initModal();
+    });
+
+    document.querySelectorAll('[data-open-modal]').forEach(trigger => {
+        const targetId = trigger.getAttribute('data-open-modal');
+        if (!targetId) return;
+        const refresh = modalInitializers.get(targetId);
+        if (!refresh) return;
+        trigger.addEventListener('click', () => setTimeout(() => refresh(), 100));
+    });
+});
+</script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const overlay = document.getElementById('createMeterOverlay');
