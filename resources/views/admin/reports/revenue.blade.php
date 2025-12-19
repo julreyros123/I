@@ -11,7 +11,7 @@
 @endphp
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 font-[Poppins] space-y-6 lg:space-y-8 print:px-0">
+<div class="w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8 font-[Poppins] space-y-6 lg:space-y-8 print:px-0">
     <div class="rounded-3xl bg-gradient-to-r from-blue-600 via-blue-500 to-sky-500 text-white p-6 shadow-xl print:hidden">
         <div class="flex flex-wrap items-start justify-between gap-4">
             <div class="space-y-1">

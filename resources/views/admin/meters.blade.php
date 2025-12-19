@@ -3,7 +3,7 @@
 @section('title', 'Admin • Meter Management')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-6 py-8 font-[Poppins] space-y-6">
+<div class="w-full px-4 sm:px-5 lg:px-6 py-4 font-[Poppins] space-y-4">
     <div id="meterToast" class="hidden"></div>
     <div class="flex items-center justify-between flex-wrap gap-3">
         <h1 class="text-xl font-semibold text-gray-800 dark:text-gray-100">Meter Management</h1>

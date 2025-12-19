@@ -3,7 +3,7 @@
 @section('title', 'Archived Billing Records')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 font-[Poppins]">
+<div class="w-full px-4 sm:px-6 lg:px-8 pt-4 pb-6 font-[Poppins] space-y-5">
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-5 sm:p-6 lg:p-8 space-y-4">
         <div class="flex flex-col gap-4">
             <div class="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-3">
@@ -26,7 +26,7 @@
                 <div class="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                     <span class="hidden sm:inline-flex text-[11px] uppercase tracking-wide text-gray-400 ml-auto">Showing {{ $records->total() }} result{{ $records->total() === 1 ? '' : 's' }}</span>
                 </div>
-                <div class="w-full lg:max-w-xl flex items-stretch">
+                <div class="w-full lg:flex-1 flex items-stretch">
                     <div class="relative flex flex-1 overflow-hidden rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/60 focus-within:ring-2 focus-within:ring-blue-400/60" data-archived-autocomplete="container">
                         <div class="flex items-center px-3 text-gray-400">
                             <x-heroicon-o-magnifying-glass class="w-4 h-4" />

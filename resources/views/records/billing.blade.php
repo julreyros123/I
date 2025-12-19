@@ -3,10 +3,10 @@
 @section('title', 'Billing Records')
 
 @section('content')
-<div class="w-full px-2 sm:px-4 lg:px-6 xl:px-8 2xl:px-10 py-6 font-[Poppins] space-y-3">
-    <div class="space-y-0.5">
+<div class="w-full px-2 sm:px-4 lg:px-6 xl:px-8 2xl:px-10 pt-4 pb-6 font-[Poppins] space-y-4">
+    <div class="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <h1 class="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100">Billing Records</h1>
-        <p class="text-sm text-gray-600 dark:text-gray-400 max-w-2xl">Monitor invoices issued by staff, track collection progress, and drill into any bill using the filters below.</p>
+        <p class="text-sm text-gray-600 dark:text-gray-400 max-w-1xl sm:text-right">Monitor invoices issued by staff, track collection progress, and drill into any bill using the filters below.</p>
     </div>
 
     <div class="bg-white dark:bg-gray-900/70 rounded-3xl shadow-xl ring-1 ring-gray-100 dark:ring-gray-800 overflow-hidden">

@@ -3,15 +3,12 @@
 @section('title', 'Payment Records')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-6 py-8 font-[Poppins]">
-    <div class="mb-3">
-        <p class="text-gray-600 dark:text-gray-400 text-xs">Guide: Search by account no. or name to find a receipt. Use "View History" to review billed months and amounts.</p>
-    </div>
-
+<div class="w-full px-4 sm:px-6 lg:px-8 py-6 font-[Poppins] space-y-5">
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6 space-y-4">
+        <p class="text-gray-600 dark:text-gray-400 text-xs">Guide: Search by account no. or name to find a receipt. Use "View History" to review billed months and amounts.</p>
         <!-- Search + filter bar -->
         <form method="GET" class="flex flex-col lg:flex-row lg:items-center gap-2 mb-1">
-            <div class="w-full md:w-2/3 lg:w-5/12 flex items-stretch gap-2">
+            <div class="w-full lg:flex-1 flex items-stretch gap-2">
                 <div class="flex flex-1 rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/60">
                     <div class="flex items-center px-3 text-gray-400">
                         <x-heroicon-o-magnifying-glass class="w-4 h-4" />

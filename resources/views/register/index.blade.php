@@ -3,7 +3,7 @@
 @section('title', 'Register')
 
 @section('content')
-<div class="max-w-7xl mx-auto p-8 space-y-8 font-sans">
+<div class="w-full px-4 sm:px-6 lg:px-8 pt-1 pb-5 space-y-5 font-sans">
     
     <!-- Success/Error Messages handled via modal -->
     @php
@@ -64,7 +64,7 @@
 
     <!-- New Connection Wizard -->
     <div class="flex justify-between items-center">
-        <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">New Customer Registration</h2>
+        <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100">New Customer Registration</h2>
         <div class="text-xs text-gray-500 dark:text-gray-400">Step <span id="wizStepNo">1</span> of <span id="wizStepTotal">2</span></div>
     </div>
 
@@ -73,15 +73,15 @@
     <!-- Wizard Container -->
     <div id="newPanel">
         <div class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-8">
-            <p class="text-xs text-gray-600 dark:text-gray-400 mb-4">Fill the steps below. ID verification is required before any meter can be installed.</p>
+            <p class="text-xs text-gray-600 dark:text-gray-400 mb-3">Fill the steps below. ID verification is required before any meter can be installed.</p>
 
             <div id="ncAlert" class="hidden mb-4"></div>
 
-            <form id="newCustomerForm" method="POST" action="{{ route('register.store') }}" enctype="multipart/form-data" class="space-y-8">
+            <form id="newCustomerForm" method="POST" action="{{ route('register.store') }}" enctype="multipart/form-data" class="space-y-6">
                 @csrf
                 <!-- Step 1: Personal Info + Address & Contact -->
-                <section data-step="1" class="space-y-6">
-                    <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-900/40 shadow-sm p-6">
+                <section data-step="1" class="space-y-5">
+                    <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-900/40 shadow-sm p-5">
                         <div class="flex flex-wrap items-start justify-between gap-4">
                             <div>
                                 <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100 tracking-wide uppercase">Applicant Details</h3>
@@ -91,7 +91,7 @@
                                 <span class="w-2 h-2 rounded-full bg-blue-500 dark:bg-blue-400 animate-pulse"></span> Required Section
                             </span>
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
                             <div>
                                 <label class="block text-xs font-semibold mb-1 text-gray-700 dark:text-gray-300">First Name</label>
                                 <x-ui.input name="first_name" :value="old('first_name')" required />
@@ -113,7 +113,7 @@
                             </div>
                             <span class="text-[11px] text-gray-400 dark:text-gray-500">Optional fields help us locate the property faster.</span>
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mt-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mt-3">
                             <div>
                                 <label class="block text-xs font-semibold mb-1 text-gray-700 dark:text-gray-300">Barangay</label>
                                 <x-ui.input name="barangay" :value="old('barangay')" required />
@@ -170,8 +170,8 @@
                 </section>
 
                 <!-- Step 2: ID Verification (KYC) -->
-                <section data-step="2" class="space-y-6 hidden">
-                    <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-900/40 shadow-sm p-6">
+                <section data-step="2" class="space-y-5 hidden">
+                    <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-900/40 shadow-sm p-5">
                         <div class="flex flex-wrap items-start justify-between gap-4">
                             <div>
                                 <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100 tracking-wide uppercase">Primary Identification</h3>
@@ -231,7 +231,7 @@
                         </div>
                     </div>
 
-                    <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-900/40 shadow-sm p-6">
+                    <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-gray-900/40 shadow-sm p-5">
                         <div class="flex flex-wrap items-start gap-3">
                             <input type="checkbox" name="consent" value="1" class="mt-1" required />
                             <div>
