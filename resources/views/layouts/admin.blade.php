@@ -286,16 +286,44 @@ table:not(.no-zebra) tbody tr:hover { background-color: #e2e8f0; /* slate-200 */
 .dark table:not(.no-zebra) tbody tr:nth-child(even) { background-color: rgba(59,130,246,0.20); /* blue-500 @ 20% */ }
 .dark table:not(.no-zebra) tbody tr:hover { background-color: rgba(59,130,246,0.28); /* blue-500 @ 28% */ }
 
-/* Blue header and top accent for all tables (opt-out with .no-accent) */
-table:not(.no-accent){ border-top: 4px solid #2563eb; /* blue-600 */ border-collapse: separate; border-spacing: 0; }
+/* Table headers + accents follow KPI sea blue palette */
+table:not(.no-accent){
+  border-top: 4px solid var(--kpi-primary);
+  border-collapse: separate;
+  border-spacing: 0;
+}
 table:not(.no-accent) thead th {
-  background-color: #1d4ed8; /* blue-700 */
+  background-color: var(--kpi-secondary);
   color: #ffffff !important;
 }
-.dark table:not(.no-accent){ border-top-color: #3b82f6; /* blue-500 */ }
+.dark table:not(.no-accent){
+  border-top-color: var(--kpi-light);
+}
 .dark table:not(.no-accent) thead th {
-  background-color: #1e3a8a; /* blue-800 */
+  background-color: var(--kpi-dark);
   color: #e5e7eb !important; /* slate-200 */
+}
+
+/* Primary action buttons share the same sea blue tone */
+.btn-kpi,
+.bg-blue-600 {
+  background-color: var(--kpi-secondary) !important;
+  color: #ffffff !important;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+.btn-kpi:hover,
+.hover\:bg-blue-700:hover {
+  background-color: var(--kpi-dark) !important;
+}
+.btn-kpi:focus-visible,
+.focus\:ring-blue-500:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(var(--kpi-light-rgb),0.5) !important;
+}
+.dark .btn-kpi:hover,
+.dark .hover\:bg-blue-500:hover {
+  background-color: var(--kpi-light) !important;
+  color: #0f172a !important;
 }
 </style>
 <style>

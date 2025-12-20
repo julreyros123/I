@@ -131,7 +131,7 @@
                     </div>
 
                     <aside class="space-y-4">
-                        <div class="rounded-2xl border border-gray-100 bg-gradient-to-br from-slate-50 to-white p-6 shadow-sm dark:border-gray-800 dark:from-gray-900 dark:to-gray-900/80">
+                        <div class="rounded-2xl border border-gray-100 bg-gradient-to-br from-slate-50 to-white p-6 shadow-sm dark:border-gray-800 dark:from-gray-900 dark:to-gray-900/80 flex flex-col h-full lg:sticky lg:top-24 lg:self-start">
                             <div class="flex items-center justify-between gap-3 mb-4">
                                 <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100">Live Summary</h3>
                                 <span class="rounded-full bg-sky-100 px-3 py-1 text-[11px] font-semibold text-sky-600 dark:bg-sky-900/40 dark:text-sky-200">Instant</span>
@@ -160,7 +160,10 @@
                             </dl>
                             <div class="mt-5 rounded-xl bg-slate-900 text-white dark:bg-slate-800 px-4 py-3">
                                 <p class="text-[11px] uppercase tracking-wide text-slate-300">Total Amount Due</p>
-                                <p id="totalDisplay" class="text-2xl font-semibold">₱0.00</p>
+                                <div class="mt-3 flex flex-col gap-2 sm:flex-row sm:items-stretch sm:gap-0">
+                                    <p id="totalDisplay" class="flex-1 text-2xl font-semibold text-gray-900 bg-white px-5 h-[48px] rounded-lg sm:rounded-r-none inline-flex items-center justify-center min-w-[10rem]">₱0.00</p>
+                                    <x-primary-button id="saveBillBtn" type="button" class="px-6 h-[48px] flex items-center justify-center rounded-lg sm:rounded-l-none sm:rounded-r-lg">Save Bill</x-primary-button>
+                                </div>
                             </div>
                             <div class="mt-4 text-[11px] text-gray-400">Status defaults to <span class="font-semibold text-sky-500">Pending</span> until the customer settles their balance.</div>
                         </div>

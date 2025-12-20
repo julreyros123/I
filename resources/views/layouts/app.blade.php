@@ -317,9 +317,9 @@
       border-color: #374151 !important;
     }
     .dark .dataTable-pagination li.active a {
-      background-color: #2563eb !important;
+      background-color: var(--brand-600) !important;
       color: #ffffff !important;
-      border-color: #2563eb !important;
+      border-color: var(--brand-600) !important;
     }
     .dark .dataTable-pagination li a:hover { background-color: #1f2937 !important; }
     .dark table.dataTable-table { background-color: transparent !important; }
@@ -342,14 +342,14 @@
     .dark table:not(.no-zebra) tbody tr:nth-child(even) { background-color: rgba(59,130,246,0.20); /* blue-500 @ 20% */ }
     .dark table:not(.no-zebra) tbody tr:hover { background-color: rgba(59,130,246,0.28); /* blue-500 @ 28% */ }
     /* Blue header and top accent for all tables (opt-out with .no-accent) */
-    table:not(.no-accent){ border-top: 4px solid #2563eb; /* blue-600 */ border-collapse: separate; border-spacing: 0; }
+    table:not(.no-accent){ border-top: 4px solid var(--brand-600); border-collapse: separate; border-spacing: 0; }
     table:not(.no-accent) thead th {
-      background-color: #1d4ed8; /* blue-700 */
+      background-color: var(--brand-700);
       color: #ffffff !important;
     }
-    .dark table:not(.no-accent){ border-top-color: #3b82f6; /* blue-500 */ }
+    .dark table:not(.no-accent){ border-top-color: var(--brand-500); }
     .dark table:not(.no-accent) thead th {
-      background-color: #1e3a8a; /* blue-800 */
+      background-color: var(--brand-900);
       color: #e5e7eb !important;
     }
     </style>

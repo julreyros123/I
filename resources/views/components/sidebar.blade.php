@@ -1,15 +1,15 @@
 {{-- Sidebar --}}
 <div 
     x-data="{ open: false }"
-    class="w-64 bg-gradient-to-b from-[#00A2FE] to-[#0085DC] 
-           text-white dark:from-gray-950 dark:to-gray-900 
+    class="w-64 bg-[var(--kpi-primary)] 
+           text-white dark:bg-gray-950 
            dark:text-gray-200 min-h-screen flex flex-col 
            fixed left-0 top-0 z-20 font-inter"
     id="sidebar"
     x-cloak
 >
     {{-- Logo / Header --}}
-    <div class="h-[65px] px-6 border-b border-[#0085DC] dark:border-gray-800 flex items-center gap-3">
+    <div class="h-[65px] px-6 border-b border-[var(--kpi-secondary)] dark:border-gray-800 flex items-center gap-3">
         <img src="{{ asset('images/mawasa-logo.png') }}" alt="MAWASA Logo" 
              class="h-10 w-10 rounded-lg shadow-md">
         <div class="flex flex-col">
@@ -22,7 +22,7 @@
 
     {{-- Menu --}}
     <nav class="flex-1 px-4 py-6">
-        <p class="uppercase text-[#bfe8ff] dark:text-gray-500 mb-4 text-xs font-medium tracking-wider">
+        <p class="uppercase text-white/80 dark:text-gray-500 mb-4 text-xs font-medium tracking-wider">
             Menu
         </p>
     
@@ -31,9 +31,9 @@
             <li>
                 <a href="{{ route('dashboard') }}"
                    class="flex items-center gap-3 px-3 py-2 rounded-lg 
-                          hover:bg-[#008fde]/60 dark:hover:bg-gray-800 
+                          hover:bg-[rgb(var(--kpi-secondary-rgb)/0.55)] dark:hover:bg-gray-800 
                           transition-all duration-200 ease-in-out font-medium">
-                    <x-heroicon-o-home class="w-5 h-5 text-[#d4f2ff] dark:text-gray-400" />
+                    <x-heroicon-o-home class="w-5 h-5 text-white/80 dark:text-gray-400" />
                     <span>Dashboard</span>
                 </a>
             </li>
@@ -45,9 +45,9 @@
                 @php($registerUrl = \Illuminate\Support\Facades\Route::has('register.index') ? route('register.index') : url('/register'))
                 <a href="{{ $registerUrl }}"
                    class="flex items-center gap-3 px-3 py-2 rounded-lg 
-                          hover:bg-[#008fde]/60 dark:hover:bg-gray-800 
+                          hover:bg-[rgb(var(--brand-700-rgb)/0.55)] dark:hover:bg-gray-800 
                           transition-all duration-200 ease-in-out font-medium">
-                    <x-heroicon-o-pencil-square class="w-5 h-5 text-[#d4f2ff] dark:text-gray-400" />
+                    <x-heroicon-o-pencil-square class="w-5 h-5 text-white/80 dark:text-gray-400" />
                     <span>Register</span>
                 </a>
             </li>
@@ -56,9 +56,9 @@
             <li>
                 <a href="{{ route('customer.index') }}"
                    class="flex items-center gap-3 px-3 py-2 rounded-lg 
-                          hover:bg-[#008fde]/60 dark:hover:bg-gray-800 
+                          hover:bg-[rgb(var(--brand-700-rgb)/0.55)] dark:hover:bg-gray-800 
                           transition-all duration-200 ease-in-out font-medium">
-                    <x-heroicon-o-user-group class="w-5 h-5 text-[#d4f2ff] dark:text-gray-400" />
+                    <x-heroicon-o-user-group class="w-5 h-5 text-white/80 dark:text-gray-400" />
                     <span>Customer</span>
                 </a>
             </li>
@@ -67,9 +67,9 @@
             <li>
                 <a href="{{ route('staff.customer-issues.index') }}"
                    class="flex items-center gap-3 px-3 py-2 rounded-lg 
-                          hover:bg-[#008fde]/60 dark:hover:bg-gray-800 
+                          hover:bg-[rgb(var(--brand-700-rgb)/0.55)] dark:hover:bg-gray-800 
                           transition-all duration-200 ease-in-out font-medium">
-                    <x-heroicon-o-chat-bubble-left-right class="w-5 h-5 text-[#d4f2ff] dark:text-gray-400" />
+                    <x-heroicon-o-chat-bubble-left-right class="w-5 h-5 text-white/80 dark:text-gray-400" />
                     <span>Customer Issues</span>
                 </a>
             </li>
@@ -78,9 +78,9 @@
             <li>
                 <a href="{{ route('billing.management') }}"
                    class="flex items-center gap-3 px-3 py-2 rounded-lg 
-                          hover:bg-[#008fde]/60 dark:hover:bg-gray-800 
+                          hover:bg-[rgb(var(--brand-700-rgb)/0.55)] dark:hover:bg-gray-800 
                           transition-all duration-200 ease-in-out font-medium">
-                    <x-heroicon-o-clipboard-document-list class="w-5 h-5 text-[#d4f2ff] dark:text-gray-400" />
+                    <x-heroicon-o-clipboard-document-list class="w-5 h-5 text-white/80 dark:text-gray-400" />
                     <span>Billing</span>
                 </a>
             </li>
@@ -89,9 +89,9 @@
             <li>
                 <a href="{{ route('payment.index') }}"
                    class="flex items-center gap-3 px-3 py-2 rounded-lg 
-                          hover:bg-[#008fde]/60 dark:hover:bg-gray-800 
+                          hover:bg-[rgb(var(--brand-700-rgb)/0.55)] dark:hover:bg-gray-800 
                           transition-all duration-200 ease-in-out font-medium">
-                    <x-heroicon-o-credit-card class="w-5 h-5 text-[#d4f2ff] dark:text-gray-400" />
+                    <x-heroicon-o-credit-card class="w-5 h-5 text-white/80 dark:text-gray-400" />
                     <span>Payment</span>
                 </a>
             </li>
@@ -100,9 +100,9 @@
             <li class="relative">
                 <button @click="open = !open"
                         class="w-full flex items-center justify-between px-3 py-2 rounded-lg 
-                               hover:bg-[#008fde]/60 dark:hover:bg-gray-800 transition-all duration-200 ease-in-out font-medium">
+                               hover:bg-[rgb(var(--kpi-secondary-rgb)/0.55)] dark:hover:bg-gray-800 transition-all duration-200 ease-in-out font-medium">
                     <span class="flex items-center gap-3">
-                        <x-heroicon-o-document-text class="w-5 h-5 text-[#d4f2ff] dark:text-gray-400" />
+                        <x-heroicon-o-document-text class="w-5 h-5 text-white/80 dark:text-gray-400" />
                         <span>Records</span>
                     </span>
                     <svg :class="open ? 'rotate-180' : ''"
@@ -115,27 +115,27 @@
 
                 {{-- Dropdown --}}
                 <ul x-show="open" x-transition
-                    class="mt-2 ml-6 space-y-1 bg-[#007fce]/95 dark:bg-gray-950 
-                           border border-[#0085DC] dark:border-gray-800 
-                           rounded-lg shadow-lg overflow-hidden">
+                    class="mt-2 ml-6 space-y-1 bg-[rgb(var(--kpi-secondary-rgb)/0.92)] dark:bg-gray-950 
+                           border border-[var(--kpi-secondary)] dark:border-gray-800 
+                           rounded-2xl shadow-lg overflow-hidden p-1">
                     <li>
                         <a href="{{ route('records.billing') }}"
-                           class="block px-3 py-2 hover:bg-[#008fde]/70 dark:hover:bg-gray-800 
-                                  transition-all duration-200 ease-in-out rounded-md">
+                           class="block px-3 py-2 rounded-xl transition-all duration-200 ease-in-out
+                                  {{ request()->routeIs('records.billing') ? 'bg-white/20 text-white shadow-inner shadow-white/20' : 'text-white/80 hover:bg-white/10' }}">
                            Billing Records
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('records.billing.archived') }}"
-                           class="block px-3 py-2 hover:bg-[#008fde]/70 dark:hover:bg-gray-800 
-                                  transition-all duration-200 ease-in-out rounded-md">
+                           class="block px-3 py-2 rounded-xl transition-all duration-200 ease-in-out
+                                  {{ request()->routeIs('records.billing.archived') ? 'bg-white/20 text-white shadow-inner shadow-white/20' : 'text-white/80 hover:bg-white/10' }}">
                            Archived Billing
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('records.payments') }}"
-                           class="block px-3 py-2 hover:bg-[#008fde]/70 dark:hover:bg-gray-800 
-                                  transition-all duration-200 ease-in-out rounded-md">
+                           class="block px-3 py-2 rounded-xl transition-all duration-200 ease-in-out
+                                  {{ request()->routeIs('records.payments') ? 'bg-white/20 text-white shadow-inner shadow-white/20' : 'text-white/80 hover:bg-white/10' }}">
                            Payment Records
                         </a>
                     </li>
@@ -145,11 +145,11 @@
     </nav>
 
    {{-- Report Issue --}}
-<div x-data="reportIssueModal()" class="p-4 border-t border-[#0085DC] dark:border-gray-800">
+<div x-data="reportIssueModal()" class="p-4 border-t border-[var(--kpi-secondary)] dark:border-gray-800">
     <!-- Trigger Button -->
     <button @click="openModal('system')"
             class="w-full flex items-center gap-3 px-3 py-2 rounded-lg 
-                   hover:bg-[#008fde]/60 dark:hover:bg-gray-800 
+                   hover:bg-[rgb(var(--kpi-secondary-rgb)/0.55)] dark:hover:bg-gray-800 
                    transition-all duration-200 ease-in-out font-medium text-sm">
         <x-heroicon-o-exclamation-triangle class="w-5 h-5 text-yellow-400 dark:text-yellow-500" />
         <span>Report Issue</span>

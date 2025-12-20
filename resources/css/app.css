@@ -1,3 +1,43 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --brand-50: #eff6ff;
+    --brand-100: #dbeafe;
+    --brand-200: #bfdbfe;
+    --brand-300: #93c5fd;
+    --brand-400: #60a5fa;
+    --brand-500: #3b82f6;
+    --brand-600: #2563eb;
+    --brand-700: #1d4ed8;
+    --brand-800: #1e40af;
+    --brand-900: #1e3a8a;
+
+    --brand-300-rgb: 147 197 253;
+    --brand-500-rgb: 59 130 246;
+    --brand-600-rgb: 37 99 235;
+    --brand-700-rgb: 29 78 216;
+
+    --kpi-primary: #0ea5e9;
+    --kpi-secondary: #0284c7;
+    --kpi-primary-rgb: 14 165 233;
+    --kpi-secondary-rgb: 2 132 199;
+    --kpi-light: #38bdf8;
+    --kpi-light-rgb: 56 189 248;
+    --kpi-dark: #0369a1;
+    --kpi-dark-rgb: 3 105 161;
+
+    --palette-deep-navy: #0b1f3a;
+    --palette-deep-navy-rgb: 11 31 58;
+    --palette-mid-navy: #103a5e;
+    --palette-mid-navy-rgb: 16 58 94;
+    --palette-ocean: #145a8a;
+    --palette-ocean-rgb: 20 90 138;
+    --palette-slate: #4c86a8;
+    --palette-slate-rgb: 76 134 168;
+    --palette-mist: #a8c4d6;
+    --palette-mist-rgb: 168 196 214;
+  }
+}

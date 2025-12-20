@@ -5,79 +5,79 @@
 
     <!-- KPI block moved below as its own row -->
     <div class="grid grid-cols-12 gap-5 mt-1 md:mt-2">
-        <div class="col-span-12 grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
+        <div class="col-span-12 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-3.5 lg:gap-4 auto-rows-fr">
             <!-- Billed (This Month) -->
-            <div class="group relative overflow-hidden rounded-2xl shadow-lg p-2.5 sm:p-3.5 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 bg-sky-500 text-sky-50">
-                <div class="relative flex h-full flex-col justify-between">
-                    <div class="flex items-start gap-3">
-                        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-white/30">
+            <div class="group relative overflow-hidden rounded-2xl min-h-[150px] sm:min-h-[170px] shadow-lg p-3 sm:p-3.5 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 text-white" style="background-color: var(--kpi-primary);">
+                <div class="relative flex h-full flex-col justify-between gap-3">
+                    <div class="flex items-start gap-2.5">
+                        <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-white/25 text-white">
                             <x-heroicon-o-document-text class="w-4 h-4" />
                         </div>
                         <div class="space-y-1">
-                            <p class="text-xs uppercase tracking-[0.18em] text-sky-100 font-semibold">Billed revenue</p>
-                            <p class="text-base font-semibold text-sky-50">Invoices this month</p>
+                            <p class="text-[10px] uppercase tracking-[0.18em] text-white font-semibold">Billed revenue</p>
+                            <p class="text-sm font-semibold text-white">Invoices this month</p>
                         </div>
                     </div>
-                    <div class="text-right space-y-1 pt-3">
-                        <p class="text-2xl sm:text-3xl font-semibold">₱{{ number_format($stats['month_billed'] ?? 0, 2) }}</p>
-                        <p class="text-xs font-semibold text-sky-100">Live total billed</p>
+                    <div class="space-y-1 text-right">
+                        <p class="text-xl sm:text-2xl font-semibold leading-tight">₱{{ number_format($stats['month_billed'] ?? 0, 2) }}</p>
+                        <p class="text-[11px] font-semibold text-white/90">Live total billed</p>
                     </div>
                 </div>
             </div>
 
             <!-- Collected (This Month) -->
-            <a href="{{ route('records.payments') }}" class="group relative overflow-hidden rounded-2xl shadow-lg p-2.5 sm:p-3.5 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-sky-400 bg-sky-500 text-sky-50">
-                <div class="relative flex h-full flex-col justify-between">
-                    <div class="flex items-start gap-3">
-                        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-white/30">
+            <a href="{{ route('records.payments') }}" class="group relative overflow-hidden rounded-2xl min-h-[150px] sm:min-h-[170px] shadow-lg p-3 sm:p-3.5 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--kpi-primary)] text-white" style="background-color: var(--kpi-primary);">
+                <div class="relative flex h-full flex-col justify-between gap-3">
+                    <div class="flex items-start gap-2.5">
+                        <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-white/25 text-white">
                             <x-heroicon-o-banknotes class="w-4 h-4" />
                         </div>
                         <div class="space-y-1">
-                            <p class="text-xs uppercase tracking-[0.18em] text-sky-100 font-semibold">Collections</p>
-                            <p class="text-base font-semibold text-sky-50">Posted receipts</p>
+                            <p class="text-[10px] uppercase tracking-[0.18em] text-white font-semibold">Collections</p>
+                            <p class="text-sm font-semibold text-white">Posted receipts</p>
                         </div>
                     </div>
-                    <div class="text-right space-y-1 pt-3">
-                        <p class="text-2xl sm:text-3xl font-semibold">₱{{ number_format($stats['month_collected'] ?? 0, 2) }}</p>
-                        <p class="text-xs font-semibold text-sky-100">Settled ledger payments</p>
+                    <div class="space-y-1 text-right">
+                        <p class="text-xl sm:text-2xl font-semibold leading-tight">₱{{ number_format($stats['month_collected'] ?? 0, 2) }}</p>
+                        <p class="text-[11px] font-semibold text-white/90">Settled ledger payments</p>
                     </div>
                 </div>
             </a>
 
             <!-- Customers -->
-            <a href="{{ route('admin.customers') }}" class="group relative overflow-hidden rounded-2xl shadow-lg p-2.5 sm:p-3.5 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-sky-400 bg-sky-500 text-sky-50">
-                <div class="relative flex h-full flex-col justify-between">
-                    <div class="flex items-start gap-3">
-                        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-white/30">
+            <a href="{{ route('admin.customers') }}" class="group relative overflow-hidden rounded-2xl min-h-[150px] sm:min-h-[170px] shadow-lg p-3 sm:p-3.5 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--kpi-primary)] text-white" style="background-color: var(--kpi-primary);">
+                <div class="relative flex h-full flex-col justify-between gap-3">
+                    <div class="flex items-start gap-2.5">
+                        <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-white/25 text-white">
                             <x-heroicon-o-users class="w-4 h-4" />
                         </div>
                         <div class="space-y-1">
-                            <p class="text-xs uppercase tracking-[0.18em] text-sky-100 font-semibold">Active customers</p>
-                            <p class="text-base font-semibold text-sky-50">Accounts in good standing</p>
+                            <p class="text-[10px] uppercase tracking-[0.18em] text-white font-semibold">Active customers</p>
+                            <p class="text-sm font-semibold text-white">Accounts in good standing</p>
                         </div>
                     </div>
-                    <div class="text-right space-y-1 pt-3">
-                        <p class="text-3xl sm:text-4xl font-semibold">{{ number_format($stats['customers'] ?? 0) }}</p>
-                        <p class="text-xs font-semibold text-sky-100">Profiles in good standing</p>
+                    <div class="space-y-1 text-right">
+                        <p class="text-2xl sm:text-3xl font-semibold leading-tight">{{ number_format($stats['customers'] ?? 0) }}</p>
+                        <p class="text-[11px] font-semibold text-white/90">Profiles in good standing</p>
                     </div>
                 </div>
             </a>
 
             <!-- Collection Rate -->
-            <div class="group relative overflow-hidden rounded-2xl shadow-lg p-2.5 sm:p-3.5 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 bg-sky-500 text-sky-50">
-                <div class="relative flex h-full flex-col justify-between">
-                    <div class="flex items-start gap-3">
-                        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-white/30">
+            <div class="group relative overflow-hidden rounded-2xl min-h-[150px] sm:min-h-[170px] shadow-lg p-3 sm:p-3.5 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 text-white" style="background-color: var(--kpi-primary);">
+                <div class="relative flex h-full flex-col justify-between gap-3">
+                    <div class="flex items-start gap-2.5">
+                        <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-white/25 text-white">
                             <x-heroicon-o-arrow-trending-up class="w-4 h-4" />
                         </div>
                         <div class="space-y-1">
-                            <p class="text-xs uppercase tracking-[0.18em] text-sky-100 font-semibold">Collection rate</p>
-                            <p class="text-base font-semibold text-sky-50">Paid vs billed</p>
+                            <p class="text-[10px] uppercase tracking-[0.18em] text-white font-semibold">Collection rate</p>
+                            <p class="text-sm font-semibold text-white">Paid vs billed</p>
                         </div>
                     </div>
-                    <div class="text-right space-y-1 pt-3">
-                        <p class="text-2xl sm:text-3xl font-semibold">{{ number_format(($stats['collection_rate'] ?? 0) * 100, 1) }}%</p>
-                        <p class="text-xs font-semibold text-sky-100">Target ≥ 90%</p>
+                    <div class="space-y-1 text-right">
+                        <p class="text-xl sm:text-2xl font-semibold leading-tight">{{ number_format(($stats['collection_rate'] ?? 0) * 100, 1) }}%</p>
+                        <p class="text-[11px] font-semibold text-white/90">Target ≥ 90%</p>
                     </div>
                 </div>
             </div>
@@ -372,7 +372,7 @@ if (count($seriesYearUsage) !== 5) { $seriesYearUsage = array_pad($seriesYearUsa
     </div>
 
     <!-- Second row: Admin Tasks (8) + Analytics (4) -->
-    <div class="grid grid-cols-12 gap-4 lg:gap-5">
+    <div class="grid grid-cols-12 gap-5 lg:gap-6 xl:gap-7 px-3 sm:px-4 lg:px-6 mb-5 lg:mb-7">
         <!-- Admin Tasks -->
         <div class="col-span-12 lg:col-span-8 bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-200 dark:border-gray-700 p-4 lg:p-5 space-y-4">
             <div class="flex flex-wrap items-start justify-between gap-3">
@@ -413,9 +413,9 @@ if (count($seriesYearUsage) !== 5) { $seriesYearUsage = array_pad($seriesYearUsa
                     </div>
                 </a>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-5">
                 <div class="space-y-3">
-                    <div class="flex items-center justify_between">
+                    <div class="flex items-center justify-between">
                         <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">Awaiting approval</h3>
                         <span class="inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-200 px-2 py-0.5 text-[11px] font-medium">{{ number_format($applicationsPendingApprovalCount ?? 0) }}</span>
                     </div>
@@ -482,7 +482,7 @@ if (count($seriesYearUsage) !== 5) { $seriesYearUsage = array_pad($seriesYearUsa
                     <button type="button" data-connection-mode="percentage" class="px-3 py-1.5 text-gray-500 dark:text-gray-400 hover:text-blue-500">Share</button>
                 </div>
             </div>
-            <div class="h-[11rem] md:h-[13rem] lg:h-[18rem] flex items-center justify-center">
+            <div class="h-[11rem] md:h-[13rem] lg:h-[18rem] flex items-center justify-center px-2">
                 <div id="connectionChart" class="w-full h-full"></div>
             </div>
             <div class="mt-4 space-y-3">

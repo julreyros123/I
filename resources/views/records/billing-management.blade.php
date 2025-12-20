@@ -137,7 +137,7 @@
             </div>
 
             <aside class="space-y-4">
-                <div class="rounded-2xl border border-gray-100 bg-gradient-to-br from-slate-50 to-white p-5 shadow-sm dark:border-gray-800 dark:from-gray-900 dark:to-gray-900/80">
+                <div class="rounded-2xl border border-gray-100 bg-gradient-to-br from-slate-50 to-white p-5 shadow-sm dark:border-gray-800 dark:from-gray-900 dark:to-gray-900/80 flex flex-col h-full sticky top-20 self-start">
                     <div class="flex items-center justify-between gap-3 mb-4">
                         <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100">Live Summary</h3>
                         <span class="rounded-full bg-sky-100 px-3 py-1 text-[11px] font-semibold text-sky-600 dark:bg-sky-900/40 dark:text-sky-200">Instant</span>
@@ -172,16 +172,18 @@
                             <dd id="disconnectDateSummary" class="text-rose-600 dark:text-rose-300">—</dd>
                         </div>
                     </dl>
-                    <div class="mt-2 rounded-xl bg-slate-900 text-white dark:bg-slate-800 px-4 py-3">
-                        <div class="flex flex-col gap-3">
-                            <p class="text-[11px] uppercase tracking-wide text-slate-200">Total Amount Due</p>
-                            <div class="flex flex-col sm:flex-row sm:items-stretch gap-2 sm:gap-0">
-                                <p id="totalDisplay" class="flex-1 text-2xl font-semibold text-gray-900 bg-white px-5 h-[46px] rounded-lg sm:rounded-r-none inline-flex items-center justify-center min-w-[10rem]">₱0.00</p>
-                                <x-primary-button id="saveBillBtn" type="button" class="px-6 h-[46px] flex items-center justify-center rounded-lg sm:rounded-l-none sm:rounded-r-lg">Save Bill</x-primary-button>
-                            </div>
+                    <div class="mt-6 lg:mt-auto rounded-xl bg-[var(--kpi-primary,#0000ff)] text-white px-3.5 py-3 shadow-md shadow-[var(--kpi-primary,#0000ff)]/45">
+                        <p class="text-[10px] uppercase tracking-[0.25em] text-white/70">Total amount due</p>
+                        <div class="mt-2 rounded-xl border border-white/50 bg-white text-center px-3 py-2 shadow">
+                            <p id="totalDisplay" class="text-3xl font-semibold tracking-tight text-[var(--kpi-primary,#0000ff)]">₱0.00</p>
                         </div>
+                        <div class="mt-2">
+                            <button id="saveBillBtn" type="button" class="w-full h-10 rounded-lg bg-[var(--kpi-dark,#0000b0)] text-white text-[13px] font-semibold tracking-[0.18em] uppercase shadow-[0_6px_12px_rgba(0,0,0,0.25)] hover:brightness-110 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-white/80">
+                                Save Bill
+                            </button>
+                        </div>
+                        <p class="mt-2 text-[10px] text-white/70">Status defaults to <span class="font-semibold text-sky-200">Pending</span> until the customer settles their balance.</p>
                     </div>
-                    <div class="mt-4 text-[11px] text-gray-400">Status defaults to <span class="font-semibold text-sky-500">Pending</span> until the customer settles their balance.</div>
                 </div>
             </aside>
         </div>
