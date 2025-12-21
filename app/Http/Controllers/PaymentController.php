@@ -22,6 +22,31 @@ class PaymentController extends Controller
         ]);
     }
 
+    protected function buildPaymentSummary(array $input, array $result): string
+    {
+        $parts = [];
+        if (!empty($input['payment_method'])) {
+            $parts[] = 'Method: ' . $input['payment_method'];
+        }
+        if (!empty($input['reference_number'])) {
+            $parts[] = 'Reference: ' . $input['reference_number'];
+        }
+        if (!empty($input['notes'])) {
+            $parts[] = 'Notes: ' . $input['notes'];
+        }
+        $details = $result['payment_details'] ?? [];
+        if (is_array($details)) {
+            if (isset($details['overpayment']) && $details['overpayment'] > 0) {
+                $parts[] = 'Overpayment: ₱' . number_format((float) $details['overpayment'], 2);
+            }
+            if (isset($details['bills_paid']) && $details['bills_paid'] > 0) {
+                $parts[] = sprintf('Bills settled: %d', (int) $details['bills_paid']);
+            }
+        }
+
+        return $parts ? implode(' • ', $parts) : '—';
+    }
+
     public function searchCustomer(Request $request): JsonResponse
     {
         $request->validate([
@@ -250,8 +275,7 @@ class PaymentController extends Controller
                 'meta' => [
                     'account_no' => $data['account_no'],
                     'amount_paid' => $data['amount_paid'],
-                    'payment_method' => $data['payment_method'] ?? null,
-                    'reference_number' => $data['reference_number'] ?? null,
+                    'payment_summary' => $this->buildPaymentSummary($data, $result ?? []),
                     'payment_details' => $result['payment_details'] ?? null,
                     'auto_archived' => $result['auto_archived'] ?? null,
                 ],

@@ -43,7 +43,7 @@
                         </div>
                         <div class="md:col-span-3 space-y-2">
                             <label class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Person In Charge</label>
-                            <x-ui.input id="prepared_by" value="{{ auth()->user()->name ?? '' }}" placeholder="e.g. Juan Dela Cruz" />
+                            <x-ui.input id="prepared_by" value="{{ (trim(auth()->user()->name ?? '') === 'Sample Staff') ? 'Staff' : (auth()->user()->name ?? 'Staff') }}" placeholder="Staff" />
                         </div>
                     </div>
 
@@ -946,6 +946,41 @@ document.getElementById('statusForm').addEventListener('submit', async function(
     return `${base}-${random}`;
   }
 
+  function formatInputDate(date) {
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  }
+
+  function resolveIssuedDate() {
+    const issuedEl = $('issued_at');
+    if (issuedEl && issuedEl.value) {
+      const parsed = new Date(`${issuedEl.value}T00:00:00`);
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed;
+      }
+    }
+    return new Date();
+  }
+
+  function applyBillingPeriodDefaults(force = false) {
+    const base = resolveIssuedDate();
+    const periodStart = new Date(base.getFullYear(), base.getMonth(), 1);
+    const periodEnd = new Date(base.getFullYear(), base.getMonth() + 1, 0);
+
+    const fromEl = $('date_from');
+    if (fromEl && (force || !fromEl.value || fromEl.dataset.autoFilled === 'true')) {
+      fromEl.value = formatInputDate(periodStart);
+      fromEl.dataset.autoFilled = 'true';
+    }
+
+    const toEl = $('date_to');
+    if (toEl && (force || !toEl.value || toEl.dataset.autoFilled === 'true')) {
+      toEl.value = formatInputDate(periodEnd);
+      toEl.dataset.autoFilled = 'true';
+    }
+
+    updateDueDate();
+  }
+
   function formatDisplayDate(date) {
     return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
   }
@@ -1019,6 +1054,7 @@ document.getElementById('statusForm').addEventListener('submit', async function(
     if (invoiceField && !invoiceField.value) {
       invoiceField.value = generateInvoiceNumber();
     }
+    applyBillingPeriodDefaults();
     calculate();
   }
 
@@ -1037,7 +1073,20 @@ document.getElementById('statusForm').addEventListener('submit', async function(
     if (!el) return;
     el.addEventListener('input', calculate);
     el.addEventListener('change', calculate);
+    if (id === 'date_from' || id === 'date_to') {
+      const markManual = () => { el.dataset.autoFilled = 'false'; };
+      el.addEventListener('input', markManual);
+      el.addEventListener('change', markManual);
+    }
   });
+
+  const issuedField = $('issued_at');
+  if (issuedField) {
+    issuedField.addEventListener('change', () => {
+      applyBillingPeriodDefaults();
+      calculate();
+    });
+  }
 
   const saveBtn = $('saveBillBtn');
   if (saveBtn) {

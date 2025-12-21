@@ -76,6 +76,19 @@
                     <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Meter Serial</label>
                     <input id="tmMeterSerial" type="text" class="w-full border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 bg-gray-100 dark:bg-gray-900 text-sm" readonly />
                 </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Original Owner</label>
+                        <div id="tmOriginalOwner" class="min-h-[40px] w-full border border-dashed border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 bg-white dark:bg-gray-900 text-sm text-gray-700 dark:text-gray-100 flex items-center">—</div>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Total Transfers Recorded</label>
+                        <div id="tmHistoryCount" class="min-h-[40px] w-full border border-dashed border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 bg-white dark:bg-gray-900 text-sm text-gray-700 dark:text-gray-100 flex items-center justify-between">
+                            <span data-history-count>0</span>
+                            <span class="text-[11px] text-gray-400" data-history-last="">—</span>
+                        </div>
+                    </div>
+                </div>
                 <div>
                     <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">New Account Owner</label>
                     <input id="tmNewName" type="text" placeholder="Full name" class="w-full border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 bg-white dark:bg-gray-900 text-sm" />
@@ -94,9 +107,39 @@
                     <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Reason / Notes</label>
                     <textarea id="tmNotes" rows="2" class="w-full border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 bg-white dark:bg-gray-900 text-sm" placeholder="Describe why the ownership is being transferred"></textarea>
                 </div>
+                <div class="flex items-center justify-between gap-3">
+                    <div>
+                        <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">History</label>
+                        <button id="tmHistoryBtn" type="button" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-xs font-semibold text-gray-700 dark:text-gray-100 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+                            <x-heroicon-o-clock class="w-4 h-4" /> View Ownership History
+                        </button>
+                    </div>
+                    <div class="text-xs text-gray-400 hidden" id="tmHistorySummary"></div>
+                </div>
             </div>
             <div class="px-5 py-4 border-t border-gray-200 dark:border-gray-700 text-right">
                 <button id="tmSave" class="px-3 py-2 rounded-md bg-blue-600 text-white text-sm">Transfer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transfer History Modal -->
+    <div id="tmHistoryModal" class="hidden fixed inset-0 z-50 bg-black/60 items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl" data-history-modal-content>
+            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <div>
+                    <h3 class="text-base md:text-lg font-semibold text-gray-800 dark:text-gray-100">Meter Ownership History</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400" id="tmHistorySubtitle">Account —</p>
+                </div>
+                <button id="tmHistoryClose" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">Close</button>
+            </div>
+            <div class="px-6 py-5">
+                <div id="tmHistory" class="max-h-[420px] overflow-y-auto space-y-3">
+                    <div class="text-xs text-gray-400">No previous transfers recorded.</div>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 text-right">
+                <button id="tmHistoryCloseBottom" class="px-3 py-2 rounded-md bg-blue-600 text-white text-sm">Done</button>
             </div>
         </div>
     </div>
@@ -854,6 +897,16 @@
     const tmNewContact = document.getElementById('tmNewContact');
     const tmDate = document.getElementById('tmDate');
     const tmNotes = document.getElementById('tmNotes');
+    const tmOriginalOwner = document.getElementById('tmOriginalOwner');
+    const tmHistory = document.getElementById('tmHistory');
+    const tmHistoryCount = document.getElementById('tmHistoryCount');
+    const tmHistoryBtn = document.getElementById('tmHistoryBtn');
+    const tmHistorySummary = document.getElementById('tmHistorySummary');
+    const tmHistoryModal = document.getElementById('tmHistoryModal');
+    const tmHistoryClose = document.getElementById('tmHistoryClose');
+    const tmHistoryCloseBottom = document.getElementById('tmHistoryCloseBottom');
+    const tmHistorySubtitle = document.getElementById('tmHistorySubtitle');
+    let activeTransferFetch = null;
 
     function openTransferModal(payload){
         if (!transferModal) return;
@@ -864,14 +917,160 @@
         tmNewContact.value = payload.contact || '';
         tmDate.value = new Date().toISOString().slice(0,10);
         tmNotes.value = '';
+        if (tmOriginalOwner){ tmOriginalOwner.textContent = 'Loading…'; }
+        if (tmHistory){
+            tmHistory.innerHTML = '<div class="text-xs text-gray-400">Loading transfer history…</div>';
+        }
+        if (tmHistoryCount){
+            const countEl = tmHistoryCount.querySelector('[data-history-count]');
+            const lastEl = tmHistoryCount.querySelector('[data-history-last]');
+            if (countEl){ countEl.textContent = '—'; }
+            if (lastEl){ lastEl.textContent = '—'; }
+        }
+        if (tmHistorySummary){
+            tmHistorySummary.classList.add('hidden');
+            tmHistorySummary.textContent = '';
+        }
         transferModal.classList.remove('hidden');
         transferModal.classList.add('flex');
+        loadTransferContext(payload.id);
     }
 
     function closeTransferModal(){
         if (!transferModal) return;
         transferModal.classList.add('hidden');
         transferModal.classList.remove('flex');
+        if (activeTransferFetch){
+            activeTransferFetch.abort();
+            activeTransferFetch = null;
+        }
+    }
+
+    function formatHistoryItem(item){
+        const when = item.performed_at ? new Date(item.performed_at).toLocaleString() : '—';
+        const by = item.performed_by || 'System';
+        const oldVal = item.old_value || '—';
+        const newVal = item.new_value || '—';
+        const notes = item.notes ? `<div class="text-[11px] text-gray-500 dark:text-gray-400 mt-1">${item.notes}</div>` : '';
+        return `<div class="border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2">
+            <div class="flex items-center justify-between text-[11px] text-gray-400">
+                <span>${when}</span>
+                <span>by ${by}</span>
+            </div>
+            <div class="text-xs text-gray-700 dark:text-gray-200">${oldVal} → <span class="font-semibold">${newVal}</span></div>
+            ${notes}
+        </div>`;
+    }
+
+    async function loadTransferContext(accountId){
+        if (!accountId) return;
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        if (activeTransferFetch){
+            activeTransferFetch.abort();
+        }
+        activeTransferFetch = new AbortController();
+        try {
+            const res = await fetch(`/api/customer/${accountId}`, {
+                headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': token },
+                signal: activeTransferFetch.signal,
+            });
+            if (!res.ok) throw new Error('Failed');
+            const data = await res.json().catch(() => ({}));
+            const original = data.original_owner || '—';
+            if (tmOriginalOwner){ tmOriginalOwner.textContent = original; }
+            if (tmHistory){
+                const history = Array.isArray(data.transfer_history) ? data.transfer_history : [];
+                if (!history.length){
+                    tmHistory.innerHTML = '<div class="text-xs text-gray-400">No previous transfers recorded.</div>';
+                } else {
+                    tmHistory.innerHTML = history.map(formatHistoryItem).join('');
+                    if (tmHistorySummary){
+                        const latest = history[0]?.performed_at ? new Date(history[0].performed_at).toLocaleDateString() : '—';
+                        tmHistorySummary.textContent = `Last transfer: ${latest}`;
+                        tmHistorySummary.classList.remove('hidden');
+                    }
+                }
+                if (tmHistoryCount){
+                    const countEl = tmHistoryCount.querySelector('[data-history-count]');
+                    const lastEl = tmHistoryCount.querySelector('[data-history-last]');
+                    if (countEl){ countEl.textContent = history.length; }
+                    if (lastEl){
+                        const latest = history[0]?.performed_at ? new Date(history[0].performed_at).toLocaleDateString() : '—';
+                        lastEl.textContent = history.length ? `Last: ${latest}` : '—';
+                    }
+                }
+            }
+        } catch (error) {
+            if ((error || {}).name === 'AbortError') return;
+            console.error(error);
+            if (tmOriginalOwner){ tmOriginalOwner.textContent = 'Unable to load transfer info'; }
+            if (tmHistory){
+                tmHistory.innerHTML = '<div class="text-xs text-rose-500">Failed to load transfer history.</div>';
+            }
+            if (tmHistoryCount){
+                const countEl = tmHistoryCount.querySelector('[data-history-count]');
+                const lastEl = tmHistoryCount.querySelector('[data-history-last]');
+                if (countEl){ countEl.textContent = '—'; }
+                if (lastEl){ lastEl.textContent = '—'; }
+            }
+            if (tmHistorySummary){
+                tmHistorySummary.classList.add('hidden');
+                tmHistorySummary.textContent = '';
+            }
+        }
+    }
+
+    function openHistoryModal(){
+        if (!tmHistoryModal) return;
+        tmHistoryModal.classList.remove('hidden');
+        tmHistoryModal.classList.add('flex');
+        requestAnimationFrame(() => {
+            const content = tmHistoryModal.querySelector('[data-history-modal-content]');
+            if (content){
+                content.classList.remove('translate-y-6','opacity-0');
+                content.classList.add('translate-y-0','opacity-100');
+            }
+        });
+    }
+
+    function closeHistoryModal(){
+        if (!tmHistoryModal) return;
+        const content = tmHistoryModal.querySelector('[data-history-modal-content]');
+        if (content){
+            content.classList.add('translate-y-6','opacity-0');
+            content.classList.remove('translate-y-0','opacity-100');
+        }
+        setTimeout(() => {
+            tmHistoryModal.classList.add('hidden');
+            tmHistoryModal.classList.remove('flex');
+        }, 160);
+    }
+
+    if (tmHistoryBtn){
+        tmHistoryBtn.addEventListener('click', () => {
+            if (tmHistorySubtitle){
+                const account = tmAccountName.value || '—';
+                const serial = tmMeterSerial.value ? ` • Meter ${tmMeterSerial.value}` : '';
+                tmHistorySubtitle.textContent = `${account}${serial}`;
+            }
+            openHistoryModal();
+        });
+    }
+
+    if (tmHistoryClose){
+        tmHistoryClose.addEventListener('click', closeHistoryModal);
+    }
+
+    if (tmHistoryCloseBottom){
+        tmHistoryCloseBottom.addEventListener('click', closeHistoryModal);
+    }
+
+    if (tmHistoryModal){
+        tmHistoryModal.addEventListener('click', (event) => {
+            if (event.target === tmHistoryModal){
+                closeHistoryModal();
+            }
+        });
     }
 
     async function submitTransfer(){
