@@ -113,9 +113,16 @@
                                     <a href="{{ route('records.billing.print', $r->id) }}" title="Print" class="inline-flex items-center justify-center w-9 h-9 rounded-full border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-300 hover:text-sky-600 hover:border-sky-300 dark:hover:text-sky-300">
                                         <x-heroicon-o-printer class="w-4 h-4" />
                                     </a>
-                                    <a href="{{ route('payment.index', ['account' => $r->account_no]) }}" title="Collect payment" class="inline-flex items-center justify-center w-9 h-9 rounded-full border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-300 hover:text-emerald-600 hover:border-emerald-300 dark:hover:text-emerald-300">
-                                        <x-heroicon-o-credit-card class="w-4 h-4" />
-                                    </a>
+                                    @if($r->bill_status === 'Pending')
+                                        <a href="{{ route('payment.index', ['account' => $r->account_no]) }}" title="Collect payment" class="inline-flex items-center justify-center w-9 h-9 rounded-full border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-300 hover:text-emerald-600 hover:border-emerald-300 dark:hover:text-emerald-300">
+                                            <x-heroicon-o-credit-card class="w-4 h-4" />
+                                        </a>
+                                    @else
+                                        <button type="button" disabled title="Collection disabled for this status"
+                                                class="inline-flex items-center justify-center w-9 h-9 rounded-full border border-gray-200 dark:border-gray-700 text-gray-300 dark:text-gray-500 bg-gray-50 dark:bg-gray-900/40 cursor-not-allowed opacity-70">
+                                            <x-heroicon-o-credit-card class="w-4 h-4" />
+                                        </button>
+                                    @endif
                                     @if($r->bill_status === 'Paid')
                                         <button type="button" title="Archive" data-archive-target="archiveForm-{{ $r->id }}"
                                                 class="js-archive-trigger inline-flex items-center justify-center w-9 h-9 rounded-full border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-300 hover:text-sky-600 hover:border-sky-300 dark:hover:text-sky-300">
@@ -230,9 +237,16 @@
                         <a href="{{ route('records.billing.print', $r->id) }}" class="inline-flex items-center gap-1 rounded-full border border-gray-200 dark:border-gray-700 px-3 py-1.5 text-xs font-semibold text-gray-600 dark:text-gray-300 hover:text-sky-600 hover:border-sky-300 dark:hover:text-sky-300">
                             <x-heroicon-o-printer class="w-4 h-4" /> Print
                         </a>
-                        <a href="{{ route('payment.index', ['account' => $r->account_no]) }}" class="inline-flex items-center gap-1 rounded-full border border-gray-200 dark:border-gray-700 px-3 py-1.5 text-xs font-semibold text-gray-600 dark:text-gray-300 hover:text-emerald-600 hover:border-emerald-300 dark:hover:text-emerald-300">
-                            <x-heroicon-o-credit-card class="w-4 h-4" /> Collect
-                        </a>
+                        @if($r->bill_status === 'Pending')
+                            <a href="{{ route('payment.index', ['account' => $r->account_no]) }}" class="inline-flex items-center gap-1 rounded-full border border-gray-200 dark:border-gray-700 px-3 py-1.5 text-xs font-semibold text-gray-600 dark:text-gray-300 hover:text-emerald-600 hover:border-emerald-300 dark:hover:text-emerald-300">
+                                <x-heroicon-o-credit-card class="w-4 h-4" /> Collect
+                            </a>
+                        @else
+                            <button type="button" disabled title="Collection disabled for this status"
+                                    class="inline-flex items-center gap-1 rounded-full border border-gray-200 dark:border-gray-700 px-3 py-1.5 text-xs font-semibold text-gray-300 dark:text-gray-500 bg-gray-50 dark:bg-gray-900/40 cursor-not-allowed opacity-70">
+                                <x-heroicon-o-credit-card class="w-4 h-4" /> Collect
+                            </button>
+                        @endif
                         @if($r->bill_status === 'Paid')
                             <button type="button" data-archive-target="archiveForm-{{ $r->id }}"
                                     class="js-archive-trigger inline-flex items-center gap-1 rounded-full border border-gray-200 dark:border-gray-700 px-3 py-1.5 text-xs font-semibold text-gray-600 dark:text-gray-300 hover:text-sky-600 hover:border-sky-300 dark:hover:text-sky-300">
@@ -328,7 +342,6 @@ document.addEventListener('DOMContentLoaded', function(){
     const bulkArchiveBtnMobile = document.getElementById('bulkArchiveBtnMobile');
     const modalCloseButtons = Array.from(document.querySelectorAll('[data-modal-close]'));
     const modalTriggers = Array.from(document.querySelectorAll('[data-modal-target="bulkArchiveModal"]'));
-
     function syncButton(){
         const anyChecked = items.some(cb => cb.checked);
         if (submitBtn) {

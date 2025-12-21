@@ -314,6 +314,13 @@
                             };
                             $daysOverdue = ($record->due_date && now()->greaterThan($record->due_date)) ? $record->due_date->diffInDays(now()) : 0;
                             $printed = (bool) $record->is_generated;
+                            $collectBlockedMessage = match($status) {
+                                'Disconnected' => 'Payment collection is blocked because this account is disconnected. Reconnect the service first.',
+                                'Notice of Disconnection' => 'Resolve the notice of disconnection before collecting payment.',
+                                'Outstanding Payment' => 'Collect this payment from the Payments module once the bill is marked Pending again.',
+                                'Overdue' => 'Clear overdue status before collecting payment from this bill.',
+                                default => "This bill can't be collected because the status is " . ($status ?? 'not pending') . '.',
+                            };
                         @endphp
                         <tr class="transition hover:bg-blue-50/40 dark:hover:bg-gray-800" data-id="{{ $record->id }}">
                             <td class="px-6 py-3 align-middle">
@@ -359,10 +366,17 @@
                                             class="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-200 hover:bg-blue-600 hover:text-white transition {{ $printed ? 'opacity-50 cursor-not-allowed hover:bg-white hover:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-gray-500' : '' }}" {{ $printed ? 'disabled' : '' }}>
                                         <x-heroicon-o-printer class="w-4 h-4" />
                                     </button>
-                                    <a href="{{ route('payment.index', ['account' => $record->account_no]) }}" title="Collect payment"
-                                       class="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-200 hover:bg-emerald-600 hover:text-white transition">
-                                        <x-heroicon-o-credit-card class="w-4 h-4" />
-                                    </a>
+                                    @if($status === 'Pending')
+                                        <a href="{{ route('payment.index', ['account' => $record->account_no]) }}" title="Collect payment"
+                                           class="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-200 hover:bg-emerald-600 hover:text-white transition">
+                                            <x-heroicon-o-credit-card class="w-4 h-4" />
+                                        </a>
+                                    @else
+                                        <button type="button" disabled title="Collection disabled for this status"
+                                                class="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-300 dark:text-gray-500 opacity-60 cursor-not-allowed">
+                                            <x-heroicon-o-credit-card class="w-4 h-4" />
+                                        </button>
+                                    @endif
                                     @if($printed)
                                         <a href="{{ route('records.billing.print', $record->id) }}" target="_blank" title="Open printed bill"
                                            class="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-200 hover:bg-emerald-600 hover:text-white transition">
@@ -719,7 +733,11 @@ function bumpCounts(deltaPending, deltaGenerated){
 
 function initBulkControls(){
   const bulkBtn = document.getElementById('bulkGenerateBtn');
+  const filtersForm = document.getElementById('billingFiltersForm');
   if (!bulkBtn) return;
+
+  const modalCloseButtons = Array.from(document.querySelectorAll('[data-modal-close]'));
+  const modalTriggers = Array.from(document.querySelectorAll('[data-modal-target="bulkArchiveModal"]'));
 
   const selectAll = document.getElementById('selectAll');
   const rowChecks = Array.from(document.querySelectorAll('.row-check'));
@@ -961,6 +979,37 @@ document.getElementById('statusForm').addEventListener('submit', async function(
     return new Date();
   }
 
+  function syncPeriodEndWithStart(options = {}) {
+    const { force = false } = options;
+    const fromEl = $('date_from');
+    const toEl = $('date_to');
+    if (!fromEl || !toEl) return;
+
+    const rawFrom = (fromEl.value || '').trim();
+    if (!rawFrom) return;
+
+    const start = new Date(`${rawFrom}T00:00:00`);
+    if (Number.isNaN(start.getTime())) return;
+
+    const rawTo = (toEl.value || '').trim();
+    let shouldUpdate = force || !rawTo || toEl.dataset.autoFilled === 'true';
+
+    if (!shouldUpdate && rawTo) {
+      const currentTo = new Date(`${rawTo}T00:00:00`);
+      if (Number.isNaN(currentTo.getTime()) || currentTo < start) {
+        shouldUpdate = true;
+      }
+    }
+
+    if (!shouldUpdate) return;
+
+    const endOfMonth = new Date(start.getFullYear(), start.getMonth() + 1, 0);
+    toEl.value = formatInputDate(endOfMonth);
+    toEl.dataset.autoFilled = 'true';
+
+    updateDueDate();
+  }
+
   function applyBillingPeriodDefaults(force = false) {
     const base = resolveIssuedDate();
     const periodStart = new Date(base.getFullYear(), base.getMonth(), 1);
@@ -1086,6 +1135,25 @@ document.getElementById('statusForm').addEventListener('submit', async function(
       applyBillingPeriodDefaults();
       calculate();
     });
+  }
+
+  const dateFromField = $('date_from');
+  if (dateFromField) {
+    dateFromField.addEventListener('input', () => {
+      dateFromField.dataset.autoFilled = 'false';
+    });
+    dateFromField.addEventListener('change', () => {
+      dateFromField.dataset.autoFilled = 'false';
+      syncPeriodEndWithStart({ force: true });
+      calculate();
+    });
+  }
+
+  const dateToField = $('date_to');
+  if (dateToField) {
+    const markManualTo = () => { dateToField.dataset.autoFilled = 'false'; };
+    dateToField.addEventListener('input', markManualTo);
+    dateToField.addEventListener('change', markManualTo);
   }
 
   const saveBtn = $('saveBillBtn');

@@ -647,6 +647,30 @@ class AdminController extends Controller
             'performed_by' => optional(auth()->user())->id,
             'performed_at' => $transferDate,
         ]);
+
+        ActivityLog::create([
+            'user_id' => optional(auth()->user())->id,
+            'module' => 'Customers',
+            'action' => 'METER_OWNERSHIP_TRANSFERRED',
+            'description' => sprintf(
+                'Transferred ownership of account %s from %s to %s',
+                $customer->account_no,
+                $oldName,
+                $customer->name
+            ),
+            'target_type' => Customer::class,
+            'target_id' => $customer->id,
+            'meta' => [
+                'account_no' => $customer->account_no,
+                'previous_owner' => $oldName,
+                'new_owner' => $customer->name,
+                'previous_contact' => $oldContact,
+                'new_contact' => $customer->contact_no,
+                'meter_serial' => $meterSerial,
+                'notes' => $validated['notes'] ?? null,
+                'transfer_date' => $transferDate->toDateTimeString(),
+            ],
+        ]);
     }
 
     public function meters()

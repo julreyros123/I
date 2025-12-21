@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ActivityLog;
 use App\Models\Customer;
 use App\Models\Notification;
 use App\Models\TransferReconnectAudit;
@@ -26,6 +27,7 @@ class ReconnectService
             return null;
         }
 
+        $previousStatus = $customer->status;
         $customer->status = 'Active';
         $customer->reconnect_requested_at = null;
         $customer->reconnect_requested_by = null;
@@ -54,6 +56,22 @@ class ReconnectService
         } catch (\Exception $e) {
             Log::warning('ReconnectService: failed to create notification/audit - ' . $e->getMessage());
         }
+
+        ActivityLog::create([
+            'user_id' => auth()->id(),
+            'module' => 'Customers',
+            'action' => 'CUSTOMER_RECONNECTED',
+            'description' => sprintf('Reconnected service for account %s (%s)', $accountNo, $customer->name ?? 'Unknown'),
+            'target_type' => Customer::class,
+            'target_id' => $customer->id,
+            'meta' => [
+                'account_no' => $accountNo,
+                'customer_name' => $customer->name,
+                'previous_status' => $previousStatus,
+                'notes' => $notes,
+                'performed_at' => now()->toDateTimeString(),
+            ],
+        ]);
 
         return $customer;
     }

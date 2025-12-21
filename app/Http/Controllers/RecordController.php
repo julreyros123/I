@@ -348,17 +348,26 @@ class RecordController extends Controller
         return view('records.billing-management', compact('records', 'q', 'status', 'stats', 'generated', 'quick', 'pending'));
     }
 
-    public function payments()
+    public function payments(Request $request)
     {
-        $q = trim((string) request()->get('q', ''));
-        $payments = BillingRecord::with('customer')
-            ->when($q, function($query) use ($q) {
-                $query->where('account_no', 'like', "%{$q}%")
-                      ->orWhereHas('customer', function($sub) use ($q){
-                          $sub->where('name', 'like', "%{$q}%");
-                      });
+        $q = trim((string) $request->get('q', ''));
+
+        $payments = Customer::query()
+            ->select('customers.*')
+            ->whereHas('paymentRecords')
+            ->withCount(['paymentRecords as payment_count'])
+            ->withSum('paymentRecords as total_paid', 'amount_paid')
+            ->addSelect([
+                'latest_payment_at' => PaymentRecord::selectRaw('MAX(created_at)')
+                    ->whereColumn('payment_records.customer_id', 'customers.id'),
+            ])
+            ->when($q, function ($query) use ($q) {
+                $query->where(function ($inner) use ($q) {
+                    $inner->where('customers.account_no', 'like', "%{$q}%")
+                          ->orWhere('customers.name', 'like', "%{$q}%");
+                });
             })
-            ->orderByDesc('created_at')
+            ->orderByDesc('latest_payment_at')
             ->paginate(15)
             ->withQueryString();
 
@@ -477,25 +486,38 @@ class RecordController extends Controller
     {
         $request->validate(['account_no' => ['required','string','max:50']]);
         $acct = $request->string('account_no')->toString();
-        $rows = BillingRecord::with('customer')
+
+        $payments = PaymentRecord::query()
+            ->with([
+                'billingRecord' => function ($query) {
+                    $query->withTrashed();
+                },
+            ])
             ->where('account_no', $acct)
             ->orderByDesc('created_at')
-            ->take(100)
-            ->get()
-            ->map(function($r){
-                return [
-                    'date' => optional($r->created_at)->format('Y-m-d'),
-                    'previous' => (float) $r->previous_reading,
-                    'current' => (float) $r->current_reading,
-                    'maintenance' => (float) $r->maintenance_charge,
-                    'service_fee' => (float) $r->service_fee,
-                    'amount_paid' => (float) $r->total_amount,
-                    'consumption' => (float) $r->consumption_cu_m,
-                    'name' => $r->customer->name ?? null,
-                    'address' => $r->customer->address ?? null,
-                ];
-            });
-        return response()->json(['ok' => true, 'history' => $rows]);
+            ->limit(100)
+            ->get();
+
+        $rows = $payments->map(function (PaymentRecord $payment) {
+            $bill = $payment->billingRecord;
+            return [
+                'date' => optional($payment->created_at)->format('Y-m-d'),
+                'previous' => (float) ($bill->previous_reading ?? 0),
+                'current' => (float) ($bill->current_reading ?? 0),
+                'maintenance' => (float) ($bill->maintenance_charge ?? 0),
+                'service_fee' => (float) ($bill->service_fee ?? 0),
+                'amount_paid' => (float) $payment->amount_paid,
+                'consumption' => (float) ($bill->consumption_cu_m ?? 0),
+                'bill_amount' => (float) ($payment->bill_amount ?? $bill->total_amount ?? 0),
+                'payment_status' => $payment->payment_status,
+                'notes' => $payment->notes,
+            ];
+        });
+
+        return response()->json([
+            'ok' => true,
+            'history' => $rows,
+        ]);
     }
 
     public function billingStats(Request $request)

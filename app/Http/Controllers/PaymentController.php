@@ -10,6 +10,7 @@ use App\Models\PaymentRecord;
 use App\Models\Register;
 use App\Services\PaymentService;
 use App\Models\ActivityLog;
+use Illuminate\Support\Facades\DB;
 
 class PaymentController extends Controller
 {
@@ -60,7 +61,24 @@ class PaymentController extends Controller
                 ->where('account_no', $inputAcct)
                 ->orWhereRaw("REPLACE(REPLACE(account_no,'-',''),' ','') = ?", [$normalized])
                 ->first();
-            
+
+            if (!$customer && str_contains($inputAcct, '-')) {
+                $withoutCheck = preg_replace('/-([A-Za-z0-9])$/', '', $inputAcct);
+                if ($withoutCheck) {
+                    $customer = Customer::query()
+                        ->where('account_no', $withoutCheck)
+                        ->orWhereRaw("REPLACE(REPLACE(account_no,'-',''),' ','') = ?", [preg_replace('/[^A-Za-z0-9]/', '', $withoutCheck)])
+                        ->first();
+                }
+            }
+
+            if (!$customer) {
+                $customer = Customer::query()
+                    ->whereRaw("REPLACE(REPLACE(account_no,'-',''),' ','') LIKE ?", ["{$normalized}%"])
+                    ->orderByRaw('LENGTH(account_no) ASC')
+                    ->first();
+            }
+
             if (!$customer) {
                 return response()->json([
                     'error' => 'Customer not found'
@@ -69,8 +87,28 @@ class PaymentController extends Controller
 
             // Use the stored account number for consistency in downstream queries
             $acct = $customer->account_no;
+            $normalizedAcct = preg_replace('/[^A-Za-z0-9]/', '', $acct ?? '') ?: null;
+
+            $applyAccountFilter = function ($query) use ($acct, $normalizedAcct, $inputAcct) {
+                $query->where('account_no', $inputAcct);
+                if ($acct && $acct !== $inputAcct) {
+                    $query->orWhere('account_no', $acct);
+                }
+                if ($normalizedAcct) {
+                    $query->orWhereRaw("REPLACE(REPLACE(account_no,'-',''),' ','') = ?", [$normalizedAcct]);
+                }
+            };
+
+            if (strcasecmp((string) ($customer->status ?? ''), 'Active') !== 0) {
+                return response()->json([
+                    'error' => 'Customer status is not Active. Only active accounts can make payments.',
+                ], 422);
+            }
+
             // Get all unpaid bills for this customer
-            $allBills = BillingRecord::where('account_no', $acct)
+            $allBills = BillingRecord::where(function ($query) use ($applyAccountFilter) {
+                    $applyAccountFilter($query);
+                })
                 ->withSum('paymentRecords as amount_paid_sum', 'amount_paid')
                 ->orderByDesc('created_at')
                 ->get();
@@ -85,6 +123,12 @@ class PaymentController extends Controller
                 $paidSum = (float) ($bill->amount_paid_sum ?? 0);
                 return $carry + max(0, (float) $bill->total_amount - $paidSum);
             }, 0.0);
+
+            if ($totalOutstanding <= 0.01) {
+                return response()->json([
+                    'error' => 'This customer has no unpaid bills to settle.',
+                ], 422);
+            }
 
             // Get the latest unpaid bill for detailed information
             $latestBill = $unpaidBills->sortByDesc('created_at')->first();
@@ -175,36 +219,67 @@ class PaymentController extends Controller
 
         $query = trim($data['q']);
         $nameFilter = isset($data['name']) ? trim($data['name']) : '';
+        $normalizedQuery = preg_replace('/[^A-Za-z0-9]/', '', $query);
 
-        // Fast, limited search for registered (active) customers by account, name, or address
+        // Flexible search for customers by account, name, or address
+        $paymentSums = DB::table('payment_records')
+            ->select('billing_record_id', DB::raw('SUM(amount_paid) as paid_total'))
+            ->groupBy('billing_record_id');
+
+        $billingSummary = DB::table('billing_records')
+            ->select('account_no')
+            ->selectRaw(
+                "SUM(CASE WHEN COALESCE(billing_records.bill_status, '') <> 'Paid' THEN GREATEST(total_amount - COALESCE(pr.paid_total, 0), 0) ELSE 0 END) as outstanding_total"
+            )
+            ->selectRaw(
+                "SUM(CASE WHEN COALESCE(billing_records.bill_status, '') <> 'Paid' THEN 1 ELSE 0 END) as outstanding_count"
+            )
+            ->leftJoinSub($paymentSums, 'pr', 'pr.billing_record_id', '=', 'billing_records.id')
+            ->groupBy('account_no');
+
         $results = Customer::query()
-            ->when(method_exists(Customer::class, 'scopeActive'), fn($qb) => $qb->active())
-            ->withCount(['unpaidBillingRecords as unpaid_count'])
-            ->withSum('unpaidBillingRecords as unpaid_total', 'total_amount')
-            ->where(function ($qb) use ($query, $nameFilter) {
-                $qb->where('account_no', 'like', "%{$query}%")
-                    ->orWhere('name', 'like', "%{$query}%")
-                    ->orWhere('address', 'like', "%{$query}%");
+            ->leftJoinSub($billingSummary, 'billing_summary', 'billing_summary.account_no', '=', 'customers.account_no')
+            ->where('customers.status', 'Active')
+            ->where(function ($qb) use ($query, $nameFilter, $normalizedQuery) {
+                $qb->where(function ($inner) use ($query) {
+                        $inner->where('customers.account_no', 'like', "%{$query}%")
+                              ->orWhere('customers.name', 'like', "%{$query}%");
+                    });
+
+                if ($normalizedQuery !== '') {
+                    $qb->orWhere(function ($inner) use ($normalizedQuery) {
+                        $inner->whereRaw("REPLACE(REPLACE(customers.account_no,'-',''),' ','') LIKE ?", ["%{$normalizedQuery}%"]);
+                    });
+                }
 
                 if ($nameFilter !== '') {
-                    $qb->orWhere('name', 'like', "%{$nameFilter}%")
-                        ->orWhere('address', 'like', "%{$nameFilter}%");
+                    $qb->orWhere(function ($inner) use ($nameFilter) {
+                        $inner->where('customers.name', 'like', "%{$nameFilter}%");
+                    });
                 }
             })
-            ->having('unpaid_count', '>', 0)
-            // Prioritize starts-with matches on account_no, then name
             ->orderByRaw(
                 "CASE 
-                    WHEN account_no LIKE ? THEN 0 
-                    WHEN name LIKE ? THEN 1 
+                    WHEN customers.account_no LIKE ? THEN 0 
+                    WHEN customers.name LIKE ? THEN 1 
                     ELSE 2 
-                END, unpaid_total DESC, name ASC",
+                END, COALESCE(billing_summary.outstanding_total, 0) DESC, customers.name ASC",
                 ["{$query}%", ($nameFilter !== '' ? "{$nameFilter}%" : "{$query}%")]
             )
             ->limit(10)
-            ->get(['id', 'account_no', 'name', 'address', 'meter_no', 'classification'])
+            ->get([
+                'customers.id',
+                'customers.account_no',
+                'customers.name',
+                'customers.address',
+                'customers.meter_no',
+                'customers.classification',
+                'customers.status',
+                DB::raw('COALESCE(billing_summary.outstanding_total, 0) as outstanding_total'),
+                DB::raw('COALESCE(billing_summary.outstanding_count, 0) as outstanding_count'),
+            ])
             ->map(function ($customer) {
-                $unpaidTotal = (float) ($customer->unpaid_total ?? 0);
+                $outstandingTotal = (float) ($customer->outstanding_total ?? 0);
                 return [
                     'id' => $customer->id,
                     'account_no' => $customer->account_no,
@@ -212,9 +287,10 @@ class PaymentController extends Controller
                     'address' => $customer->address,
                     'meter_no' => $customer->meter_no,
                     'classification' => $customer->classification,
-                    'unpaid_count' => (int) ($customer->unpaid_count ?? 0),
-                    'unpaid_total' => $unpaidTotal,
-                    'formatted_unpaid_total' => '₱' . number_format($unpaidTotal, 2),
+                    'status' => $customer->status,
+                    'unpaid_count' => (int) ($customer->outstanding_count ?? 0),
+                    'unpaid_total' => $outstandingTotal,
+                    'formatted_unpaid_total' => '₱' . number_format($outstandingTotal, 2),
                 ];
             });
 

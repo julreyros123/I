@@ -11,25 +11,32 @@
             <table class="w-full min-w-[900px] text-sm text-left text-gray-700 dark:text-gray-200">
                 <thead class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold">
                     <tr>
-                        <th class="px-6 py-3 border-b dark:border-gray-600">Date</th>
+                        <th class="px-6 py-3 border-b dark:border-gray-600">Latest Payment</th>
                         <th class="px-6 py-3 border-b dark:border-gray-600">Account No.</th>
                         <th class="px-6 py-3 border-b dark:border-gray-600">Customer Name</th>
-                        <th class="px-6 py-3 border-b dark:border-gray-600">Total Payment</th>
+                        <th class="px-6 py-3 border-b dark:border-gray-600">Total Paid</th>
+                        <th class="px-6 py-3 border-b dark:border-gray-600">Payments</th>
                         <th class="px-6 py-3 border-b dark:border-gray-600 text-center">Action</th>
                     </tr>
                 </thead>
                 <tbody id="paymentTable" class="divide-y divide-gray-200 dark:divide-gray-700">
                     @forelse(($payments ?? []) as $p)
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                        <td class="px-6 py-3">{{ optional($p->created_at)->format('Y-m-d') }}</td>
+                        <td class="px-6 py-3">
+                            @php
+                                $latest = $p->latest_payment_at ? \Illuminate\Support\Carbon::parse($p->latest_payment_at) : null;
+                            @endphp
+                            {{ optional($latest)->format('Y-m-d') ?? '—' }}
+                        </td>
                         <td class="px-6 py-3">{{ $p->account_no }}</td>
-                        <td class="px-6 py-3">{{ $p->customer->name ?? '—' }}</td>
-                        <td class="px-6 py-3 font-semibold text-green-600 dark:text-green-400">₱{{ number_format($p->total_amount, 2) }}</td>
+                        <td class="px-6 py-3">{{ $p->name ?? '—' }}</td>
+                        <td class="px-6 py-3 font-semibold text-green-600 dark:text-green-400">₱{{ number_format($p->total_paid ?? 0, 2) }}</td>
+                        <td class="px-6 py-3">{{ number_format($p->payment_count ?? 0) }}</td>
                         <td class="px-6 py-3 text-center">
                             <button 
                                 data-account="{{ $p->account_no }}"
-                                data-name="{{ $p->customer->name ?? '' }}"
-                                data-address="{{ $p->customer->address ?? '' }}"
+                                data-name="{{ $p->name ?? '' }}"
+                                data-address="{{ $p->address ?? '' }}"
                                 class="viewHistoryBtn px-3 py-1 text-xs rounded-md bg-blue-600 hover:bg-blue-700 
                                        text-white font-medium transition">
                                 View History

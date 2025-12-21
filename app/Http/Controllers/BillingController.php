@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use App\Models\ActivityLog;
 use App\Models\BillingRecord;
 use App\Models\Customer;
 use App\Services\PaymentService;
@@ -182,6 +183,30 @@ class BillingController extends Controller
 
             // Update customer's previous reading
             $customer->update(['previous_reading' => $data['current_reading']]);
+
+            ActivityLog::create([
+                'user_id' => optional($request->user())->id,
+                'module' => 'Billing',
+                'action' => 'BILL_GENERATED',
+                'description' => sprintf(
+                    'Generated bill #%d (%s) for account %s',
+                    $billingRecord->id,
+                    $billingRecord->invoice_number,
+                    $billingRecord->account_no
+                ),
+                'target_type' => BillingRecord::class,
+                'target_id' => $billingRecord->id,
+                'meta' => [
+                    'account_no' => $billingRecord->account_no,
+                    'invoice_number' => $billingRecord->invoice_number,
+                    'total_amount' => (float) $billingRecord->total_amount,
+                    'billing_period' => [
+                        'from' => optional($billingRecord->date_from)->toDateString(),
+                        'to' => optional($billingRecord->date_to)->toDateString(),
+                    ],
+                    'prepared_by' => $billingRecord->prepared_by,
+                ],
+            ]);
 
             // Advance payment is now just a field in the billing record
             

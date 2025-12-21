@@ -2,6 +2,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Meter;
 use App\Models\MeterAssignment;
 use App\Models\MeterAudit;
@@ -126,10 +127,28 @@ class MeterController extends Controller
     public function store(StoreMeterRequest $request)
     {
         $data = $request->validated();
-        $this->createMeter->handle(
+        $meter = $this->createMeter->handle(
             new CreateMeterCommand($data),
             optional(auth()->user())->id
         );
+
+        ActivityLog::create([
+            'user_id' => optional(auth()->user())->id,
+            'module' => 'Meters',
+            'action' => 'METER_ADDED',
+            'description' => sprintf('Added meter %s to inventory', $meter->serial ?? 'unknown'),
+            'target_type' => Meter::class,
+            'target_id' => $meter->id ?? null,
+            'meta' => [
+                'serial' => $meter->serial ?? null,
+                'status' => $meter->status ?? null,
+                'size' => $meter->size ?? null,
+                'type' => $meter->type ?? null,
+                'manufacturer' => $meter->manufacturer ?? null,
+                'seal_no' => $meter->seal_no ?? null,
+            ],
+        ]);
+
         return redirect()->back()->with('success','Meter created.');
     }
 
