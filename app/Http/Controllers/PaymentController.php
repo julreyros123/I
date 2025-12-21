@@ -10,6 +10,7 @@ use App\Models\PaymentRecord;
 use App\Models\Register;
 use App\Services\PaymentService;
 use App\Models\ActivityLog;
+use App\Models\Notification;
 use Illuminate\Support\Facades\DB;
 
 class PaymentController extends Controller
@@ -336,6 +337,8 @@ class PaymentController extends Controller
             // Include selection controls for service to handle bill application
             $result = $paymentService->processCustomerPayment($data);
 
+            $customer = Customer::where('account_no', $data['account_no'])->first();
+
             // Activity log: payment processed
             ActivityLog::create([
                 'user_id' => optional($request->user())->id,
@@ -356,6 +359,20 @@ class PaymentController extends Controller
                     'auto_archived' => $result['auto_archived'] ?? null,
                 ],
             ]);
+
+            $autoArchived = $result['auto_archived']['bill_ids'] ?? [];
+            if (!empty($autoArchived) && $customer) {
+                Notification::create([
+                    'user_id' => optional($request->user())->id,
+                    'title' => 'Billing Archived',
+                    'message' => sprintf(
+                        'Archived %d bill(s) for %s (%s) after payment. View archived records from the Billing Records module.',
+                        count($autoArchived),
+                        $customer->name,
+                        $customer->account_no
+                    ),
+                ]);
+            }
 
             return response()->json([
                 'success' => true,

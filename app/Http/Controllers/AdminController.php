@@ -915,36 +915,6 @@ class AdminController extends Controller
         return view('admin.billing', compact('stats', 'records'));
     }
 
-    public function archivedBilling(Request $request)
-    {
-        abort_unless(auth()->check() && auth()->user()->role === 'admin', 403);
-
-        $q = trim((string) $request->get('q', ''));
-
-        $records = BillingRecord::onlyTrashed()
-            ->select([
-                'id',
-                'customer_id',
-                'account_no',
-                'total_amount',
-                'bill_status',
-                'deleted_at',
-            ])
-            ->with(['customer:id,name,address'])
-            ->when($q, function($query) use ($q) {
-                $query->where('account_no', 'like', "%{$q}%")
-                      ->orWhereHas('customer', function($sub) use ($q){
-                          $sub->where('name', 'like', "%{$q}%")
-                              ->orWhere('address', 'like', "%{$q}%");
-                      });
-            })
-            ->orderByDesc('deleted_at')
-            ->paginate(15)
-            ->withQueryString();
-
-        return view('admin.archived-billing', compact('records', 'q'));
-    }
-
     public function activityLog(Request $request)
     {
         abort_unless(auth()->check() && auth()->user()->role === 'admin', 403);

@@ -94,16 +94,6 @@
                 </a>
             </li>
             <li>
-                <a href="{{ route('admin.billing.archived') }}"
-                   class="flex items-center gap-3 px-3 py-2 rounded-lg 
-                          hover:bg-[rgb(var(--kpi-secondary-rgb)/0.55)] dark:hover:bg-gray-800 
-                          transition-all duration-200 ease-in-out font-medium 
-                          {{ request()->routeIs('admin.billing.archived') ? 'bg-[rgb(var(--kpi-secondary-rgb)/0.45)] dark:bg-gray-800 text-white' : '' }}">
-                    <x-heroicon-o-archive-box class="w-5 h-5 text-white/80 dark:text-gray-400" />
-                    <span>Archived Billing</span>
-                </a>
-            </li>
-            <li>
                 <a href="{{ route('admin.notices') }}"
                    class="flex items-center gap-3 px-3 py-2 rounded-lg 
                           hover:bg-[rgb(var(--kpi-secondary-rgb)/0.55)] dark:hover:bg-gray-800 

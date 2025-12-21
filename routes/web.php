@@ -43,7 +43,6 @@ Route::get('/admin/customers', [AdminController::class, 'customers'])->middlewar
 Route::get('/admin/meters', [MeterController::class, 'index'])->middleware('auth')->name('admin.meters');
 Route::get('/admin/activity-log', [AdminController::class, 'activityLog'])->middleware('auth')->name('admin.activity-log');
 Route::post('/admin/billing/{id}/archive', [RecordController::class, 'archive'])->middleware('auth')->name('admin.billing.archive');
-Route::get('/admin/billing/archived', [AdminController::class, 'archivedBilling'])->middleware('auth')->name('admin.billing.archived');
 Route::middleware(['auth'])->group(function () {
     Route::post('/admin/meters', [MeterController::class, 'store'])->name('admin.meters.store');
     Route::patch('/admin/meters/{meter}', [MeterController::class, 'update'])->name('admin.meters.update');
