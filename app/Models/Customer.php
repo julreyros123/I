@@ -18,6 +18,7 @@ class Customer extends Model
         'name',
         'address',
         'contact_no',
+        'classification',
         'meter_no',
         'meter_size',
         'status',

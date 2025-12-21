@@ -31,20 +31,21 @@ Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'customLogin'])->name('login.custom');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-Route::get('/admin', [AdminController::class, 'index'])->middleware('auth')->name('admin.dashboard');
-Route::get('/admin/dashboard/stats', [AdminController::class, 'dashboardStats'])->middleware('auth')->name('admin.dashboard.stats');
-Route::get('/admin/dashboard/insights', [AdminController::class, 'dashboardInsightsData'])->middleware('auth')->name('admin.dashboard.insights');
-Route::get('/admin/notices', [AdminController::class, 'notices'])->middleware('auth')->name('admin.notices');
-Route::get('/admin/reports', [AdminController::class, 'reports'])->middleware('auth')->name('admin.reports');
-Route::post('/admin/reports/{report}/priority', [AdminController::class, 'updateReportPriority'])->middleware('auth')->name('admin.reports.priority');
-Route::post('/admin/reports/{report}/status', [AdminController::class, 'updateReportStatus'])->middleware('auth')->name('admin.reports.status');
-Route::get('/admin/reports/revenue', [AdminController::class, 'revenue'])->middleware('auth')->name('admin.reports.revenue');
-Route::get('/admin/customers', [AdminController::class, 'customers'])->middleware('auth')->name('admin.customers');
-Route::get('/admin/meters', [MeterController::class, 'index'])->middleware('auth')->name('admin.meters');
-Route::get('/admin/activity-log', [AdminController::class, 'activityLog'])->middleware('auth')->name('admin.activity-log');
-Route::post('/admin/billing/{id}/archive', [RecordController::class, 'archive'])->middleware('auth')->name('admin.billing.archive');
-Route::get('/admin/billing/archived', [AdminController::class, 'archivedBilling'])->middleware('auth')->name('admin.billing.archived');
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/admin', [AdminController::class, 'index'])->name('admin.dashboard');
+    Route::get('/admin/dashboard/stats', [AdminController::class, 'dashboardStats'])->name('admin.dashboard.stats');
+    Route::get('/admin/dashboard/insights', [AdminController::class, 'dashboardInsightsData'])->name('admin.dashboard.insights');
+    Route::get('/admin/notices', [AdminController::class, 'notices'])->name('admin.notices');
+    Route::get('/admin/reports', [AdminController::class, 'reports'])->name('admin.reports');
+    Route::post('/admin/reports/{report}/priority', [AdminController::class, 'updateReportPriority'])->name('admin.reports.priority');
+    Route::post('/admin/reports/{report}/status', [AdminController::class, 'updateReportStatus'])->name('admin.reports.status');
+    Route::get('/admin/reports/revenue', [AdminController::class, 'revenue'])->name('admin.reports.revenue');
+    Route::get('/admin/customers', [AdminController::class, 'customers'])->name('admin.customers');
+    Route::get('/admin/meters', [MeterController::class, 'index'])->name('admin.meters');
+    Route::get('/admin/activity-log', [AdminController::class, 'activityLog'])->name('admin.activity-log');
+    Route::post('/admin/billing/{id}/archive', [RecordController::class, 'archive'])->name('admin.billing.archive');
+    Route::get('/admin/billing/archived', [AdminController::class, 'archivedBilling'])->name('admin.billing.archived');
+
     Route::post('/admin/meters', [MeterController::class, 'store'])->name('admin.meters.store');
     Route::patch('/admin/meters/{meter}', [MeterController::class, 'update'])->name('admin.meters.update');
     Route::delete('/admin/meters/{meter}', [MeterController::class, 'destroy'])->name('admin.meters.destroy');
@@ -68,7 +69,7 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Billing Management Routes
-Route::get('/admin/billing', [AdminController::class, 'billing'])->middleware('auth')->name('admin.billing');
+Route::get('/admin/billing', [AdminController::class, 'billing'])->middleware(['auth', 'role:admin'])->name('admin.billing');
 
 // Use StaffPortalController for the dashboard (staff portal)
 Route::get('/dashboard', [StaffPortalController::class, 'index'])->name('dashboard')->middleware(['auth', 'verified']);

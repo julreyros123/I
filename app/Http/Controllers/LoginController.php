@@ -24,6 +24,14 @@ class LoginController extends Controller
     if (Auth::attempt($credentials, $request->boolean('remember'))) {
         $user = Auth::user();
 
+        $requestedRole = $request->input('role');
+        if ($requestedRole && $user && ($user->role ?? null) !== $requestedRole) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            return back()->withErrors(['email' => 'This account cannot sign in with the selected role.'])->withInput();
+        }
+
         // Block: sample staff account must not be used with administrator role
         if ($request->input('role') === 'admin' && $user->email === 'staff@mawasa.com') {
             Auth::logout();
@@ -33,8 +41,11 @@ class LoginController extends Controller
         }
         
 
-        // After successful login, always go to the admin dashboard
-        return redirect()->route('admin.dashboard');
+        if (($user->role ?? null) === 'admin') {
+            return redirect()->route('admin.dashboard');
+        }
+
+        return redirect()->route('dashboard');
     }
 
     return back()->withErrors(['email' => 'Invalid credentials'])->withInput();
