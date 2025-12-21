@@ -20,7 +20,7 @@
                     </div>
                     <div class="space-y-1 text-right">
                         <p class="text-xl sm:text-2xl font-semibold leading-tight">₱{{ number_format($stats['month_billed'] ?? 0, 2) }}</p>
-                        <p class="text-[11px] font-semibold text-white/90">Live total billed</p>
+                        <p class="text-[11px] font-semibold text-white/90">Total Collected</p>
                     </div>
                 </div>
             </div>
