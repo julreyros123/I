@@ -15,6 +15,13 @@
 
     @php
         $filtersActive = ($module || $action || $userId || $q || $dateFrom || $dateTo);
+        $displayUserName = function ($user = null) {
+            $name = trim(optional($user)->name ?? '');
+            if ($name === '') {
+                return 'System';
+            }
+            return strcasecmp($name, 'Sample Staff') === 0 ? 'Staff' : $name;
+        };
     @endphp
 
     <!-- Filters -->
@@ -90,7 +97,7 @@
                     @forelse($logs as $log)
                         <tr>
                             <td class="px-4 py-2 whitespace-nowrap text-xs md:text-sm">{{ $log->created_at->format('Y-m-d H:i') }}</td>
-                            <td class="px-4 py-2 whitespace-nowrap text-xs md:text-sm">{{ $log->user->name ?? 'System' }}</td>
+                            <td class="px-4 py-2 whitespace-nowrap text-xs md:text-sm">{{ $displayUserName($log->user ?? null) }}</td>
                             <td class="px-4 py-2 whitespace-nowrap text-xs md:text-sm">{{ $log->module }}</td>
                             <td class="px-4 py-2 whitespace-nowrap text-xs md:text-sm">{{ $log->action }}</td>
                             <td class="px-4 py-2 text-xs md:text-sm max-w-md truncate" title="{{ $log->description }}">{{ $log->description }}</td>
@@ -129,17 +136,27 @@
 
 @php
     $activityMeta = $logs->count()
-        ? $logs->keyBy('id')->map(function($log){
+        ? $logs->keyBy('id')->map(function($log) use ($displayUserName){
+            $meta = $log->meta ?? [];
+            if (is_array($meta)) {
+                unset($meta['payment_method'], $meta['reference_number'], $meta['credit_applied'], $meta['remaining_credit']);
+                if (isset($meta['payment_details']) && is_array($meta['payment_details'])) {
+                    unset($meta['payment_details']['credit_applied'], $meta['payment_details']['remaining_credit']);
+                    if (empty($meta['payment_details'])) {
+                        unset($meta['payment_details']);
+                    }
+                }
+            }
             return [
                 'id' => $log->id,
                 'module' => $log->module,
                 'action' => $log->action,
                 'description' => $log->description,
-                'user' => $log->user->name ?? 'System',
+                'user' => $displayUserName($log->user ?? null),
                 'timestamp' => $log->created_at->format('Y-m-d H:i:s'),
                 'target_type' => $log->target_type ? class_basename($log->target_type) : null,
                 'target_id' => $log->target_id,
-                'meta' => $log->meta ?? (object) [],
+                'meta' => $meta,
             ];
         })->toArray()
         : [];
@@ -219,32 +236,105 @@
         document.body.classList.remove('overflow-hidden');
     }
 
+    const SKIP_META_FIELDS = new Set(['payment_method', 'reference_number', 'remaining_credit', 'credit_applied']);
+
     function formatMetaEntries(meta) {
         if (!meta || (typeof meta === 'object' && Object.keys(meta).length === 0)) {
             return '<p class="text-xs text-gray-500 dark:text-gray-400">No additional metadata was captured for this action.</p>';
         }
 
-        const renderValue = (value) => {
-            if (value === null || value === undefined) {
+        const renderList = (items) => {
+            if (!items.length) {
                 return '<span class="italic text-gray-500 dark:text-gray-400">n/a</span>';
             }
-            if (Array.isArray(value) || typeof value === 'object') {
-                return `<pre class="mt-1 text-xs bg-gray-100 dark:bg-gray-800 rounded-lg px-3 py-2 overflow-auto">${JSON.stringify(value, null, 2)}</pre>`;
+            return `<ul class="mt-1 space-y-1 text-gray-800 dark:text-gray-100 text-sm list-disc list-inside">${items.map(item => `<li>${renderValue(item)}</li>`).join('')}</ul>`;
+        };
+
+        const renderObject = (obj) => {
+            const entries = Object.entries(obj || {})
+                .filter(([key]) => !SKIP_META_FIELDS.has(String(key).toLowerCase()));
+            if (!entries.length) {
+                return '<span class="italic text-gray-500 dark:text-gray-400">n/a</span>';
+            }
+            return `<dl class="mt-1 space-y-1 text-sm">${entries.map(([k,v]) => {
+                const label = k.replace(/[_-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                let valueContent;
+                if (Array.isArray(v)) {
+                    valueContent = renderList(v);
+                } else if (typeof v === 'object' && v !== null) {
+                    valueContent = renderObject(v);
+                } else {
+                    valueContent = `<span class="text-gray-800 dark:text-gray-100">${v ?? '<span class="italic text-gray-500 dark:text-gray-400">n/a</span>'}</span>`;
+                }
+                return `<div class="flex flex-col">
+                    <dt class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">${label}</dt>
+                    <dd>${valueContent}</dd>
+                </div>`;
+            }).join('')}</dl>`;
+        };
+
+        const renderValue = (value) => {
+            if (value === null || value === undefined || value === '') {
+                return '<span class="italic text-gray-500 dark:text-gray-400">n/a</span>';
+            }
+            if (Array.isArray(value)) {
+                return renderList(value);
+            }
+            if (typeof value === 'object') {
+                return renderObject(value);
             }
             return `<span class="text-gray-800 dark:text-gray-100">${value}</span>`;
         };
 
         if (Array.isArray(meta)) {
-            if (!meta.length) {
+            const filtered = meta.filter(item => {
+                if (item === null || item === undefined) return false;
+                if (typeof item === 'string' && item.trim() === '') return false;
+                if (Array.isArray(item) && item.length === 0) return false;
+                if (typeof item === 'object' && !Array.isArray(item) && Object.keys(item || {}).length === 0) return false;
+                return true;
+            });
+
+            if (!filtered.length) {
                 return '<p class="text-xs text-gray-500 dark:text-gray-400">No additional metadata was captured for this action.</p>';
             }
-            const items = meta.map((item, index) => `<li class="border border-gray-200 dark:border-gray-800 rounded-md px-3 py-2">${renderValue(item)}</li>`).join('');
+
+            const items = filtered.map((item) => `<li class="border border-gray-200 dark:border-gray-800 rounded-md px-3 py-2">${renderValue(item)}</li>`).join('');
             return `<div><p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">Metadata</p><ul class="space-y-2">${items}</ul></div>`;
         }
 
-        const entries = Object.entries(meta).map(([key, value]) => {
+        const entries = Object.entries(meta)
+            .filter(([key, value]) => {
+                if (SKIP_META_FIELDS.has(String(key).toLowerCase())) {
+                    return false;
+                }
+
+                if (value === null || value === undefined) {
+                    return false;
+                }
+
+                if (typeof value === 'string' && value.trim() === '') {
+                    return false;
+                }
+
+                if (Array.isArray(value) && value.length === 0) {
+                    return false;
+                }
+
+                if (typeof value === 'object' && !Array.isArray(value) && Object.keys(value || {}).length === 0) {
+                    return false;
+                }
+
+                return true;
+            })
+            .map(([key, value]) => {
             const label = key.replace(/[_-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-            return `<div class="border border-gray-200 dark:border-gray-800 rounded-md px-3 py-2"><p class="text-xs font-medium text-gray-500 dark:text-gray-400">${label}</p>${renderValue(value)}</div>`;
+            return `
+                <div class="rounded-lg border border-gray-200 dark:border-gray-800 px-4 py-3">
+                    <p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">${label}</p>
+                    ${renderValue(value)}
+                </div>
+            `;
         }).join('');
 
         return `<div class="space-y-2"><p class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Metadata</p>${entries}</div>`;

@@ -322,10 +322,8 @@ class PaymentService
                 'payment_details' => [
                     'total_outstanding' => $totalOutstanding,
                     'amount_paid' => $amountPaid,
-                    'credit_applied' => 0,
                     'overpayment' => $overpayment,
                     'bills_paid' => $billsPaid,
-                    'remaining_credit' => 0,
                 ],
                 'auto_archived' => [
                     'bill_ids' => $autoArchivedIds,

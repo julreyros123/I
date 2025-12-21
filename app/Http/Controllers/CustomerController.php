@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Models\Customer;
+use App\Models\TransferReconnectAudit;
 use App\Services\AccountNumberGenerator;
 use Illuminate\Http\RedirectResponse;
 
@@ -40,7 +41,37 @@ class CustomerController extends Controller
     {
         abort_unless($request->user(), 403);
         $customer = Customer::findOrFail($id);
-        return response()->json(['ok' => true, 'customer' => $customer]);
+
+        $transferAuditRecords = TransferReconnectAudit::query()
+            ->where('account_no', $customer->account_no)
+            ->where('action', 'transfer')
+            ->with('performedByUser:id,name')
+            ->orderByDesc('performed_at')
+            ->orderByDesc('created_at')
+            ->get();
+
+        $transferHistory = $transferAuditRecords->map(function (TransferReconnectAudit $audit) {
+            return [
+                'id' => $audit->id,
+                'old_value' => $audit->old_value,
+                'new_value' => $audit->new_value,
+                'notes' => $audit->notes,
+                'performed_at' => optional($audit->performed_at)->toDateTimeString(),
+                'performed_by' => optional($audit->performedByUser)->name,
+            ];
+        })->values();
+
+        $originalOwnerRecord = $transferAuditRecords->last();
+        $originalOwner = $originalOwnerRecord
+            ? ($originalOwnerRecord->old_value ?: $originalOwnerRecord->new_value)
+            : ($customer->name ?? null);
+
+        return response()->json([
+            'ok' => true,
+            'customer' => $customer,
+            'transfer_history' => $transferHistory,
+            'original_owner' => $originalOwner,
+        ]);
     }
 
     /**

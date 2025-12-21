@@ -43,7 +43,7 @@
                         </div>
                         <div class="md:col-span-3 space-y-2">
                             <label class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Person In Charge</label>
-                            <x-ui.input id="prepared_by" value="{{ auth()->user()->name ?? '' }}" placeholder="e.g. Juan Dela Cruz" />
+                            <x-ui.input id="prepared_by" value="{{ (trim(auth()->user()->name ?? '') === 'Sample Staff') ? 'Staff' : (auth()->user()->name ?? 'Staff') }}" placeholder="Staff" />
                         </div>
                     </div>
 
