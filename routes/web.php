@@ -32,6 +32,8 @@ Route::post('/login', [LoginController::class, 'customLogin'])->name('login.cust
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::get('/admin', [AdminController::class, 'index'])->middleware('auth')->name('admin.dashboard');
+Route::get('/admin/dashboard/stats', [AdminController::class, 'dashboardStats'])->middleware('auth')->name('admin.dashboard.stats');
+Route::get('/admin/dashboard/insights', [AdminController::class, 'dashboardInsightsData'])->middleware('auth')->name('admin.dashboard.insights');
 Route::get('/admin/notices', [AdminController::class, 'notices'])->middleware('auth')->name('admin.notices');
 Route::get('/admin/reports', [AdminController::class, 'reports'])->middleware('auth')->name('admin.reports');
 Route::post('/admin/reports/{report}/priority', [AdminController::class, 'updateReportPriority'])->middleware('auth')->name('admin.reports.priority');
@@ -108,6 +110,7 @@ Route::delete('/records/billing/{id}/force', [RecordController::class, 'forceDel
 Route::get('/records/billing/{id}/generate', [RecordController::class, 'generateBill'])->middleware('auth')->name('records.billing.generate');
 Route::post('/records/billing/{id}/status', [RecordController::class, 'updateBillStatus'])->middleware('auth')->name('records.billing.status');
 Route::get('/records/billing/{id}/print', [RecordController::class, 'printBill'])->middleware('auth')->name('records.billing.print');
+Route::get('/records/billing/{id}/pdf', [RecordController::class, 'downloadBillPdf'])->middleware('auth')->name('records.billing.pdf');
 Route::post('/records/billing/bulk-generate', [RecordController::class, 'bulkGenerate'])->middleware('auth')->name('records.billing.bulk-generate');
 Route::post('/records/billing/bulk-archive', [RecordController::class, 'bulkArchive'])->middleware('auth')->name('records.billing.bulk-archive');
 Route::get('/records/billing/print-batch', [RecordController::class, 'printBatch'])->middleware('auth')->name('records.billing.print-batch');

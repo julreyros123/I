@@ -5,7 +5,13 @@
 
     <!-- KPI block moved below as its own row -->
     <div class="grid grid-cols-12 gap-5 mt-1 md:mt-2">
-        <div class="col-span-12 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-3.5 lg:gap-4 auto-rows-fr">
+        <div class="col-span-12 flex flex-wrap items-center justify-between gap-2">
+            <div class="text-xs sm:text-[13px] text-gray-600 dark:text-gray-300 font-medium">
+                Synced with Insights filter · <span id="kpiRangeLabel">{{ \Illuminate\Support\Carbon::parse($defaultRangeStart ?? now()->startOfMonth())->format('M d, Y') }} – {{ \Illuminate\Support\Carbon::parse($defaultRangeEnd ?? now())->format('M d, Y') }}</span>
+            </div>
+            <div class="text-[11px] uppercase tracking-[0.3em] text-gray-500 dark:text-gray-400" id="kpiRangeStatus">Live</div>
+        </div>
+        <div id="kpiCards" class="col-span-12 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-3.5 lg:gap-4 auto-rows-fr transition-opacity duration-200">
             <!-- Billed (This Month) -->
             <div class="group relative overflow-hidden rounded-2xl min-h-[150px] sm:min-h-[170px] shadow-lg p-3 sm:p-3.5 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 text-white" style="background-color: var(--kpi-primary);">
                 <div class="relative flex h-full flex-col justify-between gap-3">
@@ -19,8 +25,8 @@
                         </div>
                     </div>
                     <div class="space-y-1 text-right">
-                        <p class="text-xl sm:text-2xl font-semibold leading-tight">₱{{ number_format($stats['month_billed'] ?? 0, 2) }}</p>
-                        <p class="text-[11px] font-semibold text-white/90">Total Collected</p>
+                        <p id="kpiBilledValue" class="text-xl sm:text-2xl font-semibold leading-tight">₱{{ number_format($stats['month_billed'] ?? 0, 2) }}</p>
+                        <p class="text-[11px] font-semibold text-white/90">Range billed total</p>
                     </div>
                 </div>
             </div>
@@ -38,7 +44,7 @@
                         </div>
                     </div>
                     <div class="space-y-1 text-right">
-                        <p class="text-xl sm:text-2xl font-semibold leading-tight">₱{{ number_format($stats['month_collected'] ?? 0, 2) }}</p>
+                        <p id="kpiCollectedValue" class="text-xl sm:text-2xl font-semibold leading-tight">₱{{ number_format($stats['month_collected'] ?? 0, 2) }}</p>
                         <p class="text-[11px] font-semibold text-white/90">Settled ledger payments</p>
                     </div>
                 </div>
@@ -52,13 +58,13 @@
                             <x-heroicon-o-users class="w-4 h-4" />
                         </div>
                         <div class="space-y-1">
-                            <p class="text-[10px] uppercase tracking-[0.18em] text-white font-semibold">Active customers</p>
-                            <p class="text-sm font-semibold text-white">Accounts in good standing</p>
+                            <p class="text-[10px] uppercase tracking-[0.18em] text-white font-semibold">New registrations</p>
+                            <p class="text-sm font-semibold text-white">Customers added</p>
                         </div>
                     </div>
                     <div class="space-y-1 text-right">
-                        <p class="text-2xl sm:text-3xl font-semibold leading-tight">{{ number_format($stats['customers'] ?? 0) }}</p>
-                        <p class="text-[11px] font-semibold text-white/90">Profiles in good standing</p>
+                        <p id="kpiCustomerValue" class="text-2xl sm:text-3xl font-semibold leading-tight">{{ number_format($stats['new_customers'] ?? 0) }}</p>
+                        <p class="text-[11px] font-semibold text-white/90">Within selected range</p>
                     </div>
                 </div>
             </a>
@@ -76,7 +82,7 @@
                         </div>
                     </div>
                     <div class="space-y-1 text-right">
-                        <p class="text-xl sm:text-2xl font-semibold leading-tight">{{ number_format(($stats['collection_rate'] ?? 0) * 100, 1) }}%</p>
+                        <p id="kpiCollectionRateValue" class="text-xl sm:text-2xl font-semibold leading-tight">{{ number_format(($stats['collection_rate'] ?? 0) * 100, 1) }}%</p>
                         <p class="text-[11px] font-semibold text-white/90">Target ≥ 90%</p>
                     </div>
                 </div>
@@ -116,62 +122,72 @@
                     <div id="revChart" class="absolute inset-0 w-full h-full"></div>
                 </div>
             </div>
-            <div id="rangeSummaryWrapper" class="mt-4 space-y-3">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-200">Monthly breakdown</h3>
-                    <span id="rangeSummaryCount" class="text-xs text-gray-400"></span>
-                </div>
-                <div id="rangeSummary" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3"></div>
-            </div>
         </div>
 
     </div>
-@php
-// Labels
-$monthsShort = array('Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec');
-$labelsMonth = $monthsShort;
-$currentYear = (int) date('Y');
-$labelsYear = array(); for ($y=$currentYear-4; $y<=$currentYear; $y++) { $labelsYear[] = (string)$y; }
-
-// Revenue (default)
-$seriesMonthRevenue = isset($monthlyRevenue) ? (array)$monthlyRevenue : array();
-if (count($seriesMonthRevenue) !== 12) { $seriesMonthRevenue = array_pad($seriesMonthRevenue, 12, 0); }
-$hasM = false; foreach ($seriesMonthRevenue as $v) { if ((float)$v > 0) { $hasM = true; break; } }
-if (!$hasM) { $seriesMonthRevenue = array(8,9,10,11,12,13,14,15,16,18,19,20); }
-$currentYear = (int) date('Y');
-$seriesYearRevenue = isset($yearlyRevenue) ? (array)$yearlyRevenue : array();
-if (count($seriesYearRevenue) !== 5) { $seriesYearRevenue = array_pad($seriesYearRevenue, 5, 0); }
-$hasY = false; foreach ($seriesYearRevenue as $v) { if ((float)$v > 0) { $hasY = true; break; } }
-if (!$hasY) { $seriesYearRevenue = array(120,135,150,142,160); }
-
-// Customers Added (demo until wired)
-$seriesMonthCustomers = isset($monthlyCustomers) ? (array)$monthlyCustomers : array(3,5,4,8,6,7,9,11,10,12,9,8);
-if (count($seriesMonthCustomers) !== 12) { $seriesMonthCustomers = array_pad($seriesMonthCustomers, 12, 0); }
-$seriesYearCustomers = isset($yearlyCustomers) ? (array)$yearlyCustomers : array(60,72,81,95,110);
-if (count($seriesYearCustomers) !== 5) { $seriesYearCustomers = array_pad($seriesYearCustomers, 5, 0); }
-
-// Average Usage (m³) (demo until wired)
-$seriesMonthUsage = isset($monthlyUsage) ? (array)$monthlyUsage : array(12,11,13,12,14,15,16,15,14,13,12,11);
-if (count($seriesMonthUsage) !== 12) { $seriesMonthUsage = array_pad($seriesMonthUsage, 12, 0); }
-$seriesYearUsage = isset($yearlyUsage) ? (array)$yearlyUsage : array(150,155,160,162,170);
-if (count($seriesYearUsage) !== 5) { $seriesYearUsage = array_pad($seriesYearUsage, 5, 0); }
-@endphp
             <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
             <script>
             (function(){
               var el = document.getElementById('revChart');
               if (!el) return;
-              var labelsMonth = @json($labelsMonth);
-              var labelsYear = @json($labelsYear);
-              var metric = 'revenue';
-              // datasets
-              var monthRevenue = @json($seriesMonthRevenue);
-              var yearRevenue  = @json($seriesYearRevenue);
-              var monthCustomers = @json($seriesMonthCustomers);
-              var yearCustomers  = @json($seriesYearCustomers);
-              var monthUsage = @json($seriesMonthUsage);
-              var yearUsage  = @json($seriesYearUsage);
 
+              var metric = 'revenue';
+              var chart = null;
+              var chartData = { labels: [], data: [] };
+              var defaultRangeStart = "{{ $defaultRangeStart ?? now()->startOfMonth()->toDateString() }}";
+              var defaultRangeEnd = "{{ $defaultRangeEnd ?? now()->toDateString() }}";
+              var kpiEndpoint = "{{ route('admin.dashboard.stats') }}";
+              var insightsEndpoint = "{{ route('admin.dashboard.insights') }}";
+              var kpiEls = {
+                label: document.getElementById('kpiRangeLabel'),
+                status: document.getElementById('kpiRangeStatus'),
+                cards: document.getElementById('kpiCards'),
+                billed: document.getElementById('kpiBilledValue'),
+                collected: document.getElementById('kpiCollectedValue'),
+                customers: document.getElementById('kpiCustomerValue'),
+                rate: document.getElementById('kpiCollectionRateValue')
+              };
+              var kpiState = {
+                start: defaultRangeStart,
+                end: defaultRangeEnd,
+                loading: false
+              };
+              var insightsState = { loading: false };
+              var dateFormatter = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+
+              function pad2(n){ return String(n).padStart(2, '0'); }
+              function formatDateInput(d){
+                if (!d) return '';
+                try {
+                  var dt = (d instanceof Date) ? d : new Date(d);
+                  if (!isFinite(dt)) return '';
+                  return dt.getFullYear() + '-' + pad2(dt.getMonth() + 1) + '-' + pad2(dt.getDate());
+                } catch (e) {
+                  return '';
+                }
+              }
+              function formatDisplayDate(iso){
+                if (!iso) return '';
+                try {
+                  var dt = new Date(iso);
+                  return isFinite(dt) ? dateFormatter.format(dt) : String(iso);
+                } catch (e) {
+                  return String(iso);
+                }
+              }
+              function setMetricActive(activeBtn, inactiveBtn1, inactiveBtn2){
+                var active = 'bg-blue-600 text-white hover:bg-blue-700 dark:hover:bg-blue-500';
+                var inactive = 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-transparent dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 dark:border-gray-700';
+                if (activeBtn){ activeBtn.className = 'px-3 py-1.5 rounded-md ' + active; }
+                if (inactiveBtn1){ inactiveBtn1.className = 'px-3 py-1.5 rounded-md ' + inactive; }
+                if (inactiveBtn2){ inactiveBtn2.className = 'px-3 py-1.5 rounded-md ' + inactive; }
+              }
+
+              function metricName(){
+                if (metric === 'customers') return 'Customers';
+                if (metric === 'usage') return 'Avg Usage';
+                return 'Revenue';
+              }
               function peso(v){
                 if (v >= 1e9) return '₱'+(v/1e9).toFixed(1)+'B';
                 if (v >= 1e6) return '₱'+(v/1e6).toFixed(1)+'M';
@@ -181,112 +197,64 @@ if (count($seriesYearUsage) !== 5) { $seriesYearUsage = array_pad($seriesYearUsa
               function num(v){ if (v>=1e6) return (v/1e6).toFixed(1)+'M'; if (v>=1e3) return (v/1e3).toFixed(1)+'K'; return (''+Math.round(v)); }
               function m3(v){ return num(v)+' m³'; }
               function isDark(){ return document.documentElement.classList.contains('dark'); }
-              function buildTimeSeries(){
-                function toNumberArray(arr){ return (arr || []).map(function(v){ var n = parseFloat(v); return isFinite(n) ? n : 0; }); }
-                var baseRevenue = toNumberArray(monthRevenue);
-                var baseCustomers = toNumberArray(monthCustomers);
-                var baseUsage = toNumberArray(monthUsage);
-                var baseRevSum = baseRevenue.reduce(function(a,b){ return a + b; }, 0) || 1;
-                var baseCustSum = baseCustomers.reduce(function(a,b){ return a + b; }, 0) || 1;
-                var baseUsageSum = baseUsage.reduce(function(a,b){ return a + b; }, 0) || 1;
-                var series = [];
-                for (var yi = 0; yi < labelsYear.length; yi++){
-                  var year = parseInt(labelsYear[yi], 10);
-                  if (!isFinite(year)) continue;
-                  var revFactor = baseRevSum ? (parseFloat(yearRevenue[yi]) || 0) / baseRevSum : 1;
-                  var custFactor = baseCustSum ? (parseFloat(yearCustomers[yi]) || 0) / baseCustSum : 1;
-                  var usageFactor = baseUsageSum ? (parseFloat(yearUsage[yi]) || 0) / baseUsageSum : 1;
-                  for (var mi = 0; mi < labelsMonth.length; mi++){
-                    var date = new Date(year, mi, 1);
-                    var isCurrentYear = (year === (new Date()).getFullYear());
-                    series.push({
-                      date: date,
-                      revenue: isCurrentYear ? baseRevenue[mi] : baseRevenue[mi] * revFactor,
-                      customers: isCurrentYear ? baseCustomers[mi] : baseCustomers[mi] * custFactor,
-                      usage: isCurrentYear ? baseUsage[mi] : baseUsage[mi] * usageFactor
-                    });
-                  }
-                }
-                return series.sort(function(a,b){ return a.date - b.date; });
-              }
-              var timeSeries = buildTimeSeries();
-              function yFormatter(){
-                if (metric==='revenue') return function(v){ return peso(v); };
-                if (metric==='customers') return function(v){ return num(v); };
-                return function(v){ return m3(v); };
-              }
               function palette(){
-                // Tri-blue palette: dark blue, blue, sky blue
                 var darkBlue = '#1e3a8a';
                 var blue = '#2563eb';
                 var sky = '#38bdf8';
                 if (isDark()) return { dark:darkBlue, blue:'#60a5fa', sky:sky, grid:'rgba(255,255,255,0.10)', tick:'#cbd5e1', bg:'#0b1f3a' };
                 return { dark:darkBlue, blue:blue, sky:sky, grid:'#E5E7EB', tick:'#6B7280', bg:'#F3F4F6' };
               }
-              function formatDateInput(dt){ var y = dt.getFullYear(); var m = String(dt.getMonth()+1).padStart(2,'0'); var d = String(dt.getDate()).padStart(2,'0'); return y+'-'+m+'-'+d; }
-              function formatLabel(dt){ return dt.toLocaleString(undefined, { month:'short', year:'numeric' }); }
-
-              var currentRange = { start: null, end: null };
-
-              function setDefaultRange(){
-                if (!timeSeries.length) return;
-                var now = new Date();
-                var start = new Date(now.getFullYear(), 0, 1);
-                var end = new Date(now.getFullYear(), 11, 31);
-                currentRange.start = start;
-                currentRange.end = end;
-                var startInput = document.getElementById('rangeStart');
-                var endInput = document.getElementById('rangeEnd');
-                if (startInput) startInput.value = formatDateInput(start);
-                if (endInput) endInput.value = formatDateInput(end);
+              function formatPeso(v){
+                var num = Number(v || 0);
+                return '₱' + num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
               }
-
-              function activeData(){
-                var filtered = timeSeries.filter(function(point){
-                  var afterStart = !currentRange.start || point.date >= currentRange.start;
-                  var beforeEnd = !currentRange.end || point.date <= currentRange.end;
-                  return afterStart && beforeEnd;
-                });
-                if (!filtered.length && timeSeries.length){ filtered = timeSeries.slice(-12); }
-                var items = filtered.map(function(p){
-                  var label = formatLabel(p.date);
-                  var value = metric==='revenue' ? p.revenue : (metric==='customers' ? p.customers : p.usage);
-                  return { label: label, value: value };
-                });
-                var labels = items.map(function(p){ return p.label; });
-                var data = items.map(function(p){ return p.value; });
-                return { l: labels, d: data, items: items };
+              function formatPercent(v){
+                var num = Number(v || 0);
+                return (num * 100).toFixed(1) + '%';
               }
-              function updateSummary(items){
-                var wrap = document.getElementById('rangeSummaryWrapper');
-                var target = document.getElementById('rangeSummary');
-                var count = document.getElementById('rangeSummaryCount');
-                if (!wrap || !target) return;
-                if (!items || !items.length){
-                  wrap.classList.add('hidden');
-                  if (count) count.textContent = '';
-                  return;
+              function toggleKpiLoading(isLoading){
+                if (!kpiEls.cards) return;
+                if (isLoading){
+                  kpiEls.cards.classList.add('opacity-60','pointer-events-none');
+                  if (kpiEls.status) kpiEls.status.textContent = 'Syncing';
+                } else {
+                  kpiEls.cards.classList.remove('opacity-60','pointer-events-none');
                 }
-                wrap.classList.remove('hidden');
-                if (count) count.textContent = items.length + ' month' + (items.length === 1 ? '' : 's');
-                target.innerHTML = items.map(function(item){
-                  var formatted = metric==='revenue' ? peso(item.value) : (metric==='customers' ? num(item.value) : m3(item.value));
-                  return '<div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white/70 dark:bg-gray-900/60 px-3 py-2 shadow-sm flex flex-col gap-1">'
-                         + '<span class="text-xs font-medium text-gray-500 dark:text-gray-400">' + item.label + '</span>'
-                         + '<span class="text-sm font-semibold text-gray-800 dark:text-gray-100">' + formatted + '</span>'
-                         + '</div>';
-                }).join('');
               }
-              function buildOptions(){
+              function updateKpiRangeLabel(){
+                if (!kpiEls.label) return;
+                kpiEls.label.textContent = formatDisplayDate(kpiState.start) + ' – ' + formatDisplayDate(kpiState.end);
+              }
+              function updateKpiRangeStatus(){
+                if (!kpiEls.status) return;
+                var today = formatDateInput(new Date());
+                if (kpiState.loading){
+                  kpiEls.status.textContent = 'Syncing';
+                } else if (kpiState.end === today){
+                  kpiEls.status.textContent = 'Live';
+                } else {
+                  kpiEls.status.textContent = 'Backtrack';
+                }
+              }
+              function updateKpiCards(data){
+                if (!data) data = {};
+                if (kpiEls.billed) kpiEls.billed.textContent = formatPeso(data.billed_total ?? data.month_billed ?? 0);
+                if (kpiEls.collected) kpiEls.collected.textContent = formatPeso(data.collected_total ?? data.month_collected ?? 0);
+                if (kpiEls.customers) kpiEls.customers.textContent = Number(data.new_customers ?? data.customers ?? 0).toLocaleString();
+                if (kpiEls.rate) kpiEls.rate.textContent = formatPercent(data.collection_rate ?? 0);
+              }
+              function yFormatter(){
+                if (metric==='revenue') return function(v){ return peso(v); };
+                if (metric==='customers') return function(v){ return num(v); };
+                return function(v){ return m3(v); };
+              }
+              function buildChartOptions(){
                 var pal = palette();
-                var pack = activeData();
-                updateSummary(pack.items);
-                var name = metric==='revenue' ? 'Revenue' : (metric==='customers' ? 'Customers' : 'Avg Usage');
                 return {
                   chart: { type: 'area', height: '100%', toolbar: { show: false }, animations: { enabled: true }, dropShadow: { enabled: true, top: 6, left: 0, blur: 6, color: pal.blue, opacity: 0.35 } },
                   theme: { mode: isDark() ? 'dark' : 'light' },
-                  series: [{ name: name, data: pack.d }],
-                  xaxis: { categories: pack.l, labels: { rotate: -45, style: { colors: pal.tick } }, axisBorder: { color: pal.grid }, axisTicks: { color: pal.grid } },
+                  series: [{ name: metricName(), data: chartData.data }],
+                  xaxis: { categories: chartData.labels, labels: { rotate: -45, style: { colors: palette().tick } }, axisBorder: { color: pal.grid }, axisTicks: { color: pal.grid } },
                   yaxis: { labels: { formatter: yFormatter(), style: { colors: pal.tick } } },
                   grid: { borderColor: pal.grid },
                   stroke: { curve: 'smooth', width: 2, colors: [pal.blue] },
@@ -296,53 +264,91 @@ if (count($seriesYearUsage) !== 5) { $seriesYearUsage = array_pad($seriesYearUsa
                   tooltip: { theme: isDark() ? 'dark' : 'light', y: { formatter: yFormatter() } }
                 };
               }
-
-              var chart = new ApexCharts(el, buildOptions());
-              chart.render();
-
-              function setActive(btnOn, btnOff){
-                btnOn.classList.add('bg-blue-600','text-white');
-                btnOn.classList.remove('bg-gray-100','text-gray-700','dark:bg-gray-700','dark:text-gray-200');
-                btnOff.classList.remove('bg-blue-600','text-white');
-                btnOff.classList.add('bg-gray-100','text-gray-700','dark:bg-gray-700','dark:text-gray-200');
+              function ensureChart(){
+                if (chart) return;
+                chart = new ApexCharts(el, buildChartOptions());
+                chart.render();
               }
-              function setMetricActive(activeBtn, otherBtn1, otherBtn2){
-                activeBtn.classList.add('bg-blue-600','text-white');
-                activeBtn.classList.remove('bg-gray-100','text-gray-700','dark:bg-gray-700','dark:text-gray-200');
-                [otherBtn1, otherBtn2].forEach(function(btn){
-                  btn.classList.remove('bg-blue-600','text-white');
-                  btn.classList.add('bg-gray-100','text-gray-700','dark:bg-gray-700','dark:text-gray-200');
-                });
-              }
-
-              function updateChart(){
+              function refreshChart(){
+                if (!chart){ ensureChart(); }
                 var pal = palette();
-                var pack = activeData();
-                updateSummary(pack.items);
-                var name = metric==='revenue' ? 'Revenue' : (metric==='customers' ? 'Customers' : 'Avg Usage');
                 chart.updateOptions({
                   chart: { dropShadow: { enabled: true, top: 6, left: 0, blur: 6, color: pal.blue, opacity: 0.35 } },
                   theme: { mode: isDark() ? 'dark' : 'light' },
-                  xaxis: { categories: pack.l, labels: { rotate: -45, style: { colors: pal.tick } }, axisBorder: { color: pal.grid }, axisTicks: { color: pal.grid } },
+                  xaxis: { categories: chartData.labels, labels: { rotate: -45, style: { colors: pal.tick } }, axisBorder: { color: pal.grid }, axisTicks: { color: pal.grid } },
                   yaxis: { labels: { formatter: yFormatter(), style: { colors: pal.tick } } },
                   grid: { borderColor: pal.grid },
                   stroke: { colors: [pal.blue] },
                   colors: [pal.dark, pal.blue, pal.sky].slice(1,2),
                   tooltip: { theme: isDark() ? 'dark' : 'light', y: { formatter: yFormatter() } }
                 });
-                chart.updateSeries([{ name: name, data: pack.d }]);
+                chart.updateSeries([{ name: metricName(), data: chartData.data }]);
+              }
+              function syncKpis(startISO, endISO){
+                if (!kpiEndpoint) return;
+                kpiState.loading = true;
+                toggleKpiLoading(true);
+                updateKpiRangeStatus();
+                var params = new URLSearchParams();
+                if (startISO) params.append('start', startISO);
+                if (endISO) params.append('end', endISO);
+                var url = kpiEndpoint + (params.toString() ? ('?' + params.toString()) : '');
+                fetch(url, {
+                  headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                }).then(function(res){
+                  if (!res.ok) throw new Error('Failed to fetch KPI stats');
+                  return res.json();
+                }).then(function(payload){
+                  if (!payload || payload.ok !== true) throw new Error('Invalid KPI payload');
+                  kpiState.start = payload.range && payload.range.start ? payload.range.start : startISO;
+                  kpiState.end = payload.range && payload.range.end ? payload.range.end : endISO;
+                  updateKpiCards(payload.stats || {});
+                  updateKpiRangeLabel();
+                  kpiState.loading = false;
+                  updateKpiRangeStatus();
+                }).catch(function(err){
+                  console.error(err);
+                  kpiState.loading = false;
+                  if (kpiEls.status) kpiEls.status.textContent = 'Offline';
+                }).finally(function(){
+                  toggleKpiLoading(false);
+                });
+              }
+              function fetchInsights(metricKey, startISO, endISO){
+                if (!insightsEndpoint) return;
+                insightsState.loading = true;
+                var params = new URLSearchParams();
+                params.append('metric', metricKey || 'revenue');
+                if (startISO) params.append('start', startISO);
+                if (endISO) params.append('end', endISO);
+                fetch(insightsEndpoint + '?' + params.toString(), {
+                  headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                }).then(function(res){
+                  if (!res.ok) throw new Error('Failed to load insights');
+                  return res.json();
+                }).then(function(payload){
+                  chartData.labels = payload.labels || [];
+                  chartData.data = (payload.data || []).map(function(val){
+                    var numVal = parseFloat(val);
+                    return isFinite(numVal) ? numVal : 0;
+                  });
+                  refreshChart();
+                }).catch(function(err){
+                  console.error(err);
+                }).finally(function(){
+                  insightsState.loading = false;
+                });
               }
 
+              ensureChart();
               var mR = document.getElementById('metricRevenue');
               var mC = document.getElementById('metricCustomers');
               var mU = document.getElementById('metricUsage');
               if (mR && mC && mU){
-                mR.onclick = function(){ metric='revenue'; setMetricActive(mR,mC,mU); updateChart(); };
-                mC.onclick = function(){ metric='customers'; setMetricActive(mC,mR,mU); updateChart(); };
-                mU.onclick = function(){ metric='usage'; setMetricActive(mU,mR,mC); updateChart(); };
+                mR.onclick = function(){ metric='revenue'; setMetricActive(mR,mC,mU); fetchInsights(metric, kpiState.start, kpiState.end); };
+                mC.onclick = function(){ metric='customers'; setMetricActive(mC,mR,mU); fetchInsights(metric, kpiState.start, kpiState.end); };
+                mU.onclick = function(){ metric='usage'; setMetricActive(mU,mR,mC); fetchInsights(metric, kpiState.start, kpiState.end); };
               }
-
-              setDefaultRange();
 
               var applyBtn = document.getElementById('applyRange');
               if (applyBtn){
@@ -356,14 +362,29 @@ if (count($seriesYearUsage) !== 5) { $seriesYearUsage = array_pad($seriesYearUsa
                     if (startInput) startInput.value = formatDateInput(startVal);
                     if (endInput) endInput.value = formatDateInput(endVal);
                   }
-                  currentRange.start = startVal;
-                  currentRange.end = endVal;
-                  updateChart();
+                  kpiState.start = formatDateInput(startVal);
+                  kpiState.end = formatDateInput(endVal);
+                  updateKpiRangeLabel();
+                  updateKpiRangeStatus();
+                  syncKpis(kpiState.start, kpiState.end);
+                  fetchInsights(metric, kpiState.start, kpiState.end);
                 });
               }
 
+              // Initial sync on load
+              (function(){
+                var startInput = document.getElementById('rangeStart');
+                var endInput = document.getElementById('rangeEnd');
+                if (startInput && !startInput.value) startInput.value = defaultRangeStart;
+                if (endInput && !endInput.value) endInput.value = defaultRangeEnd;
+                updateKpiRangeLabel();
+                updateKpiRangeStatus();
+                syncKpis(kpiState.start, kpiState.end);
+                fetchInsights(metric, kpiState.start, kpiState.end);
+              })();
+
               // Observe theme changes to update colors
-              var mo = new MutationObserver(function(){ updateChart(); });
+              var mo = new MutationObserver(function(){ refreshChart(); });
               mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
             })();
             </script>

@@ -262,40 +262,6 @@
             </div>
 
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 py-4">
-                <form method="GET" class="flex flex-col sm:flex-row gap-3 w-full lg:max-w-xl">
-                    <div class="flex-1 relative">
-                        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-                            <x-heroicon-o-magnifying-glass class="w-4 h-4" />
-                        </span>
-                        <input
-                            id="billingSearchInput"
-                            name="q"
-                            type="search"
-                            value="{{ $q ?? '' }}"
-                            placeholder="Search by account no., customer name, or address"
-                            class="w-full h-[44px] rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-200 pl-10 pr-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                        />
-                        <div id="billingSearchSuggestions" class="absolute top-full left-0 right-0 mt-2 hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xl z-30 overflow-hidden"></div>
-                    </div>
-                    <div class="sm:w-52">
-                        <select name="status" class="w-full h-[44px] rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-200 px-3">
-                            <option value="">All Bill Status</option>
-                            <option value="Outstanding Payment" {{ $status === 'Outstanding Payment' ? 'selected' : '' }}>Outstanding Payment</option>
-                            <option value="Overdue" {{ $status === 'Overdue' ? 'selected' : '' }}>Overdue</option>
-                            <option value="Notice of Disconnection" {{ $status === 'Notice of Disconnection' ? 'selected' : '' }}>Notice of Disconnection</option>
-                            <option value="Disconnected" {{ $status === 'Disconnected' ? 'selected' : '' }}>Disconnected</option>
-                            <option value="Paid" {{ $status === 'Paid' ? 'selected' : '' }}>Paid</option>
-                        </select>
-                    </div>
-                    @if($generatedFilter !== '')
-                        <input type="hidden" name="generated" value="{{ $generatedFilter }}">
-                    @endif
-                    <div class="flex gap-2">
-                        <x-secondary-button type="submit" class="px-5">Apply</x-secondary-button>
-                        <a href="{{ route('billing.management') }}" class="inline-flex items-center justify-center px-4 h-[44px] rounded-xl border border-gray-300 dark:border-gray-700 text-sm text-gray-600 dark:text-gray-200 hover:border-blue-400 hover:text-blue-600">Reset</a>
-                    </div>
-                </form>
-
                 <div class="flex flex-wrap items-center gap-2">
                     @php
                         $allLink = route('billing.management', $filtersQuery);

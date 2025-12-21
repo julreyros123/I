@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Storage;
 use App\Models\BillingRecord;
 use App\Models\Customer;
 use App\Models\PaymentRecord;
@@ -13,7 +14,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Arr;
 use App\Models\ActivityLog;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class RecordController extends Controller
@@ -571,6 +571,24 @@ class RecordController extends Controller
 
         $usageSeries = $this->getLastFiveMonthsUsage($billingRecord->account_no);
         return view('records.bill-print', compact('billingRecord', 'usageSeries'));
+    }
+
+    public function downloadBillPdf($id)
+    {
+        $billingRecord = BillingRecord::with('customer')->findOrFail($id);
+
+        $path = $billingRecord->pdf_path;
+        if (!$path) {
+            abort(404);
+        }
+
+        $disk = Storage::disk('public');
+        if (!$disk->exists($path)) {
+            abort(404);
+        }
+
+        $filename = ($billingRecord->invoice_number ?? ('INV-' . str_pad((string) $billingRecord->id, 4, '0', STR_PAD_LEFT))) . '.pdf';
+        return $disk->download($path, $filename);
     }
 
     public function bulkGenerate(Request $request)

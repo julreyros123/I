@@ -12,7 +12,7 @@
             <x-heroicon-o-bars-3 class="w-6 h-6 text-gray-700 dark:text-gray-200"/>
         </button>
 
-        <img src="{{ asset('images/mawasa-logo.png') }}" alt="Logo" class="h-8 w-8 rounded">
+        <div class="h-8 w-8 rounded bg-[var(--kpi-primary)] text-white flex items-center justify-center text-xs font-bold select-none" aria-label="Logo">MW</div>
         <div class="leading-tight hidden sm:block">
             <h1 class="text-sm font-semibold text-gray-900 dark:text-white">
                 MANAMBULAN WATERWORKS AND SANITATION INC.
@@ -53,8 +53,7 @@
         <div x-data="{ open: false }" class="relative">
             <button @click="open = !open" 
                 class="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">
-                <img src="{{ asset('images/images.jpg') }}" alt="Profile" 
-                     class="h-8 w-8 rounded-full border border-gray-200 dark:border-gray-700">
+                <div class="h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-200 dark:border-gray-700 flex items-center justify-center text-[11px] font-semibold text-gray-700 dark:text-gray-200 select-none" aria-label="Profile">US</div>
                 
                 <div class="hidden sm:block text-left">
                     @php($isAdmin = optional(auth()->user())->role === 'admin')

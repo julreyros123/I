@@ -14,6 +14,7 @@ class BillingRecord extends Model
     protected $fillable = [
         'customer_id',
         'account_no',
+        'pdf_path',
         'invoice_number',
         'previous_reading',
         'current_reading',

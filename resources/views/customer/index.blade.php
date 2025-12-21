@@ -6,55 +6,15 @@
 <div class="w-full px-4 sm:px-6 py-4 font-[Poppins]">
 
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-5 transition-all space-y-5">
-        <div class="flex flex-wrap items-start justify_between gap-3">
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
             <div>
-                <h1 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Customer directory</h1>
-                <p class="text-xs text-gray-500 dark:text-gray-400">Search by name, address, or account number. Use filters to refine results.</p>
+                <h1 class="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-100">Customers</h1>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Manage customer records and meter/account details.</p>
             </div>
             <x-danger-button id="clearSelectedBtn" type="button" class="hidden">
                 Clear Selected
             </x-danger-button>
         </div>
-
-        <form id="customerSearchForm" method="GET" class="flex flex-col lg:flex-row lg:items-center gap-3">
-            <div class="relative flex-1 min-w-[240px]">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-                    <x-heroicon-o-magnifying-glass class="w-4 h-4" />
-                </span>
-                <input
-                    id="searchCustomer"
-                    name="q"
-                    type="search"
-                    value="{{ $q ?? '' }}"
-                    placeholder="Search by name, address, or account no."
-                    class="w-full pl-10 pr-28 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                />
-                <div id="customerSuggestions" class="absolute top-full left-0 right-0 mt-1 hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg overflow-hidden z-20"></div>
-                <div class="absolute inset-y-0 right-0 flex items-center pr-2 gap-2">
-                    @if(!empty($q))
-                        <a href="{{ route('customer.index') }}" class="px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700">
-                            Clear
-                        </a>
-                    @endif
-                    <button type="submit" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md bg-blue-600 hover:bg-blue-700 text-white">
-                        Search
-                    </button>
-                </div>
-            </div>
-            <div class="flex items-center gap-2">
-                <label for="statusFilter" class="text-xs font-medium text-gray-500 dark:text-gray-400">Status</label>
-                <select
-                    id="statusFilter"
-                    name="status"
-                    class="w-40 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-xs bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                >
-                    <option value="">All Status</option>
-                    <option value="Active" {{ ($status ?? '') === 'Active' ? 'selected' : '' }}>Active</option>
-                    <option value="Inactive" {{ ($status ?? '') === 'Inactive' ? 'selected' : '' }}>Inactive</option>
-                    <option value="Disconnected" {{ ($status ?? '') === 'Disconnected' ? 'selected' : '' }}>Disconnected</option>
-                </select>
-            </div>
-        </form>
 
         <!-- Mobile cards -->
         <div class="space-y-3 lg:hidden">

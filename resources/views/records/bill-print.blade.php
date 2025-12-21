@@ -161,16 +161,10 @@
                 <div><dt>Status</dt><dd>{{ $billingRecord->bill_status }}</dd></div>
                 <div><dt>Billing Period</dt><dd>{{ $billingPeriod }}</dd></div>
                 <div><dt>Due Date</dt><dd>{{ $dueDate }}</dd></div>
+                <div><dt>Previous Reading</dt><dd>{{ number_format($previousReading, 0) }} m³</dd></div>
+                <div><dt>Current Reading</dt><dd>{{ number_format($currentReading, 0) }} m³</dd></div>
                 <div><dt>Prepared By</dt><dd>{{ $billingRecord->prepared_by ?? '—' }}</dd></div>
                 <div><dt>Meter</dt><dd>{{ $customer->meter_no ?? '—' }} · {{ $customer->meter_size ?? '—' }}</dd></div>
-            </dl>
-        </div>
-        <div class="info-block">
-            <h2>Account Snapshot</h2>
-            <dl>
-                <div><dt>Total Due</dt><dd>₱{{ number_format($totalDue, 2) }}</dd></div>
-                <div><dt>Overdue</dt><dd>₱{{ number_format($overdueTotal, 2) }}</dd></div>
-                <div><dt>Base Rate</dt><dd>₱{{ number_format($baseRate, 2) }} / cu m</dd></div>
             </dl>
         </div>
     </section>
@@ -248,45 +242,6 @@
             </section>
             @endif
         </div>
-
-        <aside class="billing-summary">
-            <div class="summary-highlight">
-                <span class="summary-label">Total Due</span>
-                <span class="summary-value">₱{{ number_format($totalDue, 2) }}</span>
-                <span class="summary-note">{{ $dueNote }}</span>
-            </div>
-
-            <div class="summary-metrics">
-                <div class="metric-card">
-                    <span class="metric-label">Previous Reading</span>
-                    <span class="metric-value">{{ number_format($previousReading, 0) }} m³</span>
-                    <span class="metric-sub">Last cycle</span>
-                </div>
-                <div class="metric-card">
-                    <span class="metric-label">Current Reading</span>
-                    <span class="metric-value">{{ number_format($currentReading, 0) }} m³</span>
-                    <span class="metric-sub">This cycle</span>
-                </div>
-                <div class="metric-card">
-                    <span class="metric-label">Consumption</span>
-                    <span class="metric-value">{{ number_format($consumptionVolume, 1) }} m³</span>
-                    <span class="metric-sub">Billed usage</span>
-                </div>
-                <div class="metric-card">
-                    <span class="metric-label">Base Rate</span>
-                    <span class="metric-value">₱{{ number_format($baseRate, 2) }}</span>
-                    <span class="metric-sub">Per cubic meter</span>
-                </div>
-            </div>
-
-            @if($overdueTotal > 0)
-                <div class="metric-card">
-                    <span class="metric-label">Overdue Balance</span>
-                    <span class="metric-value metric-value--danger">₱{{ number_format($overdueTotal, 2) }}</span>
-                    <span class="metric-sub">Includes surcharge</span>
-                </div>
-            @endif
-        </aside>
     </div>
 
     <footer class="footer-bar">
@@ -298,69 +253,37 @@
 <section class="print-back-section">
     <header class="back-header">
         <div>
-            <h2>Payment &amp; Support Information</h2>
-            <p>Please present this page when settling your account. Safekeeping of receipts expedites reconnection and billing inquiries.</p>
+            <h2>Company Policy</h2>
+            <p>Please read and keep this page for your reference.</p>
         </div>
         <div class="back-hours">
-            <span class="label">Office Hours</span>
-            <span class="value">Mon – Fri, 8:00 AM – 5:00 PM</span>
-            <span class="note">Saturday half-day: 8:00 AM – 12:00 NN</span>
+            <span class="label">Important</span>
+            <span class="value">Pay on or before the due date.</span>
+            <span class="note">If you can't make to pay before due date, your water source will be cut.</span>
         </div>
     </header>
 
-    <section class="back-overview">
-        <div class="back-overview-copy">
-            <h3>Customer Reminders</h3>
-            <p>Bring this billing statement when paying over the counter. Bank deposits must include the account number and invoice reference for reconciliation.</p>
-            <p>Submit proofs of payment within the same day via email or hotline messaging so your account status can be updated without delay.</p>
-        </div>
-        <div class="back-overview-cta">
-            <span class="cta-label">Need Assistance?</span>
-            <span class="cta-value">service@mawasa.ph</span>
-            <span class="cta-note">We reply within the day during office hours.</span>
-        </div>
-    </section>
-
-    <section class="back-columns">
-        <div class="back-card">
-            <h3>Payment Methods</h3>
-            <ul>
-                <li><strong>Over-the-counter:</strong> MAWASA Main Office, Barangay Manambulan</li>
-                <li><strong>Bank Deposit:</strong> Mawasa Cooperative Bank</li>
-                <li><strong>Account Number:</strong> {{ $billingRecord->account_no }}</li>
-                <li><strong>Reference:</strong> {{ $invoiceNumber }}</li>
-            </ul>
-        </div>
-        <div class="back-card">
-            <h3>Contact Channels</h3>
-            <ul>
-                <li><strong>Hotline:</strong> (082) 297-4521</li>
-                <li><strong>Mobile:</strong> +63 917 555 2300</li>
-                <li><strong>Email:</strong> service@mawasa.ph</li>
-                <li><strong>Address:</strong> Barangay Manambulan, Tugbok District, Davao City</li>
-            </ul>
-        </div>
-    </section>
-
     <section class="back-terms">
-        <h3>Terms &amp; Conditions</h3>
-        <p>Payments are due within ten (10) days from the billing date. Overdue accounts are assessed a surcharge per MAWASA policy. Service disconnection may be executed one (1) day after the published due date if the account remains unpaid. Keep your proof of payment for validation.</p>
-        <p>Report discrepancies immediately through our hotline or email. Consumption is based on actual meter readings; estimated bills are reconciled within the next billing cycle.</p>
+        <h3>Reminders</h3>
+        <p>Always present your account number when paying. Keep your receipts for verification and reconnection requests.</p>
+        <p>For billing concerns, immediately coordinate with MAWASA office staff.</p>
         <div class="policy-callout">
-            <h4>Disconnection &amp; Reconnection Policy</h4>
-            <p>Accounts that remain unpaid one (1) day after the due date are tagged for immediate service disconnection. Reconnection is scheduled within 24-48 hours after full payment of the outstanding balance plus the standard reconnection fee. Please coordinate with MAWASA billing staff to confirm clearance before resumption of water service.</p>
+            <h4>Disconnection Policy</h4>
+            <p>Accounts that are not paid on or before the due date may be scheduled for service disconnection. Disconnection may be implemented after the due date if payment is not received.</p>
         </div>
     </section>
 
     <footer class="back-footer">
-        <span>MAWASA • Reliable community water service since 1998</span>
+        <span>MANAMBULAN WATERWORKS AND SANITATION INC. (MAWASA)</span>
     </footer>
 </section>
 
 <script>
-    window.addEventListener('load', function () {
-        window.print();
-    });
+    @if(empty($disableAutoPrint))
+        window.addEventListener('load', function () {
+            window.print();
+        });
+    @endif
 </script>
 </body>
 </html>

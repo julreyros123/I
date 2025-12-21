@@ -513,63 +513,6 @@
         </div>
     </div>
 
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-200 dark:border-gray-700 p-4 lg:p-5 space-y-5">
-        <div class="space-y-1">
-            <h1 class="text-xl font-semibold text-gray-800 dark:text-gray-100">Customer Management</h1>
-            <p class="text-[12px] text-gray-500 dark:text-gray-400">Search, filter, and manage customer records with full audit history.</p>
-        </div>
-
-        <form id="customerFilters" method="GET" class="space-y-4">
-            <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
-                <div class="relative flex-1">
-                    <div class="flex items-center rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 overflow-hidden">
-                        <span class="px-3 text-gray-400">
-                            <x-heroicon-o-magnifying-glass class="w-4 h-4" />
-                        </span>
-                        <input id="adminCustomerSearch" name="search" value="{{ $filters['search'] ?? '' }}" type="search" placeholder="Search name, account, or address" class="flex-1 bg-transparent px-2 py-2 text-sm text-gray-800 dark:text-gray-100 focus:outline-none" autocomplete="off" />
-                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm font-semibold hover:bg-blue-500 transition">Search</button>
-                    </div>
-                    <div id="adminCustomerSuggestions" class="absolute z-30 top-full left-0 right-0 mt-2 hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xl overflow-hidden"></div>
-                </div>
-                <div class="flex items-center gap-2">
-                    <a href="{{ route('admin.customers') }}" class="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-xs font-semibold text-gray-600 dark:text-gray-200 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800">Reset</a>
-                    <button type="button" id="toggleCustomerFilters" class="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-xs font-semibold text-gray-700 dark:text-gray-100 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800">
-                        <x-heroicon-o-funnel class="w-4 h-4" />
-                        More filters
-                    </button>
-                </div>
-            </div>
-            <div class="flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
-                <span class="font-semibold uppercase tracking-wide text-[11px]">Status</span>
-                <label class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 cursor-pointer">
-                    <input type="radio" name="status" value="" class="w-3 h-3 text-blue-600 border-gray-300 focus:ring-blue-500" {{ empty($filters['status']) ? 'checked' : '' }}>
-                    <span>All</span>
-                </label>
-                @foreach($statusOptions as $option)
-                    <label class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 cursor-pointer">
-                        <input type="radio" name="status" value="{{ $option }}" class="w-3 h-3 text-blue-600 border-gray-300 focus:ring-blue-500" {{ ($filters['status'] ?? '') === $option ? 'checked' : '' }}>
-                        <span>{{ $option }}</span>
-                    </label>
-                @endforeach
-            </div>
-            <div id="customerAdvancedFilters" class="grid gap-3 md:grid-cols-2 lg:grid-cols-3 {{ $advancedFiltersOpen ? '' : 'hidden' }}">
-                <div>
-                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1" for="customer-classification">Connection Type</label>
-                    <select id="customer-classification" name="classification" class="w-full border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-700 dark:text-gray-200">
-                        <option value="">Any</option>
-                        @foreach($classificationOptions as $option)
-                            <option value="{{ $option }}" @selected(($filters['classification'] ?? null) === $option)>{{ $option }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1" for="customer-created">Created Date</label>
-                    <input id="customer-created" name="created" value="{{ $filters['created'] ?? '' }}" type="date" class="w-full border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-700 dark:text-gray-200" />
-                </div>
-            </div>
-        </form>
-    </div>
-
     <div class="bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700/60">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 px-6 lg:px-8 py-5 border-b border-gray-100 dark:border-gray-800">
             <div>
@@ -579,9 +522,6 @@
             <div class="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
                 <a href="{{ route('admin.customers', array_filter([...request()->except('export'), 'export' => 'csv'])) }}" class="inline-flex items-center gap-2 rounded-xl bg-blue-600 text-white px-4 py-2 font-semibold shadow hover:bg-blue-500 transition">
                     <x-heroicon-o-arrow-down-tray class="w-4 h-4" /> Export CSV
-                </a>
-                <a href="#customerFilters" class="inline-flex items-center gap-2 rounded-xl border border-gray-300 dark:border-gray-700 px-4 py-2 text-gray-600 dark:text-gray-200 hover:border-blue-400 hover:text-blue-600 transition">
-                    <x-heroicon-o-funnel class="w-4 h-4" /> Adjust filters
                 </a>
             </div>
         </div>
@@ -713,126 +653,6 @@
     <!-- Audit Log Modal -->
 </div>
 @endsection
-
-@push('scripts')
-<script>
-(function(){
-    const searchInput = document.getElementById('adminCustomerSearch');
-    const suggestionPanel = document.getElementById('adminCustomerSuggestions');
-    if (!searchInput || !suggestionPanel) return;
-
-    let controller = null;
-    let activeIndex = -1;
-    let suggestions = [];
-
-    function resetSuggestions(){
-        activeIndex = -1;
-        suggestions = [];
-        suggestionPanel.classList.add('hidden');
-        suggestionPanel.innerHTML = '';
-    }
-
-    async function fetchSuggestions(term){
-        const query = term.trim();
-        if (query.length < 2){
-            resetSuggestions();
-            return;
-        }
-
-        if (controller){ controller.abort(); }
-        controller = new AbortController();
-        suggestionPanel.innerHTML = '<div class="px-4 py-2 text-xs text-gray-400">Searching…</div>';
-        suggestionPanel.classList.remove('hidden');
-
-        try {
-            const res = await fetch(`{{ route('customer.searchAccounts') }}?q=${encodeURIComponent(query)}`, {
-                headers: { 'Accept':'application/json' },
-                signal: controller.signal,
-            });
-            if (!res.ok) throw new Error('Request failed');
-            const data = await res.json();
-            suggestions = Array.isArray(data.suggestions) ? data.suggestions : [];
-            if (!suggestions.length){
-                suggestionPanel.innerHTML = '<div class="px-4 py-2 text-xs text-gray-400">No matches.</div>';
-                return;
-            }
-            suggestionPanel.innerHTML = suggestions.map((item, idx) => {
-                const status = (item.status || '').toLowerCase();
-                const tone = status === 'active'
-                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
-                    : status === 'disconnected'
-                        ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-                        : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300';
-                return `
-                    <button type="button" data-index="${idx}" class="admin-suggestion w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-100 hover:bg-blue-50 dark:hover:bg-gray-800 focus:bg-blue-50 dark:focus:bg-gray-800">
-                        <div class="flex items-center justify-between gap-3 mb-1">
-                            <span class="font-mono text-xs text-gray-500 dark:text-gray-400">${item.account_no ?? ''}</span>
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${tone}">${item.status ?? ''}</span>
-                        </div>
-                        <div class="text-sm font-semibold text-gray-800 dark:text-gray-100">${item.name ?? 'Unnamed customer'}</div>
-                        <div class="text-xs text-gray-500 dark:text-gray-400">${item.address ?? 'No address on file'}</div>
-                    </button>
-                `;
-            }).join('');
-            activeIndex = -1;
-        } catch (error) {
-            if (error.name === 'AbortError') return;
-            console.error(error);
-            suggestionPanel.innerHTML = '<div class="px-4 py-2 text-xs text-rose-500">Unable to load suggestions.</div>';
-        }
-    }
-
-    searchInput.addEventListener('input', (event) => {
-        fetchSuggestions(event.target.value);
-    });
-
-    searchInput.addEventListener('keydown', (event) => {
-        if (suggestionPanel.classList.contains('hidden')) return;
-        const buttons = suggestionPanel.querySelectorAll('.admin-suggestion');
-        if (!buttons.length) return;
-
-        if (event.key === 'ArrowDown' || event.key === 'ArrowUp'){
-            event.preventDefault();
-            if (event.key === 'ArrowDown'){
-                activeIndex = (activeIndex + 1) % buttons.length;
-            } else {
-                activeIndex = (activeIndex - 1 + buttons.length) % buttons.length;
-            }
-            buttons.forEach((btn, idx) => {
-                btn.classList.toggle('bg-blue-50', idx === activeIndex);
-                btn.classList.toggle('dark:bg-gray-800', idx === activeIndex);
-            });
-        } else if (event.key === 'Enter' && activeIndex >= 0){
-            event.preventDefault();
-            buttons[activeIndex]?.click();
-        } else if (event.key === 'Escape'){
-            resetSuggestions();
-        }
-    });
-
-    suggestionPanel.addEventListener('mousedown', (event) => {
-        const item = event.target.closest('.admin-suggestion');
-        if (!item) return;
-        const idx = Number(item.dataset.index);
-        const data = suggestions[idx];
-        if (!data) return;
-        searchInput.value = data.account_no || data.name || '';
-        resetSuggestions();
-        searchInput.form?.submit();
-    });
-
-    document.addEventListener('click', (event) => {
-        if (event.target === searchInput || suggestionPanel.contains(event.target)) return;
-        resetSuggestions();
-    });
-
-    searchInput.addEventListener('search', () => {
-        resetSuggestions();
-        searchInput.form?.submit();
-    });
-})();
-</script>
-@endpush
 
 @push('scripts')
 <script>

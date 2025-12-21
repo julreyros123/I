@@ -6,27 +6,6 @@
 <div class="max-w-7xl mx-auto p-8 space-y-6">
     <div class="flex items-center justify-between">
         <h1 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Applications</h1>
-        <form method="GET" class="flex items-center gap-2 text-sm">
-            <select name="status" class="border rounded px-2 h-[36px] bg-white dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600">
-                <option value="">All Status</option>
-                @foreach(['registered','inspected','approved','assessed','paid','scheduled','installed','rejected'] as $st)
-                    <option value="{{ $st }}" @selected(request('status')===$st)>{{ ucfirst($st) }}</option>
-                @endforeach
-            </select>
-            <select name="decision" class="border rounded px-2 h-[36px] bg-white dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600">
-                <option value="">All Decisions</option>
-                @foreach(['approve','review','reject'] as $dc)
-                    <option value="{{ $dc }}" @selected(request('decision')===$dc)>{{ ucfirst($dc) }}</option>
-                @endforeach
-            </select>
-            <select name="risk" class="border rounded px-2 h-[36px] bg-white dark:bg-gray-700 dark:text-gray-100 border-gray-300 dark:border-gray-600">
-                <option value="">All Risk</option>
-                @foreach(['low','medium','high'] as $rk)
-                    <option value="{{ $rk }}" @selected(request('risk')===$rk)>{{ ucfirst($rk) }}</option>
-                @endforeach
-            </select>
-            <button class="px-3 h-[36px] rounded bg-blue-600 text-white">Filter</button>
-        </form>
     </div>
 
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">

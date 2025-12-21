@@ -165,6 +165,9 @@ class AdminController extends Controller
         $yearlyRevenue = [];
         foreach ($years as $y) { $yearlyRevenue[] = (float) ($byYear[$y] ?? 0); }
 
+        $defaultRangeStart = $periodStart->copy()->toDateString();
+        $defaultRangeEnd = $periodEnd->copy()->toDateString();
+
         return view('admin.dashboard', compact(
             'stats',
             'monthlyRevenue',
@@ -182,8 +185,133 @@ class AdminController extends Controller
             'connectionAnalyticsLabels',
             'connectionAnalyticsCounts',
             'connectionAnalyticsTotal',
-            'connectionColorPalette'
+            'connectionColorPalette',
+            'defaultRangeStart',
+            'defaultRangeEnd'
         ));
+    }
+
+    public function dashboardStats(Request $request)
+    {
+        abort_unless(auth()->check() && auth()->user()->role === 'admin', 403);
+
+        $startInput = $request->query('start');
+        $endInput = $request->query('end');
+
+        try {
+            $startDate = $startInput ? Carbon::parse($startInput)->startOfDay() : now()->copy()->startOfYear();
+            $endDate = $endInput ? Carbon::parse($endInput)->endOfDay() : now()->copy()->endOfDay();
+        } catch (\Exception $e) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Invalid date range provided.'
+            ], 422);
+        }
+
+        if ($startDate->greaterThan($endDate)) {
+            [$startDate, $endDate] = [$endDate->copy(), $startDate->copy()];
+        }
+
+        $billedTotal = (float) BillingRecord::whereBetween('created_at', [$startDate, $endDate])->sum('total_amount');
+        $collectedTotal = (float) PaymentRecord::whereBetween('created_at', [$startDate, $endDate])->sum('amount_paid');
+        $newCustomers = (int) Customer::whereBetween('created_at', [$startDate, $endDate])->count();
+        $activeCustomers = (int) Customer::count();
+        $collectionRate = $billedTotal > 0 ? round($collectedTotal / max($billedTotal, 0.000001), 4) : 0.0;
+
+        return response()->json([
+            'ok' => true,
+            'range' => [
+                'start' => $startDate->toDateString(),
+                'end' => $endDate->toDateString(),
+            ],
+            'stats' => [
+                'billed_total' => round($billedTotal, 2),
+                'collected_total' => round($collectedTotal, 2),
+                'new_customers' => $newCustomers,
+                'active_customers' => $activeCustomers,
+                'collection_rate' => $collectionRate,
+            ],
+        ]);
+    }
+
+    public function dashboardInsightsData(Request $request)
+    {
+        abort_unless(auth()->check() && auth()->user()->role === 'admin', 403);
+
+        $metric = $request->query('metric', 'revenue');
+        if (!in_array($metric, ['revenue', 'customers', 'usage'])) {
+            $metric = 'revenue';
+        }
+
+        try {
+            $startDate = $request->query('start')
+                ? Carbon::parse($request->query('start'))->startOfDay()
+                : now()->copy()->startOfYear();
+            $endDate = $request->query('end')
+                ? Carbon::parse($request->query('end'))->endOfDay()
+                : now()->copy()->endOfDay();
+        } catch (\Exception $e) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Invalid date range provided.'
+            ], 422);
+        }
+
+        if ($startDate->greaterThan($endDate)) {
+            [$startDate, $endDate] = [$endDate->copy(), $startDate->copy()];
+        }
+
+        $bucketStart = $startDate->copy()->startOfMonth();
+        $bucketEnd = $endDate->copy()->startOfMonth();
+
+        $labels = [];
+        $buckets = [];
+        $cursor = $bucketStart->copy();
+        while ($cursor->lte($bucketEnd)) {
+            $key = $cursor->format('Y-m-01');
+            $labels[] = $cursor->format('M Y');
+            $buckets[] = $key;
+            $cursor->addMonthNoOverflow();
+        }
+
+        switch ($metric) {
+            case 'customers':
+                $rows = Customer::selectRaw('DATE_FORMAT(created_at, "%Y-%m-01") as bucket, COUNT(*) as total')
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->groupBy('bucket')
+                    ->pluck('total', 'bucket');
+                break;
+            case 'usage':
+                $rows = BillingRecord::selectRaw('DATE_FORMAT(created_at, "%Y-%m-01") as bucket, AVG(consumption_cu_m) as total')
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->groupBy('bucket')
+                    ->pluck('total', 'bucket');
+                break;
+            case 'revenue':
+            default:
+                $rows = BillingRecord::selectRaw('DATE_FORMAT(created_at, "%Y-%m-01") as bucket, SUM(total_amount) as total')
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->groupBy('bucket')
+                    ->pluck('total', 'bucket');
+                break;
+        }
+
+        $series = [];
+        foreach ($buckets as $bucketKey) {
+            $value = (float) ($rows[$bucketKey] ?? 0);
+            $series[] = round($value, 2);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'range' => [
+                'start' => $startDate->toDateString(),
+                'end' => $endDate->toDateString(),
+            ],
+            'metric' => $metric,
+            'labels' => $labels,
+            'data' => $series,
+        ]);
     }
 
     public function notices()
@@ -359,73 +487,30 @@ class AdminController extends Controller
     {
         abort_unless(auth()->check() && auth()->user()->role === 'admin', 403);
 
-        $statusOptions = ['Active', 'Inactive', 'Disconnected'];
-        $classificationOptions = ['Residential', 'Commercial', 'Industrial'];
-
-        $search = trim((string) $request->get('search', ''));
-        $status = $request->get('status');
-        $classification = $request->get('classification');
-        $created = $request->get('created');
-
-        if (!in_array($status, $statusOptions, true)) {
-            $status = null;
-        }
-
-        if (!in_array($classification, $classificationOptions, true)) {
-            $classification = null;
-        }
-
-        if ($created && !strtotime($created)) {
-            $created = null;
-        }
-
-        $query = Customer::query();
-
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $like = "%{$search}%";
-                $q->where('name', 'like', $like)
-                    ->orWhere('account_no', 'like', $like)
-                    ->orWhere('address', 'like', $like)
-                    ->orWhere('contact_no', 'like', $like);
-            });
-        }
-
-        if ($status) {
-            $query->where('status', $status);
-        }
-
-        if ($classification) {
-            $query->where('classification', $classification);
-        }
-
-        if ($created) {
-            $query->whereDate('created_at', $created);
-        }
+        $query = Customer::query()->select([
+            'id',
+            'account_no',
+            'name',
+            'address',
+            'contact_no',
+            'classification',
+            'status',
+            'meter_no',
+            'reconnect_requested_at',
+            'created_at',
+        ]);
 
         if ($request->get('export') === 'csv') {
             return $this->exportCustomersCsv(clone $query);
         }
 
-        $customers = $query->orderByDesc('created_at')->paginate(10)->withQueryString();
-
-        $auditLog = TransferReconnectAudit::with('performedByUser')
-            ->orderByDesc('performed_at')
+        $customers = $query
             ->orderByDesc('created_at')
-            ->limit(25)
-            ->get();
+            ->paginate(10)
+            ->withQueryString();
 
         return view('admin.customers', [
             'customers' => $customers,
-            'filters' => [
-                'search' => $search,
-                'status' => $status,
-                'classification' => $classification,
-                'created' => $created,
-            ],
-            'statusOptions' => $statusOptions,
-            'classificationOptions' => $classificationOptions,
-            'auditLog' => $auditLog,
         ]);
     }
 
@@ -813,7 +898,15 @@ class AdminController extends Controller
         $q = trim((string) $request->get('q', ''));
 
         $records = BillingRecord::onlyTrashed()
-            ->with('customer')
+            ->select([
+                'id',
+                'customer_id',
+                'account_no',
+                'total_amount',
+                'bill_status',
+                'deleted_at',
+            ])
+            ->with(['customer:id,name,address'])
             ->when($q, function($query) use ($q) {
                 $query->where('account_no', 'like', "%{$q}%")
                       ->orWhereHas('customer', function($sub) use ($q){

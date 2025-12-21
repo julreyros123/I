@@ -52,30 +52,6 @@
                 <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Applicant Queue</h2>
                 <p class="text-sm text-gray-500 dark:text-gray-400">Showing {{ $applications->firstItem() ?? 0 }} – {{ $applications->lastItem() ?? 0 }} of {{ $applications->total() }} applicants.</p>
             </div>
-            <form method="GET" class="flex flex-wrap items-center gap-2 text-xs sm:text-sm w-full lg:w-auto">
-                <div class="relative flex-1 min-w-[160px]">
-                    <input type="search" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Search applicant or address" class="w-full h-10 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 pl-10 pr-3 text-sm text-gray-700 dark:text-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-300/60" />
-                    <x-heroicon-o-magnifying-glass class="w-4 h-4 text-gray-400 absolute left-3 inset-y-0 my-auto" />
-                </div>
-                <select name="status" class="h-10 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-sm text-gray-700 dark:text-gray-200">
-                    <option value="">All Status</option>
-                    @foreach($statusOptions as $value => $label)
-                        <option value="{{ $value }}" @selected(($filters['status'] ?? null) === $value)>{{ $label }}</option>
-                    @endforeach
-                </select>
-                <select name="decision" class="h-10 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-sm text-gray-700 dark:text-gray-200">
-                    <option value="">All Decisions</option>
-                    @foreach($decisionOptions as $value => $label)
-                        <option value="{{ $value }}" @selected(($filters['decision'] ?? null) === $value)>{{ $label }}</option>
-                    @endforeach
-                </select>
-                <select name="per_page" class="h-10 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-sm text-gray-700 dark:text-gray-200">
-                    @foreach($perPageOptions as $size)
-                        <option value="{{ $size }}" @selected(($filters['per_page'] ?? null) == $size)>{{ $size }}/page</option>
-                    @endforeach
-                </select>
-                <button class="inline-flex h-10 items-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow hover:bg-blue-700">Apply</button>
-            </form>
         </div>
 
         <div class="overflow-x-auto">

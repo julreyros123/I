@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use App\Models\BillingRecord;
 use App\Models\Customer;
 use App\Services\PaymentService;
+use App\Services\BillPdfService;
 use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -170,6 +171,15 @@ class BillingController extends Controller
                 'issued_at' => $data['issued_at'] ? Carbon::parse($data['issued_at']) : Carbon::now(),
             ]);
 
+            try {
+                $pdfPath = app(BillPdfService::class)->generateAndStore($billingRecord);
+                if ($pdfPath) {
+                    $billingRecord->update(['pdf_path' => $pdfPath]);
+                }
+            } catch (\Throwable $e) {
+                // Ignore PDF generation failures to keep bill saving fast and reliable.
+            }
+
             // Update customer's previous reading
             $customer->update(['previous_reading' => $data['current_reading']]);
 
@@ -179,6 +189,7 @@ class BillingController extends Controller
                 'ok' => true,
                 'billing_record_id' => $billingRecord->id,
                 'invoice_number' => $billingRecord->invoice_number,
+                'pdf_url' => $billingRecord->pdf_path ? url('/storage/' . ltrim($billingRecord->pdf_path, '/')) : null,
                 'message' => 'Bill saved successfully!',
             ]);
         } catch (\Exception $e) {

@@ -10,60 +10,6 @@
     </div>
 
     <div class="bg-white dark:bg-gray-900/70 rounded-3xl shadow-xl ring-1 ring-gray-100 dark:ring-gray-800 overflow-hidden">
-        <div class="border-b border-gray-100 dark:border-gray-800 px-4 sm:px-6 py-5 space-y-5">
-            <form method="GET" id="billingFiltersForm" class="space-y-4">
-                <div class="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                    <span class="font-semibold text-gray-600 dark:text-gray-300">Status quick view:</span>
-                    @foreach(($statusOptions ?? ['Pending','Outstanding Payment','Overdue','Notice of Disconnection','Disconnected','Paid']) as $label)
-                        @php $active = in_array($label, $statuses ?? []); @endphp
-                        <button type="button"
-                                class="js-status-chip inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0090ff] {{ $active ? 'bg-[#0090ff] text-white border-transparent shadow-lg dark:bg-[#0090ff] dark:text-white' : 'bg-gray-50 dark:bg-gray-900/70 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700' }}"
-                                data-status="{{ $label }}"
-                                data-active-classes="bg-[#0090ff] text-white border-transparent shadow-lg dark:bg-[#0090ff] dark:text-white"
-                                data-inactive-classes="bg-gray-50 dark:bg-gray-900/70 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700 shadow-sm"
-                                aria-pressed="{{ $active ? 'true' : 'false' }}">
-                            {{ $label }}
-                        </button>
-                    @endforeach
-                    <span class="w-full md:w-auto md:ml-auto text-[11px] uppercase tracking-wide text-gray-400">Showing {{ $records->total() }} result{{ $records->total() === 1 ? '' : 's' }}</span>
-                </div>
-
-                <div id="statusFiltersHidden" class="hidden">
-                    @foreach(($statuses ?? []) as $selectedStatus)
-                        <input type="hidden" name="statuses[]" value="{{ $selectedStatus }}">
-                    @endforeach
-                </div>
-
-                <div class="flex flex-col lg:flex-row lg:items-center gap-3">
-                    <div class="w-full md:w-1/2 lg:w-5/12 flex items-stretch gap-2">
-                        <div class="relative flex flex-1 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 focus-within:ring-2 focus-within:ring-sky-400/60 focus-within:border-sky-300" data-autocomplete="container">
-                            <div class="flex items-center px-3 text-gray-400">
-                                <x-heroicon-o-magnifying-glass class="w-4 h-4" />
-                            </div>
-                            <input type="text" name="q" value="{{ request('q') }}" placeholder="Search invoice, account, or customer"
-                                   class="flex-1 px-3 py-2 bg-transparent text-sm text-gray-900 dark:text-gray-100 focus:outline-none" data-autocomplete="input" autocomplete="off" />
-                            <button type="submit" class="h-full px-4 text-xs font-semibold bg-sky-600 hover:bg-sky-500 text-white transition-colors rounded-none rounded-r-xl">Search</button>
-                            <div class="absolute z-30 inset-x-0 top-full mt-1 hidden rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-950 shadow-2xl text-sm overflow-hidden" data-autocomplete="panel">
-                                <div class="py-3 text-center text-xs text-gray-400 dark:text-gray-500" data-autocomplete="empty">Start typing a customer name or account number</div>
-                                <ul class="max-h-72 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800" data-autocomplete="list"></ul>
-                                <div class="hidden py-3 text-center text-xs text-gray-400 dark:text-gray-500" data-autocomplete="loading">Searching…</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button type="button" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
-                            <x-heroicon-o-funnel class="w-4 h-4" />
-                            <span>Filters</span>
-                        </button>
-                        <a href="{{ route('records.billing') }}" class="inline-flex items-center gap-2 rounded-xl border border-transparent px-4 py-2 text-xs font-semibold text-gray-600 dark:text-gray-300 hover:text-sky-600 bg-gray-100 dark:bg-gray-800/60 hover:bg-gray-200 dark:hover:bg-gray-700 transition">Clear</a>
-                        <button type="button" id="bulkArchiveBtn" data-modal-target="bulkArchiveModal"
-                                class="hidden md:inline-flex items-center gap-1.5 px-3 py-2 text-xs rounded-xl border border-transparent bg-amber-500 hover:bg-amber-400 text-white font-semibold transition disabled:opacity-60 disabled:cursor-not-allowed">
-                            <x-heroicon-o-archive-box class="w-4 h-4" /> Archive selected
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>
 
         <div class="hidden lg:block overflow-x-auto">
             <form method="POST" action="{{ route('records.billing.bulk-generate') }}" id="bulkGenerateForm" class="space-y-3">

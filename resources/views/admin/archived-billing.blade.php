@@ -6,11 +6,6 @@
 <div class="w-full mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-8 font-[Poppins] space-y-6 lg:space-y-8">
     <div class="flex items-center justify-between mb-4">
         <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-100">Archived Billing Records</h1>
-        <form method="GET" class="flex gap-2">
-            <input type="text" name="q" value="{{ $q ?? '' }}" placeholder="Search by account or name"
-                   class="w-56 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <button class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm">Search</button>
-        </form>
     </div>
 
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-200 dark:border-gray-700 overflow-hidden">

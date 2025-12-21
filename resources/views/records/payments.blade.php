@@ -6,49 +6,9 @@
 <div class="w-full px-4 sm:px-6 lg:px-8 py-6 font-[Poppins] space-y-5">
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6 space-y-4">
         <p class="text-gray-600 dark:text-gray-400 text-xs">Guide: Search by account no. or name to find a receipt. Use "View History" to review billed months and amounts.</p>
-        <!-- Search + filter bar -->
-        <form method="GET" class="flex flex-col lg:flex-row lg:items-center gap-2 mb-1">
-            <div class="w-full lg:flex-1 flex items-stretch gap-2">
-                <div class="flex flex-1 rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/60">
-                    <div class="flex items-center px-3 text-gray-400">
-                        <x-heroicon-o-magnifying-glass class="w-4 h-4" />
-                    </div>
-                    <input 
-                        type="text" 
-                        name="q"
-                        value="{{ $q ?? '' }}"
-                        class="flex-1 px-3 py-2 bg-transparent text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none"
-                        placeholder="Search by account no. or name">
-                    <button type="submit" class="px-4 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white">
-                        Search
-                    </button>
-                </div>
-                <button type="button" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <x-heroicon-o-funnel class="w-4 h-4" />
-                    <span>Filter</span>
-                </button>
-            </div>
-        </form>
-
-        <!-- Show only pills (UI only for now) -->
-        <div class="flex flex-wrap items-center gap-3 text-xs text-gray-600 dark:text-gray-300">
-            <span class="font-medium">Show only:</span>
-            <label class="inline-flex items-center gap-1 cursor-pointer">
-                <input type="radio" name="paymentFilter" value="all" class="w-3 h-3 text-blue-600 border-gray-300 focus:ring-blue-500" checked>
-                <span>All</span>
-            </label>
-            <label class="inline-flex items-center gap-1 cursor-pointer">
-                <input type="radio" name="paymentFilter" value="recent" class="w-3 h-3 text-blue-600 border-gray-300 focus:ring-blue-500">
-                <span>Last 30 days</span>
-            </label>
-            <label class="inline-flex items-center gap-1 cursor-pointer">
-                <input type="radio" name="paymentFilter" value="high" class="w-3 h-3 text-blue-600 border-gray-300 focus:ring-blue-500">
-                <span>High amounts</span>
-            </label>
-        </div>
 
         <div class="overflow-x-auto table-responsive-wrapper">
-            <table class="w-full min-w-full text-sm text-left text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-lg">
+            <table class="w-full min-w-[900px] text-sm text-left text-gray-700 dark:text-gray-200">
                 <thead class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold">
                     <tr>
                         <th class="px-6 py-3 border-b dark:border-gray-600">Date</th>

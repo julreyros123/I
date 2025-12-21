@@ -1,6 +1,6 @@
 @page {
-    size: A5 landscape;
-    margin: 0;
+    size: A5;
+    margin: 8mm;
 }
 
 :root {
@@ -52,6 +52,36 @@ body {
 .print-billing > * {
     position: relative;
     z-index: 1;
+}
+
+@media print {
+    body {
+        background: white;
+    }
+
+    .print-billing {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        box-sizing: border-box;
+        padding: 6mm;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .print-billing::before,
+    .print-billing::after {
+        display: none;
+    }
+
+    .print-back-section {
+        margin: 0;
+        padding: 6mm;
+        box-sizing: border-box;
+        border-top: 0;
+        page-break-before: always;
+        break-before: page;
+    }
 }
 
 .invoice-header {
@@ -132,7 +162,7 @@ body {
 
 .invoice-info {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
     margin-bottom: 14px;
 }
@@ -295,7 +325,7 @@ body {
 
 .billing-content {
     display: grid;
-    grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.9fr);
+    grid-template-columns: minmax(0, 1fr);
     gap: 14px;
     align-items: start;
 }
@@ -417,7 +447,7 @@ body {
     margin-bottom: 10px;
     border: 1px solid rgba(56,189,248,0.28);
     border-radius: 16px;
-    padding: 14px 16px;
+    padding: 10px 12px;
     background: rgba(15,98,254,0.05);
 }
 
@@ -460,7 +490,7 @@ body {
 .usage-bars .bar-track {
     position: relative;
     width: 22px;
-    height: 80px;
+    height: 56px;
     border-radius: 12px;
     background: rgba(56,189,248,0.18);
     overflow: hidden;
