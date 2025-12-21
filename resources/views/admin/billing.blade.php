@@ -3,7 +3,7 @@
 @section('title', 'Billing Management')
 
 @section('content')
-<div class="w-full mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-8 font-[Poppins] space-y-6 lg:space-y-8">
+<div class="w-full mx-auto px-4 sm:px-6 py-3 sm:py-4 lg:py-5 font-[Poppins] space-y-5 lg:space-y-6">
     <div class="flex items-center justify-between">
         <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-100">Billing Management</h1>
         <div></div>
@@ -17,12 +17,24 @@
             <div class="p-3 lg:p-4 border-b border-gray-200 dark:border-gray-700">
                 <div class="flex flex-col gap-3">
                     <form method="GET" class="w-full">
-                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 w-full">
-                            <!-- Right group: Filters then Search (all right-aligned on desktop) -->
-                            <div class="flex w-full sm:w-auto justify-start sm:justify-end gap-3 sm:ml-auto">
-                                <div class="w-full sm:w-32">
+                        <div class="flex flex-col lg:flex-row lg:items-center gap-3 w-full">
+                            <div class="w-full lg:flex-1">
+                                <label for="q" class="sr-only">Search bills</label>
+                                <div class="relative">
+                                    <input
+                                        id="q"
+                                        name="q"
+                                        type="search"
+                                        placeholder="Search by account no., customer, or address"
+                                        class="w-full h-12 pl-12 pr-4 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm md:text-base text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                    />
+                                    <x-heroicon-o-magnifying-glass aria-hidden="true" class="pointer-events-none w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto lg:justify-end">
+                                <div class="w-full sm:w-40">
                                     <label for="status" class="sr-only">Status</label>
-                                    <select id="status" name="status" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm">
+                                    <select id="status" name="status" class="w-full h-11 px-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm">
                                         <option value="">All Status</option>
                                         <option value="Outstanding Payment">Outstanding Payment</option>
                                         <option value="Overdue">Overdue</option>
@@ -31,21 +43,14 @@
                                         <option value="Paid">Paid</option>
                                     </select>
                                 </div>
-                                <div class="w-full sm:w-32">
+                                <div class="w-full sm:w-40">
                                     <label for="period" class="sr-only">Period</label>
-                                    <select id="period" name="period" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm">
+                                    <select id="period" name="period" class="w-full h-11 px-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm">
                                         <option value="">This Month</option>
                                         <option value="last-month">Last Month</option>
                                         <option value="last-3-months">Last 3 Months</option>
                                         <option value="this-year">This Year</option>
                                     </select>
-                                </div>
-                                <!-- Search: reduced width, beside filters on right -->
-                                <div class="relative w-full sm:w-40">
-                                    <label for="q" class="sr-only">Search bills</label>
-                                    <input id="q" name="q" type="text" placeholder="Search"
-                                           class="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm">
-                                    <x-heroicon-o-magnifying-glass aria-hidden="true" class="pointer-events-none w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
                                 </div>
                             </div>
                         </div>
@@ -55,7 +60,7 @@
             
             <div class="overflow-x-auto">
                 <table class="w-full text-sm js-datatable">
-                    <thead class="bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-300">
+                    <thead class="bg-gradient-to-r from-[#00B4FF] via-[#009FFA] to-[#0082DC] text-white dark:from-gray-900 dark:via-gray-900 dark:to-gray-900 dark:text-gray-200">
                         <tr>
                             <th class="px-4 py-2 text-left">Date</th>
                             <th class="px-4 py-2 text-left">Account No.</th>

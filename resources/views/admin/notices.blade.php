@@ -3,7 +3,7 @@
 @section('title', 'Notice to Staff')
 
 @section('content')
-<div class="max-w-4xl mx-auto px-6 py-8 font-[Poppins]">
+<div class="w-full px-4 sm:px-6 lg:px-8 py-6 font-[Poppins] space-y-6">
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6">
         <h1 class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Send Notice to Staff</h1>
         <form id="broadcastForm" class="space-y-4">
@@ -13,7 +13,7 @@
             </div>
             <div>
                 <label class="block text-sm mb-1">Message</label>
-                <textarea id="broadcastMsg" rows="4" class="w-full border rounded-lg px-3 py-2 bg-white dark:bg-gray-700" required></textarea>
+                <textarea id="broadcastMsg" rows="6" class="w-full min-h-[180px] border rounded-lg px-3 py-2 bg-white dark:bg-gray-700" required></textarea>
             </div>
             <div class="text-right">
                 <button class="px-4 h-[40px] rounded bg-blue-600 hover:bg-blue-700 text-white">Send</button>
@@ -22,7 +22,7 @@
         <p id="broadcastStatus" class="text-sm mt-2"></p>
     </div>
 
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6 mt-6">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6">
         <div class="flex items-center justify-between mb-2">
             <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Recent Notices</h2>
             <button id="refreshRecent" class="text-sm text-blue-600 hover:text-blue-700">Refresh</button>

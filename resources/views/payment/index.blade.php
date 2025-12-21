@@ -6,11 +6,14 @@
 @section('title', 'Payment Portal')
 
 @section('content')
-<div class="max-w-7xl mx-auto px-6 py-6 font-[Poppins] space-y-6">
-    <!-- Tabs -->
-    <div class="flex gap-2 text-sm">
-        <button id="tabBtnCustomer" class="px-3 py-1.5 rounded bg-blue-600 text-white">Customer Payments</button>
-        <button id="tabBtnApplicant" class="px-3 py-1.5 rounded bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200">Applicant Fees</button>
+<div class="w-full px-4 sm:px-6 lg:px-8 pt-4 pb-6 font-[Poppins] space-y-6">
+    <!-- Tabs + Guide -->
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex gap-2 text-sm">
+            <button id="tabBtnCustomer" class="px-3 py-1.5 rounded bg-blue-600 text-white">Customer Payments</button>
+            <button id="tabBtnApplicant" class="px-3 py-1.5 rounded bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200">Applicant Fees</button>
+        </div>
+        <p class="text-sm text-gray-600 dark:text-gray-400">Guide: Search an account, review unpaid bills, then process payment.</p>
     </div>
 
 <!-- Applicant Fees Tab -->
@@ -92,12 +95,12 @@
                         <p class="text-[11px] uppercase tracking-wide text-blue-600 dark:text-blue-300">Live Summary</p>
                         <p id="feesSummaryStatus" class="text-sm font-semibold text-blue-900 dark:text-blue-200">Select a fee to begin</p>
                     </div>
-                    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                        <div class="sm:max-w-[60%]">
+                    <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+                        <div class="sm:flex-[1_1_320px] sm:max-w-full">
                             <p class="text-[11px] text-gray-600 dark:text-gray-400">Invoice No.</p>
                             <p id="feesInvoiceDisplay" class="font-mono text-sm text-gray-900 dark:text-gray-100 break-words sm:break-normal">—</p>
                         </div>
-                        <div class="w-full sm:w-auto sm:min-w-[220px] space-y-2">
+                        <div class="w-full sm:flex-[1_1_220px] sm:min-w-[220px] space-y-2">
                             <div class="flex items-center justify-between gap-4">
                                 <p class="text-[11px] uppercase text-gray-500 dark:text-gray-400">Due</p>
                                 <p id="feesSummaryDue" class="text-base font-semibold text-gray-900 dark:text-gray-100">₱0.00</p>
@@ -130,10 +133,6 @@
 
     <!-- Customer Payments Tab -->
     <div id="tabCustomer" class="space-y-5">
-        <!-- Quick actions / helper text -->
-        <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
-            <p class="text-sm text-gray-600 dark:text-gray-400">Guide: Search an account, review unpaid bills, then process payment.</p>
-        </div>
 
         <!-- Alert Box -->
         <div id="alertBox" class="hidden p-4 rounded-lg"></div>
