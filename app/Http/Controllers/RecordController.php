@@ -35,10 +35,18 @@ class RecordController extends Controller
         $issueFrom = $request->filled('issue_from') ? Carbon::parse($request->get('issue_from'))->startOfDay() : null;
         $issueTo = $request->filled('issue_to') ? Carbon::parse($request->get('issue_to'))->endOfDay() : null;
         
-        $records = BillingRecord::with('customer', 'paymentRecords')
+        $activeCustomerConstraint = function ($customerQuery) {
+            $customerQuery->where(function ($statusQuery) {
+                $statusQuery->whereNull('status')
+                    ->orWhere('status', '!=', 'Disconnected');
+            });
+        };
+
+        $recordsQuery = BillingRecord::with('customer', 'paymentRecords')
             ->when(Schema::hasColumn('billing_records', 'deleted_at'), function ($query) {
                 $query->whereNull('billing_records.deleted_at');
             })
+            ->whereHas('customer', $activeCustomerConstraint)
             ->when($q, function($query) use ($q) {
                 $query->where('account_no', 'like', "%{$q}%")
                       ->orWhereHas('customer', function($sub) use ($q){
@@ -75,20 +83,24 @@ class RecordController extends Controller
                 } else {
                     $query->where('created_at', '<=', $issueTo);
                 }
-            })
+            });
+
+        $records = (clone $recordsQuery)
             ->orderByDesc('created_at')
             ->paginate(10)
             ->withQueryString();
 
         // Get statistics (generation-focused) with guard if column not migrated yet
         if (Schema::hasColumn('billing_records', 'is_generated')) {
+            $statsBase = BillingRecord::whereHas('customer', $activeCustomerConstraint);
             $stats = [
-                'pending_generate' => BillingRecord::where('is_generated', false)->count(),
-                'generated' => BillingRecord::where('is_generated', true)->count(),
+                'pending_generate' => (clone $statsBase)->where('is_generated', false)->count(),
+                'generated' => (clone $statsBase)->where('is_generated', true)->count(),
             ];
         } else {
+            $statsBase = BillingRecord::whereHas('customer', $activeCustomerConstraint);
             $stats = [
-                'pending_generate' => BillingRecord::count(),
+                'pending_generate' => (clone $statsBase)->count(),
                 'generated' => 0,
             ];
         }
@@ -281,41 +293,63 @@ class RecordController extends Controller
         $this->applyOverdueRules();
         $q = trim((string) $request->get('q', ''));
         $status = $request->get('status', '');
-        $generated = $request->get('generated', ''); // '' | '0' | '1'
-        
-        $records = BillingRecord::with('customer', 'paymentRecords')
-            ->when($q, function($query) use ($q) {
+        $generated = $request->get('generated', '');
+
+        $activeCustomerConstraint = function ($customerQuery) {
+            $customerQuery->where(function ($statusQuery) {
+                $statusQuery->whereNull('status')
+                    ->orWhere('status', '!=', 'Disconnected');
+            });
+        };
+
+        $recordsQuery = BillingRecord::with('customer', 'paymentRecords')
+            ->whereHas('customer', $activeCustomerConstraint)
+            ->when($q, function ($query) use ($q) {
                 $query->where('account_no', 'like', "%{$q}%")
-                      ->orWhereHas('customer', function($sub) use ($q){
-                          $sub->where('name', 'like', "%{$q}%")
-                              ->orWhere('address', 'like', "%{$q}%");
-                      });
+                    ->orWhereHas('customer', function ($sub) use ($q) {
+                        $sub->where('name', 'like', "%{$q}%")
+                            ->orWhere('address', 'like', "%{$q}%");
+                    });
             })
-            ->when($status, function($query) use ($status) {
+            ->when($status, function ($query) use ($status) {
                 $query->where('bill_status', $status);
             })
-            ->when($generated !== '' && \Schema::hasColumn('billing_records','is_generated'), function($query) use ($generated){
+            ->when($generated !== '' && Schema::hasColumn('billing_records', 'is_generated'), function ($query) use ($generated) {
                 $query->where('is_generated', $generated === '1');
             })
+            ->where(function ($query) {
+                $query->whereNull('bill_status')
+                    ->orWhereNotIn('bill_status', ['Disconnected']);
+            })
+            ->whereNull('deleted_at');
+
+        $records = (clone $recordsQuery)
             ->orderByDesc('created_at')
             ->paginate(10)
             ->withQueryString();
 
-        // Get statistics (generation-focused) with guard if column not migrated yet
         if (Schema::hasColumn('billing_records', 'is_generated')) {
+            $statsBase = BillingRecord::whereHas('customer', $activeCustomerConstraint)
+                ->where(function ($query) {
+                    $query->whereNull('bill_status')
+                        ->orWhereNotIn('bill_status', ['Disconnected']);
+                });
             $stats = [
-                'pending_generate' => BillingRecord::where('is_generated', false)->count(),
-                'generated' => BillingRecord::where('is_generated', true)->count(),
+                'pending_generate' => (clone $statsBase)->where('is_generated', false)->count(),
+                'generated' => (clone $statsBase)->where('is_generated', true)->count(),
             ];
         } else {
-            // Fallback: treat all as pending when the is_generated column is not yet available
+            $statsBase = BillingRecord::whereHas('customer', $activeCustomerConstraint)
+                ->where(function ($query) {
+                    $query->whereNull('bill_status')
+                        ->orWhereNotIn('bill_status', ['Disconnected']);
+                });
             $stats = [
-                'pending_generate' => BillingRecord::count(),
+                'pending_generate' => (clone $statsBase)->count(),
                 'generated' => 0,
             ];
         }
 
-        // Quick totals cards (no schema changes)
         $startOfDay = Carbon::now()->startOfDay();
         $endOfDay = Carbon::now()->endOfDay();
         $startOfMonth = Carbon::now()->startOfMonth();
@@ -323,7 +357,7 @@ class RecordController extends Controller
 
         $collectionsToday = (float) PaymentRecord::whereBetween('created_at', [$startOfDay, $endOfDay])->sum('amount_paid');
         $collectionsMonth = (float) PaymentRecord::whereBetween('created_at', [$startOfMonth, $now])->sum('amount_paid');
-        $overdueQuery = BillingRecord::whereIn('bill_status', ['Overdue', 'Notice of Disconnection', 'Disconnected'])
+        $overdueQuery = BillingRecord::whereIn('bill_status', ['Overdue', 'Notice of Disconnection'])
             ->whereDoesntHave('paymentRecords');
         $overdueCount = (int) $overdueQuery->count();
         $overdueAmount = (float) $overdueQuery->sum('total_amount');
@@ -337,28 +371,78 @@ class RecordController extends Controller
             'outstanding_amount' => $outstandingAmount,
         ];
 
-        // Pending list for generation (limit to show in UI)
         $pending = BillingRecord::with('customer')
-            ->when(Schema::hasColumn('billing_records','is_generated'), function($qb){ $qb->where('is_generated', false); })
-            ->where(function($qb){ $qb->whereNull('bill_status')->orWhere('bill_status','!=','Paid'); })
+            ->whereHas('customer', $activeCustomerConstraint)
+            ->when(Schema::hasColumn('billing_records', 'is_generated'), function ($qb) {
+                $qb->where('is_generated', false);
+            })
+            ->where(function ($qb) {
+                $qb->whereNull('bill_status')
+                    ->orWhereNotIn('bill_status', ['Paid', 'Disconnected']);
+            })
             ->orderByDesc('created_at')
             ->limit(50)
-            ->get(['id','account_no','total_amount','date_from','date_to','created_at']);
+            ->get(['id', 'account_no', 'total_amount', 'date_from', 'date_to', 'created_at']);
 
         return view('records.billing-management', compact('records', 'q', 'status', 'stats', 'generated', 'quick', 'pending'));
     }
 
-    public function payments()
+    public function printBill($id)
     {
-        $q = trim((string) request()->get('q', ''));
-        $payments = BillingRecord::with('customer')
-            ->when($q, function($query) use ($q) {
-                $query->where('account_no', 'like', "%{$q}%")
-                      ->orWhereHas('customer', function($sub) use ($q){
-                          $sub->where('name', 'like', "%{$q}%");
-                      });
+        $billingRecord = BillingRecord::with('customer')->findOrFail($id);
+
+        if (($billingRecord->customer && $billingRecord->customer->status === 'Disconnected')
+            || $billingRecord->bill_status === 'Disconnected') {
+            abort(403, 'This account is disconnected. Printing is not allowed.');
+        }
+
+        $usageSeries = $this->getLastFiveMonthsUsage($billingRecord->account_no);
+        return view('records.bill-print', compact('billingRecord', 'usageSeries'));
+    }
+
+    public function downloadBillPdf($id)
+    {
+        $billingRecord = BillingRecord::with('customer')->findOrFail($id);
+
+        if (($billingRecord->customer && $billingRecord->customer->status === 'Disconnected')
+            || $billingRecord->bill_status === 'Disconnected') {
+            abort(403, 'This account is disconnected. Printing is not allowed.');
+        }
+
+        $path = $billingRecord->pdf_path;
+        if (!$path) {
+            abort(404);
+        }
+
+        $disk = Storage::disk('public');
+        if (!$disk->exists($path)) {
+            abort(404);
+        }
+
+        $filename = ($billingRecord->invoice_number ?? ('INV-' . str_pad((string) $billingRecord->id, 4, '0', STR_PAD_LEFT))) . '.pdf';
+        return $disk->download($path, $filename);
+    }
+
+    public function payments(Request $request)
+    {
+        $q = trim((string) $request->get('q', ''));
+
+        $payments = Customer::query()
+            ->select('customers.*')
+            ->whereHas('paymentRecords')
+            ->withCount(['paymentRecords as payment_count'])
+            ->withSum('paymentRecords as total_paid', 'amount_paid')
+            ->addSelect([
+                'latest_payment_at' => PaymentRecord::selectRaw('MAX(created_at)')
+                    ->whereColumn('payment_records.customer_id', 'customers.id'),
+            ])
+            ->when($q, function ($query) use ($q) {
+                $query->where(function ($inner) use ($q) {
+                    $inner->where('customers.account_no', 'like', "%{$q}%")
+                          ->orWhere('customers.name', 'like', "%{$q}%");
+                });
             })
-            ->orderByDesc('created_at')
+            ->orderByDesc('latest_payment_at')
             ->paginate(15)
             ->withQueryString();
 
@@ -477,25 +561,38 @@ class RecordController extends Controller
     {
         $request->validate(['account_no' => ['required','string','max:50']]);
         $acct = $request->string('account_no')->toString();
-        $rows = BillingRecord::with('customer')
+
+        $payments = PaymentRecord::query()
+            ->with([
+                'billingRecord' => function ($query) {
+                    $query->withTrashed();
+                },
+            ])
             ->where('account_no', $acct)
             ->orderByDesc('created_at')
-            ->take(100)
-            ->get()
-            ->map(function($r){
-                return [
-                    'date' => optional($r->created_at)->format('Y-m-d'),
-                    'previous' => (float) $r->previous_reading,
-                    'current' => (float) $r->current_reading,
-                    'maintenance' => (float) $r->maintenance_charge,
-                    'service_fee' => (float) $r->service_fee,
-                    'amount_paid' => (float) $r->total_amount,
-                    'consumption' => (float) $r->consumption_cu_m,
-                    'name' => $r->customer->name ?? null,
-                    'address' => $r->customer->address ?? null,
-                ];
-            });
-        return response()->json(['ok' => true, 'history' => $rows]);
+            ->limit(100)
+            ->get();
+
+        $rows = $payments->map(function (PaymentRecord $payment) {
+            $bill = $payment->billingRecord;
+            return [
+                'date' => optional($payment->created_at)->format('Y-m-d'),
+                'previous' => (float) ($bill->previous_reading ?? 0),
+                'current' => (float) ($bill->current_reading ?? 0),
+                'maintenance' => (float) ($bill->maintenance_charge ?? 0),
+                'service_fee' => (float) ($bill->service_fee ?? 0),
+                'amount_paid' => (float) $payment->amount_paid,
+                'consumption' => (float) ($bill->consumption_cu_m ?? 0),
+                'bill_amount' => (float) ($payment->bill_amount ?? $bill->total_amount ?? 0),
+                'payment_status' => $payment->payment_status,
+                'notes' => $payment->notes,
+            ];
+        });
+
+        return response()->json([
+            'ok' => true,
+            'history' => $rows,
+        ]);
     }
 
     public function billingStats(Request $request)
@@ -563,32 +660,6 @@ class RecordController extends Controller
         return redirect()
             ->route('records.billing')
             ->with('success', 'Bill status updated successfully!');
-    }
-
-    public function printBill($id)
-    {
-        $billingRecord = BillingRecord::with('customer')->findOrFail($id);
-
-        $usageSeries = $this->getLastFiveMonthsUsage($billingRecord->account_no);
-        return view('records.bill-print', compact('billingRecord', 'usageSeries'));
-    }
-
-    public function downloadBillPdf($id)
-    {
-        $billingRecord = BillingRecord::with('customer')->findOrFail($id);
-
-        $path = $billingRecord->pdf_path;
-        if (!$path) {
-            abort(404);
-        }
-
-        $disk = Storage::disk('public');
-        if (!$disk->exists($path)) {
-            abort(404);
-        }
-
-        $filename = ($billingRecord->invoice_number ?? ('INV-' . str_pad((string) $billingRecord->id, 4, '0', STR_PAD_LEFT))) . '.pdf';
-        return $disk->download($path, $filename);
     }
 
     public function bulkGenerate(Request $request)

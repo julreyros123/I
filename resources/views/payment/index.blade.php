@@ -372,10 +372,47 @@
     </div>
 </div>
 
+<!-- Customer lookup modal -->
+<div id="customerSearchModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-8">
+    <div class="relative w-full max-w-3xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700">
+        <div class="flex items-start justify-between gap-4 px-6 py-5 border-b border-gray-100 dark:border-gray-800">
+            <div>
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Find a Customer</h2>
+                <p class="text-sm text-gray-500 dark:text-gray-300">Search by account number or name, then click a match to load billing details.</p>
+            </div>
+            <button type="button" id="closeSearchModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                <x-heroicon-o-x-mark class="w-5 h-5" />
+            </button>
+        </div>
+        <div class="px-6 py-5 space-y-4">
+            <div class="relative">
+                <x-ui.input id="searchModalInput" placeholder="Start typing a customer or account number" class="h-11 text-sm pr-12" />
+                <div class="absolute inset-y-0 right-3 flex items-center text-gray-400">
+                    <x-heroicon-o-magnifying-glass class="w-5 h-5" />
+                </div>
+            </div>
+            <div id="searchModalResultsWrap" class="border border-gray-200 dark:border-gray-700 rounded-xl max-h-80 overflow-y-auto">
+                <ul id="searchModalResults" class="divide-y divide-gray-200 dark:divide-gray-800 bg-white dark:bg-gray-900 text-sm"></ul>
+            </div>
+        </div>
+        <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 dark:border-gray-800">
+            <button type="button" id="resetSearchModal" class="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100">Clear</button>
+            <x-primary-button type="button" id="modalCloseDone" class="px-5">Done</x-primary-button>
+        </div>
+    </div>
+</div>
+
 <script>
 const prefillAccount = @json($prefillAccount ?? null);
 const alertBox = document.getElementById('alertBox');
 let currentAccountNo = null;
+const searchModal = document.getElementById('customerSearchModal');
+const searchModalInput = document.getElementById('searchModalInput');
+const searchModalResults = document.getElementById('searchModalResults');
+const openSearchModalBtn = document.getElementById('openSearchModal');
+const closeSearchModalBtn = document.getElementById('closeSearchModal');
+const modalDoneBtn = document.getElementById('modalCloseDone');
+const modalResetBtn = document.getElementById('resetSearchModal');
 function showAlert(msg, type = 'success') {
     if (window.showToast) {
         showToast(type === 'error' ? 'error' : (type === 'warning' ? 'warning' : 'success'), String(msg));
@@ -387,6 +424,7 @@ function showAlert(msg, type = 'success') {
         alertBox.innerText = msg;
         setTimeout(() => alertBox.classList.add('hidden'), 3000);
     }
+}
 
 function resetCustomerWorkspace(){
     hideSuggest();
@@ -456,7 +494,6 @@ function resetCustomerWorkspace(){
     window.__latestAmount = 0;
     window.__manualSelectionTotal = 0;
 }
-}
 
 // --- Customer Search Functionality ---
 // --- Account No. formatter and validator ---
@@ -468,14 +505,17 @@ const resultsPanel = document.getElementById('searchResults');
 const resultsList = document.getElementById('searchResultsList');
 const clearResultsBtn = document.getElementById('clearResults');
 function formatAcct(v){
-    const d = (v || '').replace(/\D+/g,'').slice(0,9); // 9 digits total
-    const p1 = d.slice(0,2);
-    const p2 = d.slice(2,8);
-    const p3 = d.slice(8,9);
-    let out = p1;
-    if (p2) out += '-' + p2; else if (p1.length === 2 && d.length>2) out += '-';
-    if (p3) out += '-' + p3; else if (p2.length === 6 && d.length>8) out += '-';
-    return out;
+    const raw = (v || '').trim();
+    const digits = raw.replace(/\D+/g, '');
+    if (!digits) return raw;
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 8) {
+        return `${digits.slice(0,2)}-${digits.slice(2)}`;
+    }
+    const first = digits.slice(0,2);
+    const middle = digits.slice(2,8);
+    const tail = digits.slice(8);
+    return tail ? `${first}-${middle}-${tail}` : `${first}-${middle}`;
 }
 function isValidAcct(v){
     return /^[A-Za-z0-9-]{3,}$/.test((v || '').trim());
@@ -496,8 +536,19 @@ async function searchByAccount(account){
             },
             body: JSON.stringify({ account_no: account })
         });
-        if (!res.ok) throw new Error('Customer not found');
-        const data = await res.json();
+        let data = null;
+        try {
+            data = await res.json();
+        } catch (_) {
+            data = null;
+        }
+        if (!res.ok) {
+            const message = (data && typeof data.error === 'string') ? data.error : 'Customer not found or not eligible for payment.';
+            throw new Error(message);
+        }
+        if (!data || !data.customer) {
+            throw new Error('Unexpected response from payment search.');
+        }
 
         // Populate customer info fields
         document.getElementById('account_no').value = data.customer.account_no || '';
@@ -649,7 +700,8 @@ async function searchByAccount(account){
         try { loadApplicantFeesForAccount(data.customer.account_no || '', data.customer.name || ''); } catch(_){}
         return data;
     } catch (e) {
-        showAlert('Customer not found.', 'error');
+        const message = (e && typeof e.message === 'string' && e.message.trim()) ? e.message : 'Customer not found.';
+        showAlert(message, 'error');
         var paymentSummary = document.getElementById('paymentSummary');
         if (paymentSummary) paymentSummary.classList.add('hidden');
         throw e;
@@ -726,29 +778,27 @@ function renderResults(customers){
     if (!customers.length) {
         resultsList.innerHTML = `
             <li class="px-4 py-6 text-xs text-gray-500 dark:text-gray-400 text-center">
-                No matching customers with unpaid balances yet. Try another name or account number.
+                No active customers with unpaid balances were found for that search. Try a different name or account number.
             </li>
         `;
         resultsPanel.classList.remove('hidden');
         return;
     }
     customers.forEach(customer => {
-        const { account_no, name, address, classification, unpaid_count, formatted_unpaid_total } = customer;
+        const { account_no, name, address, classification, unpaid_count, formatted_unpaid_total, status } = customer;
         const li = document.createElement('li');
-        li.className = 'px-4 py-3 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer transition space-y-1';
+        li.className = 'px-4 py-3 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer transition';
         li.innerHTML = `
-            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-                <div class="space-y-0.5">
-                    <p class="font-semibold text-gray-800 dark:text-gray-100">${escapeHtml(name || '—')}</p>
-                    <div class="flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
-                        <span class="font-medium text-blue-600 dark:text-blue-300">${escapeHtml(account_no || '—')}</span>
-                        ${classification ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-200 text-[10px] uppercase">${escapeHtml(classification)}</span>` : ''}
-                    </div>
-                    <p class="text-[11px] text-gray-400 dark:text-gray-500 truncate max-w-[320px]">${escapeHtml(address || '—')}</p>
+            <div class="flex items-start justify-between gap-3">
+                <div class="space-y-1">
+                    <span class="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">${escapeHtml(account_no || '—')}</span>
+                    <p class="text-base font-semibold text-gray-900 dark:text-gray-100">${escapeHtml(name || '—')}</p>
+                    <p class="text-[12px] text-gray-500 dark:text-gray-400 max-w-[360px] truncate">${escapeHtml(address || '—')}</p>
                 </div>
-                <div class="flex flex-col items-start lg:items-end text-xs text-gray-600 dark:text-gray-300">
-                    <span>${unpaid_count ? `${unpaid_count} unpaid bill${unpaid_count === 1 ? '' : 's'}` : 'Up to date'}</span>
+                <div class="flex flex-col items-end gap-1 text-xs text-gray-600 dark:text-gray-300">
+                    ${buildStatusBadge(status)}
                     <span class="font-semibold text-gray-900 dark:text-gray-100">${formatted_unpaid_total || '₱0.00'}</span>
+                    <span>${unpaid_count ? `${unpaid_count} unpaid bill${unpaid_count === 1 ? '' : 's'}` : 'Up to date'}</span>
                 </div>
             </div>
         `;
@@ -766,23 +816,21 @@ function renderResults(customers){
 }
 
 function buildSuggestionItem(customer){
-    const { account_no, name, address, classification, unpaid_count, formatted_unpaid_total } = customer;
+    const { account_no, name, address, classification, unpaid_count, formatted_unpaid_total, status } = customer;
     const item = document.createElement('button');
     item.type = 'button';
-    item.className = 'w-full text-left px-4 py-3 space-y-1 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg';
+    item.className = 'w-full text-left px-4 py-3 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg';
     item.innerHTML = `
-        <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div class="flex items-start justify-between gap-3">
             <div class="space-y-1">
-                <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">${escapeHtml(name || '—')}</p>
-                <div class="flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
-                    <span class="font-medium text-blue-600 dark:text-blue-300">${escapeHtml(account_no || '—')}</span>
-                    ${classification ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-200 text-[10px] uppercase">${escapeHtml(classification)}</span>` : ''}
-                </div>
-                <p class="text-[11px] text-gray-400 dark:text-gray-500 truncate max-w-[360px]">${escapeHtml(address || '—')}</p>
+                <span class="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">${escapeHtml(account_no || '—')}</span>
+                <p class="text-base font-semibold text-gray-900 dark:text-gray-100">${escapeHtml(name || '—')}</p>
+                <p class="text-[12px] text-gray-500 dark:text-gray-400 max-w-[360px] truncate">${escapeHtml(address || '—')}</p>
             </div>
-            <div class="flex flex-col items-start sm:items-end text-xs text-gray-600 dark:text-gray-300">
-                <span>${unpaid_count ? `${unpaid_count} unpaid bill${unpaid_count === 1 ? '' : 's'}` : 'Up to date'}</span>
+            <div class="flex flex-col items-end gap-1 text-xs text-gray-600 dark:text-gray-300">
+                ${buildStatusBadge(status)}
                 <span class="font-semibold text-gray-900 dark:text-gray-50">${formatted_unpaid_total || '₱0.00'}</span>
+                <span>${unpaid_count ? `${unpaid_count} unpaid bill${unpaid_count === 1 ? '' : 's'}` : 'Up to date'}</span>
             </div>
         </div>
     `;
@@ -805,7 +853,7 @@ function renderSuggestions(customers){
     if (!customers.length) {
         suggestBox.innerHTML = `
             <div class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
-                No customers with unpaid balances found for that search.
+                No active customers with unpaid balances match that search yet.
             </div>
         `;
         suggestBox.classList.remove('hidden');
@@ -813,6 +861,20 @@ function renderSuggestions(customers){
     }
     customers.forEach(customer => suggestBox.appendChild(buildSuggestionItem(customer)));
     suggestBox.classList.remove('hidden');
+}
+
+function escapeHtml(s){
+    return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
+}
+
+function buildStatusBadge(status){
+    const label = (status || '').trim() || 'Unspecified';
+    const tone = label.toLowerCase();
+    let classes = 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-200';
+    if (tone === 'active') classes = 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300';
+    else if (tone.includes('disconnect')) classes = 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300';
+    else if (tone === 'pending') classes = 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300';
+    return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${classes}">${escapeHtml(label)}</span>`;
 }
 
 async function fetchCustomers(query){
@@ -871,6 +933,134 @@ async function searchUnified(value){
 
 function escapeHtml(s){
     return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
+}
+
+function buildStatusBadge(status){
+    const label = (status || '').trim() || 'Unspecified';
+    const tone = label.toLowerCase();
+    let classes = 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-200';
+    if (tone === 'active') classes = 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300';
+    else if (tone.includes('disconnect')) classes = 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300';
+    else if (tone === 'pending') classes = 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300';
+    return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${classes}">${escapeHtml(label)}</span>`;
+}
+
+function openSearchModal(){
+    if (!searchModal) return;
+    searchModal.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+    const seed = (unifiedInput?.value || '').trim();
+    if (searchModalInput) {
+        searchModalInput.value = seed;
+        setTimeout(() => searchModalInput.focus(), 50);
+        if (seed.length >= 2) {
+            triggerModalSearch(seed);
+        } else {
+            renderModalResults([]);
+        }
+    }
+}
+
+function closeSearchModal(){
+    if (!searchModal) return;
+    searchModal.classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
+}
+
+let modalDebounce;
+function triggerModalSearch(query){
+    clearTimeout(modalDebounce);
+    modalDebounce = setTimeout(async () => {
+        const customers = await fetchCustomers(query);
+        renderModalResults(customers);
+    }, 200);
+}
+
+if (openSearchModalBtn){
+    openSearchModalBtn.addEventListener('click', openSearchModal);
+}
+if (closeSearchModalBtn){
+    closeSearchModalBtn.addEventListener('click', closeSearchModal);
+}
+if (modalDoneBtn){
+    modalDoneBtn.addEventListener('click', closeSearchModal);
+}
+if (modalResetBtn){
+    modalResetBtn.addEventListener('click', () => {
+        if (searchModalInput) searchModalInput.value = '';
+        renderModalResults([]);
+    });
+}
+if (searchModalInput){
+    searchModalInput.addEventListener('input', (e) => {
+        const value = (e.target.value || '').trim();
+        if (value.length >= 2) {
+            triggerModalSearch(value);
+        } else {
+            renderModalResults([]);
+        }
+    });
+    searchModalInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const value = (searchModalInput.value || '').trim();
+            if (value.length >= 2) {
+                triggerModalSearch(value);
+            }
+        }
+    });
+}
+
+if (searchModal){
+    searchModal.addEventListener('click', (event) => {
+        if (event.target === searchModal) {
+            closeSearchModal();
+        }
+    });
+}
+
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && searchModal && !searchModal.classList.contains('hidden')) {
+        closeSearchModal();
+    }
+});
+
+async function loadPrefillAccount(account){
+    const unifiedField = document.getElementById('unifiedSearch');
+    const normalizedInput = String(account || '').trim();
+    const candidates = Array.from(new Set([
+        normalizedInput,
+        formatAcct(normalizedInput),
+        normalizedInput.replace(/\s+/g, ''),
+    ])).filter(Boolean);
+
+    if (unifiedField) unifiedField.value = candidates[0];
+    if (acctInput) acctInput.value = candidates[0];
+
+    for (const candidate of candidates) {
+        if (!candidate) continue;
+        try {
+            await searchByAccount(candidate);
+            return true;
+        } catch (primaryError) {
+            console.warn('Direct lookup failed for prefill candidate', candidate, primaryError);
+            try {
+                const matches = await fetchCustomers(candidate);
+                if (matches.length) {
+                    const first = matches[0];
+                    const fallbackAccount = first.account_no || candidate;
+                    if (unifiedField) unifiedField.value = first.account_no || first.name || fallbackAccount;
+                    if (acctInput) acctInput.value = fallbackAccount;
+                    await searchByAccount(fallbackAccount);
+                    return true;
+                }
+            } catch (secondaryError) {
+                console.error('Prefill fallback search failed', secondaryError);
+            }
+        }
+    }
+    console.error('Prefill account lookup failed for all candidates', candidates);
+    return false;
 }
 
 // Quick search: auto-trigger when a valid account number is typed (debounced)
@@ -1158,18 +1348,25 @@ initTabFromUrl();
 window.addEventListener('hashchange', initTabFromUrl);
 window.addEventListener('popstate', initTabFromUrl);
 
-document.addEventListener('DOMContentLoaded', async () => {
+async function initPrefillIfNeeded(){
     if (!prefillAccount) return;
     try {
-        const unifiedField = document.getElementById('unifiedSearch');
-        if (unifiedField) {
-            unifiedField.value = prefillAccount;
-            await searchUnified(prefillAccount);
+        const success = await loadPrefillAccount(prefillAccount);
+        if (!success) {
+            showAlert('Unable to auto-load the selected customer. Please search manually.', 'warning');
         }
     } catch (error) {
         console.error('Failed to prefill payment search', error);
     }
-});
+}
+
+if (prefillAccount){
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPrefillIfNeeded);
+    } else {
+        initPrefillIfNeeded();
+    }
+}
 
 // --- Applicant fee directory & payment flow ---
 const feesCard = document.getElementById('feesCard');

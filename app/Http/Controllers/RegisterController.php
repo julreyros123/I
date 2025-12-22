@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\ActivityLog;
 use App\Models\Customer;
 use App\Models\Register;
 use App\Services\AccountNumberGenerator;
@@ -180,6 +181,22 @@ class RegisterController extends Controller
             }
 
             DB::commit();
+
+            ActivityLog::create([
+                'user_id' => optional($request->user())->id,
+                'module' => 'Customers',
+                'action' => 'CUSTOMER_REGISTERED',
+                'description' => sprintf('Registered new customer %s (%s)', $customer->name, $customer->account_no),
+                'target_type' => Customer::class,
+                'target_id' => $customer->id,
+                'meta' => [
+                    'account_no' => $customer->account_no,
+                    'name' => $customer->name,
+                    'address' => $customer->address,
+                    'contact_no' => $request->contact_number ? trim($request->contact_number) : null,
+                    'application_id' => $application->id,
+                ],
+            ]);
 
             return redirect()->route('register.index')
                 ->with('success', 'Registration submitted. Please wait for validation.')

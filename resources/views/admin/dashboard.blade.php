@@ -26,7 +26,7 @@
                     </div>
                     <div class="space-y-1 text-right">
                         <p id="kpiBilledValue" class="text-xl sm:text-2xl font-semibold leading-tight">₱{{ number_format($stats['month_billed'] ?? 0, 2) }}</p>
-                        <p class="text-[11px] font-semibold text-white/90">Range billed total</p>
+                        <p class="text-[12px] sm:text-[13px] font-semibold text-white/90">Range billed total</p>
                     </div>
                 </div>
             </div>
@@ -45,7 +45,7 @@
                     </div>
                     <div class="space-y-1 text-right">
                         <p id="kpiCollectedValue" class="text-xl sm:text-2xl font-semibold leading-tight">₱{{ number_format($stats['month_collected'] ?? 0, 2) }}</p>
-                        <p class="text-[11px] font-semibold text-white/90">Settled ledger payments</p>
+                        <p class="text-[12px] sm:text-[13px] font-semibold text-white/90">Settled ledger payments</p>
                     </div>
                 </div>
             </a>
@@ -64,7 +64,7 @@
                     </div>
                     <div class="space-y-1 text-right">
                         <p id="kpiCustomerValue" class="text-2xl sm:text-3xl font-semibold leading-tight">{{ number_format($stats['new_customers'] ?? 0) }}</p>
-                        <p class="text-[11px] font-semibold text-white/90">Within selected range</p>
+                        <p class="text-[12px] sm:text-[13px] font-semibold text-white/90">Within selected range</p>
                     </div>
                 </div>
             </a>
@@ -83,7 +83,7 @@
                     </div>
                     <div class="space-y-1 text-right">
                         <p id="kpiCollectionRateValue" class="text-xl sm:text-2xl font-semibold leading-tight">{{ number_format(($stats['collection_rate'] ?? 0) * 100, 1) }}%</p>
-                        <p class="text-[11px] font-semibold text-white/90">Target ≥ 90%</p>
+                        <p class="text-[12px] sm:text-[13px] font-semibold text-white/90">Target ≥ 90%</p>
                     </div>
                 </div>
             </div>

@@ -42,9 +42,9 @@
                 <span id="topbarNotifDot" class="absolute -top-1 -right-1 w-5 h-5 text-[11px] font-bold text-white bg-red-500 rounded-full flex items-center justify-center shadow hidden">0</span>
             </button>
             <div id="topbarNotifMenu" 
-                 class="hidden absolute right-0 mt-2 w-72 bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
-                <div class="px-4 py-2 text-sm font-semibold">Notifications</div>
-                <ul id="topbarNotifList" class="max-h-80 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800"></ul>
+                 class="hidden absolute right-0 mt-2 w-96 max-w-sm bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 py-3 z-50">
+                <div class="px-5 py-2 text-sm font-semibold">Notifications</div>
+                <ul id="topbarNotifList" class="max-h-96 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800"></ul>
                 
             </div>
         </div>

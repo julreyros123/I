@@ -270,6 +270,10 @@
     return num.toString().padStart(2, '0');
   }
 
+  function formatInputDate(date) {
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  }
+
   function generateInvoiceNumber() {
     const now = new Date();
     const base = `INV-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
@@ -290,6 +294,38 @@
     } catch (_) {
       state.dueDatePreview.textContent = '—';
     }
+  }
+
+  function syncPeriodEndWithStart(options = {}) {
+    const { force = false } = options;
+    const fromEl = $('date_from');
+    const toEl = $('date_to');
+    if (!fromEl || !toEl) return;
+
+    const rawFrom = (fromEl.value || '').trim();
+    if (!rawFrom) return;
+
+    const start = new Date(`${rawFrom}T00:00:00`);
+    if (Number.isNaN(start.getTime())) return;
+
+    const rawTo = (toEl.value || '').trim();
+    let shouldUpdate = force || !rawTo || toEl.dataset.autoFilled === 'true';
+
+    if (!shouldUpdate && rawTo) {
+      const currentTo = new Date(`${rawTo}T00:00:00`);
+      if (Number.isNaN(currentTo.getTime()) || currentTo < start) {
+        shouldUpdate = true;
+      }
+    }
+
+    if (!shouldUpdate) return;
+
+    const endOfMonth = new Date(start.getFullYear(), start.getMonth() + 1, 0);
+    toEl.value = formatInputDate(endOfMonth);
+    toEl.dataset.autoFilled = 'true';
+
+    updateDueDate();
+    checkBillingStatus();
   }
 
   async function checkBillingStatus() {
@@ -366,6 +402,7 @@
     if (!invoiceField.value) {
       invoiceField.value = generateInvoiceNumber();
     }
+    syncPeriodEndWithStart({ force: true });
     calculate();
   }
 
@@ -381,15 +418,35 @@
 
   const dateToField = $('date_to');
   if (dateToField) {
+    const markManualTo = () => { dateToField.dataset.autoFilled = 'false'; };
+    dateToField.addEventListener('input', markManualTo);
+    dateToField.addEventListener('change', markManualTo);
     dateToField.addEventListener('change', () => {
       updateDueDate();
       checkBillingStatus();
     });
   }
 
+  const dateFromField = $('date_from');
+  if (dateFromField) {
+    dateFromField.addEventListener('input', () => {
+      dateFromField.dataset.autoFilled = 'false';
+    });
+    dateFromField.addEventListener('change', () => {
+      dateFromField.dataset.autoFilled = 'false';
+      syncPeriodEndWithStart({ force: true });
+      calculate();
+    });
+  }
+
   fields.forEach(id => {
     const el = $(id);
     if (!el) return;
+
+    if (id === 'date_from' || id === 'date_to') {
+      el.dataset.autoFilled = el.dataset.autoFilled || 'true';
+    }
+
     el.addEventListener('input', calculate);
     el.addEventListener('change', calculate);
   });

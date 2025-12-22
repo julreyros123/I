@@ -1,13 +1,49 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-4xl mx-auto p-6">
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-8">
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100">Payment Receipt</h1>
-            <p class="text-gray-600 dark:text-gray-400 mt-2">MAWASA - Brgy. Manambulan Tugbok District, Davao City</p>
-        </div>
-
+<style>
+@page {
+    size: A4;
+    margin: 12mm;
+}
+@media print {
+    body {
+        background: #ffffff !important;
+    }
+    nav, #sidebar, #overlay, .no-print, .print-hide {
+        display: none !important;
+    }
+    main[class*="md:ml-64"] {
+        margin-left: 0 !important;
+    }
+    main {
+        padding-top: 0 !important;
+    }
+    main > div.w-full {
+        padding: 0 !important;
+    }
+    #receiptPrintWrapper {
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 auto !important;
+    }
+    #receiptCard {
+        box-shadow: none !important;
+        border: none !important;
+        background: #fff !important;
+        padding: 24px !important;
+    }
+    #receiptCard .bg-gray-50,
+    #receiptCard .dark\:bg-gray-700,
+    #receiptCard .dark\:bg-blue-900\/30,
+    #receiptCard .dark\:bg-yellow-900\/30 {
+        background: #fff !important;
+        border-color: #d1d5db !important;
+    }
+}
+</style>
+<div id="receiptPrintWrapper" class="max-w-4xl mx-auto p-6">
+    <div id="receiptCard" class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-8">
         @php
             $customer = $paymentRecord->customer;
             $billingRecord = $paymentRecord->billingRecord;
@@ -15,6 +51,21 @@
             $billingDateFormatted = $billingDate ? $billingDate->format('M d, Y') : '—';
             $paymentMethod = $paymentRecord->payment_method ? ucfirst($paymentRecord->payment_method) : '—';
         @endphp
+
+        <div class="relative mb-8">
+            @if($billingRecord?->trashed())
+                <div class="print-hide absolute right-0 top-0 flex items-center gap-2 rounded-full border border-blue-200 bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700 shadow-sm dark:border-blue-800 dark:bg-blue-900/40 dark:text-blue-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.707a1 1 0 00-1.414-1.414L9 10.172 7.707 8.879a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                    <span>Archived automatically</span>
+                </div>
+            @endif
+            <div class="text-center">
+                <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100">Payment Receipt</h1>
+                <p class="text-gray-600 dark:text-gray-400 mt-2">MAWASA - Brgy. Manambulan Tugbok District, Davao City</p>
+            </div>
+        </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
             <!-- Customer Information -->
@@ -85,7 +136,7 @@
         </div>
 
         @if($billingRecord?->trashed())
-            <div class="mt-6 p-4 border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+            <div class="print-hide mt-6 p-4 border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
                 <p class="text-sm text-blue-800 dark:text-blue-200">
                     Note: This billing record has been archived for safekeeping.
                 </p>
@@ -100,7 +151,7 @@
         </div>
 
         <!-- Action Buttons -->
-        <div class="mt-8 flex justify-center space-x-4">
+        <div class="mt-8 flex justify-center space-x-4 print-hide">
             <button onclick="window.print()" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md transition">
                 Print Receipt
             </button>

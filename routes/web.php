@@ -31,6 +31,7 @@ Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'customLogin'])->name('login.custom');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
+<<<<<<< HEAD
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin', [AdminController::class, 'index'])->name('admin.dashboard');
     Route::get('/admin/dashboard/stats', [AdminController::class, 'dashboardStats'])->name('admin.dashboard.stats');
@@ -46,6 +47,21 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::post('/admin/billing/{id}/archive', [RecordController::class, 'archive'])->name('admin.billing.archive');
     Route::get('/admin/billing/archived', [AdminController::class, 'archivedBilling'])->name('admin.billing.archived');
 
+=======
+Route::get('/admin', [AdminController::class, 'index'])->middleware('auth')->name('admin.dashboard');
+Route::get('/admin/dashboard/stats', [AdminController::class, 'dashboardStats'])->middleware('auth')->name('admin.dashboard.stats');
+Route::get('/admin/dashboard/insights', [AdminController::class, 'dashboardInsightsData'])->middleware('auth')->name('admin.dashboard.insights');
+Route::get('/admin/notices', [AdminController::class, 'notices'])->middleware('auth')->name('admin.notices');
+Route::get('/admin/reports', [AdminController::class, 'reports'])->middleware('auth')->name('admin.reports');
+Route::post('/admin/reports/{report}/priority', [AdminController::class, 'updateReportPriority'])->middleware('auth')->name('admin.reports.priority');
+Route::post('/admin/reports/{report}/status', [AdminController::class, 'updateReportStatus'])->middleware('auth')->name('admin.reports.status');
+Route::get('/admin/reports/revenue', [AdminController::class, 'revenue'])->middleware('auth')->name('admin.reports.revenue');
+Route::get('/admin/customers', [AdminController::class, 'customers'])->middleware('auth')->name('admin.customers');
+Route::get('/admin/meters', [MeterController::class, 'index'])->middleware('auth')->name('admin.meters');
+Route::get('/admin/activity-log', [AdminController::class, 'activityLog'])->middleware('auth')->name('admin.activity-log');
+Route::post('/admin/billing/{id}/archive', [RecordController::class, 'archive'])->middleware('auth')->name('admin.billing.archive');
+Route::middleware(['auth'])->group(function () {
+>>>>>>> 0f3b6bd1706cf52e66ad723e32be41572065b56d
     Route::post('/admin/meters', [MeterController::class, 'store'])->name('admin.meters.store');
     Route::patch('/admin/meters/{meter}', [MeterController::class, 'update'])->name('admin.meters.update');
     Route::delete('/admin/meters/{meter}', [MeterController::class, 'destroy'])->name('admin.meters.destroy');

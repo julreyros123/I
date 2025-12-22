@@ -647,6 +647,30 @@ class AdminController extends Controller
             'performed_by' => optional(auth()->user())->id,
             'performed_at' => $transferDate,
         ]);
+
+        ActivityLog::create([
+            'user_id' => optional(auth()->user())->id,
+            'module' => 'Customers',
+            'action' => 'METER_OWNERSHIP_TRANSFERRED',
+            'description' => sprintf(
+                'Transferred ownership of account %s from %s to %s',
+                $customer->account_no,
+                $oldName,
+                $customer->name
+            ),
+            'target_type' => Customer::class,
+            'target_id' => $customer->id,
+            'meta' => [
+                'account_no' => $customer->account_no,
+                'previous_owner' => $oldName,
+                'new_owner' => $customer->name,
+                'previous_contact' => $oldContact,
+                'new_contact' => $customer->contact_no,
+                'meter_serial' => $meterSerial,
+                'notes' => $validated['notes'] ?? null,
+                'transfer_date' => $transferDate->toDateTimeString(),
+            ],
+        ]);
     }
 
     public function meters()
@@ -889,36 +913,6 @@ class AdminController extends Controller
             ->withQueryString();
 
         return view('admin.billing', compact('stats', 'records'));
-    }
-
-    public function archivedBilling(Request $request)
-    {
-        abort_unless(auth()->check() && auth()->user()->role === 'admin', 403);
-
-        $q = trim((string) $request->get('q', ''));
-
-        $records = BillingRecord::onlyTrashed()
-            ->select([
-                'id',
-                'customer_id',
-                'account_no',
-                'total_amount',
-                'bill_status',
-                'deleted_at',
-            ])
-            ->with(['customer:id,name,address'])
-            ->when($q, function($query) use ($q) {
-                $query->where('account_no', 'like', "%{$q}%")
-                      ->orWhereHas('customer', function($sub) use ($q){
-                          $sub->where('name', 'like', "%{$q}%")
-                              ->orWhere('address', 'like', "%{$q}%");
-                      });
-            })
-            ->orderByDesc('deleted_at')
-            ->paginate(15)
-            ->withQueryString();
-
-        return view('admin.archived-billing', compact('records', 'q'));
     }
 
     public function activityLog(Request $request)
