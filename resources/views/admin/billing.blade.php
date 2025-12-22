@@ -34,7 +34,16 @@
                     </thead>
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700 text-gray-800 dark:text-gray-100">
                         @forelse($records as $r)
+                        @php
+                            $rowHighlightClass = match($r->bill_status) {
+                                'Overdue' => 'bg-amber-100/70 dark:bg-amber-900/35 border-l-4 border-amber-500',
+                                'Notice of Disconnection' => 'bg-rose-100/70 dark:bg-rose-900/30 border-l-4 border-rose-500',
+                                'Disconnected' => 'bg-rose-200/60 dark:bg-rose-900/45 border-l-4 border-rose-600',
+                                default => 'border-l-4 border-transparent',
+                            };
+                        @endphp
                         <tr
+                            class="{{ $rowHighlightClass }} hover:bg-gray-50 dark:hover:bg-gray-900/40 transition"
                             data-customer-name="{{ $r->customer->name ?? '' }}"
                             data-customer-email="{{ $r->customer->email ?? '' }}"
                             data-meter-no="{{ $r->customer->meter_no ?? '' }}"

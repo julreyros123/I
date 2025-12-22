@@ -35,7 +35,15 @@
                 </thead>
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                     @forelse($records as $r)
-                    <tr class="bg-white even:bg-slate-50 dark:bg-gray-900 dark:even:bg-gray-900/60 hover:bg-blue-50/70 dark:hover:bg-gray-800 transition">
+                    @php
+                        $rowHighlightClass = match($r->bill_status) {
+                            'Overdue' => 'bg-amber-100/70 dark:bg-amber-900/35 border-l-4 border-amber-500',
+                            'Notice of Disconnection' => 'bg-rose-100/70 dark:bg-rose-900/30 border-l-4 border-rose-500',
+                            'Disconnected' => 'bg-rose-200/60 dark:bg-rose-900/45 border-l-4 border-rose-600',
+                            default => 'bg-white even:bg-slate-50 dark:bg-gray-900 dark:even:bg-gray-900/60 border-l-4 border-transparent',
+                        };
+                    @endphp
+                    <tr class="{{ $rowHighlightClass }} hover:bg-blue-50/70 dark:hover:bg-gray-800 transition">
                         <td class="px-6 py-4 align-top text-xs text-gray-500 dark:text-gray-400">{{ optional($r->deleted_at)->format('Y-m-d H:i') }}</td>
                         <td class="px-6 py-4 align-top text-sm font-semibold text-gray-800 dark:text-gray-100">{{ $r->account_no }}</td>
                         <td class="px-6 py-4 align-top">
@@ -63,12 +71,12 @@
                         <td class="px-6 py-4 align-top text-right space-x-2">
                             <form action="{{ route('records.billing.restore', $r->id) }}" method="POST" class="inline">
                                 @csrf
-                                <button class="px-3 py-1 rounded-full text-xs bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm" onclick="return confirm('Restore this record?');">Restore</button>
+                                <x-ui.action-button size="xs" variant="success" type="submit" onclick="return confirm('Restore this record?');">Restore</x-ui.action-button>
                             </form>
                             <form action="{{ route('records.billing.force', $r->id) }}" method="POST" class="inline" onsubmit="return confirm('Permanently delete this record?');">
                                 @csrf
                                 @method('DELETE')
-                                <button class="px-3 py-1 rounded-full text-xs bg-red-500 hover:bg-red-600 text-white shadow-sm">Delete</button>
+                                <x-ui.action-button size="xs" variant="danger" type="submit">Delete</x-ui.action-button>
                             </form>
                         </td>
                     </tr>

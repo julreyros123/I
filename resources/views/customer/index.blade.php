@@ -60,8 +60,8 @@
                     </div>
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3 text-xs">
-                            <button class="inline-flex items-center gap-1 text-blue-600" onclick="openViewModal({{ $c->id }}, @js($c->toArray()))">View</button>
-                            <button class="inline-flex items-center gap-1 text-blue-600" onclick="openEditModal({{ $c->id }}, @js($c->toArray()))">Edit</button>
+                            <x-ui.action-button size="xs" variant="neutral" onclick="openViewModal({{ $c->id }}, @js($c->toArray()))">View</x-ui.action-button>
+                            <x-ui.action-button size="xs" variant="primary" onclick="openEditModal({{ $c->id }}, @js($c->toArray()))">Edit</x-ui.action-button>
                         </div>
                         <div class="flex items-center gap-2">
                             <button class="app-rescore-btn opacity-50 cursor-not-allowed text-[11px]">Re-score</button>

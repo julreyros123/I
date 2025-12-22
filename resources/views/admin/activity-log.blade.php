@@ -3,7 +3,7 @@
 @section('title', 'Activity Log')
 
 @section('content')
-<div class="w-full mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-8 font-[Poppins] space-y-6 lg:space-y-8">
+<div class="w-full mx-auto px-6 sm:px-8 lg:px-10 py-4 sm:py-6 lg:py-8 font-[Poppins] space-y-6 lg:space-y-8">
     <div class="flex items-center justify-between mb-3">
         <h1 class="text-2xl font-semibold text-gray-800 dark:text-gray-100">Activity Log</h1>
         <button type="button" id="toggleFilters"
@@ -77,7 +77,7 @@
 
     <!-- Activity table -->
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+        <div class="px-6 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
             <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-200">Recent activity</h2>
             <span class="text-xs text-gray-500 dark:text-gray-400">{{ $logs->total() }} entries</span>
         </div>
@@ -85,29 +85,29 @@
             <table class="w-full text-sm">
                 <thead class="bg-gray-50 dark:bg-gray-700/60 text-gray-700 dark:text-gray-300">
                     <tr>
-                        <th class="px-4 py-2 text-left">Time</th>
-                        <th class="px-4 py-2 text-left">User</th>
-                        <th class="px-4 py-2 text-left">Module</th>
-                        <th class="px-4 py-2 text-left">Action</th>
-                        <th class="px-4 py-2 text-left">Description</th>
-                        <th class="px-4 py-2 text-left">Details</th>
+                        <th class="px-6 py-2 text-left">Time</th>
+                        <th class="px-6 py-2 text-left">User</th>
+                        <th class="px-6 py-2 text-left">Module</th>
+                        <th class="px-6 py-2 text-left">Action</th>
+                        <th class="px-6 py-2 text-left">Description</th>
+                        <th class="px-6 py-2 text-left">Details</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700 text-gray-800 dark:text-gray-100">
                     @forelse($logs as $log)
                         <tr>
-                            <td class="px-4 py-2 whitespace-nowrap text-xs md:text-sm">{{ $log->created_at->format('Y-m-d H:i') }}</td>
-                            <td class="px-4 py-2 whitespace-nowrap text-xs md:text-sm">{{ $displayUserName($log->user ?? null) }}</td>
-                            <td class="px-4 py-2 whitespace-nowrap text-xs md:text-sm">{{ $log->module }}</td>
-                            <td class="px-4 py-2 whitespace-nowrap text-xs md:text-sm">{{ $log->action }}</td>
-                            <td class="px-4 py-2 text-xs md:text-sm max-w-md truncate" title="{{ $log->description }}">{{ $log->description }}</td>
-                            <td class="px-4 py-2 whitespace-nowrap text-xs md:text-sm">
-                                <button type="button" onclick="showActivityMeta({{ $log->id }})" class="px-3 py-1 rounded-md text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600">View</button>
+                            <td class="px-6 py-2 whitespace-nowrap text-xs md:text-sm">{{ $log->created_at->format('Y-m-d H:i') }}</td>
+                            <td class="px-6 py-2 whitespace-nowrap text-xs md:text-sm">{{ $displayUserName($log->user ?? null) }}</td>
+                            <td class="px-6 py-2 whitespace-nowrap text-xs md:text-sm">{{ $log->module }}</td>
+                            <td class="px-6 py-2 whitespace-nowrap text-xs md:text-sm">{{ $log->action }}</td>
+                            <td class="px-6 py-2 text-xs md:text-sm max-w-md truncate" title="{{ $log->description }}">{{ $log->description }}</td>
+                            <td class="px-6 py-2 whitespace-nowrap text-xs md:text-sm">
+                                <x-ui.action-button size="xs" variant="neutral" onclick="showActivityMeta({{ $log->id }})">View</x-ui.action-button>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-4 py-6 text-center text-gray-500 dark:text-gray-400 text-sm">No activity found for the selected filters.</td>
+                            <td colspan="6" class="px-6 py-6 text-center text-gray-500 dark:text-gray-400 text-sm">No activity found for the selected filters.</td>
                         </tr>
                     @endforelse
                 </tbody>

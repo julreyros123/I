@@ -140,10 +140,10 @@
         </div>
       </div>
       <div class="flex items-center justify-between p-4 border-t dark:border-gray-700">
-        <button id="sc_new" type="button" class="px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-xs hover:bg-gray-50 dark:hover:bg-gray-700">New</button>
+        <x-ui.action-button id="sc_new" type="button" variant="ghost" size="xs">New</x-ui.action-button>
         <div class="flex items-center gap-2">
-          <button id="sc_save" type="button" class="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm">Save</button>
-          <button type="button" data-modal-hide="staffCustomerModal" class="px-4 py-2 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm">Close</button>
+          <x-ui.action-button id="sc_save" type="button" variant="primary" size="sm">Save</x-ui.action-button>
+          <x-ui.action-button type="button" data-modal-hide="staffCustomerModal" variant="neutral" size="sm">Close</x-ui.action-button>
         </div>
       </div>
     </div>
@@ -279,7 +279,7 @@
                                 <x-heroicon-o-information-circle class="w-5 h-5 text-blue-500 dark:text-blue-300" />
                                 <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Upcoming Activities</h3>
                             </div>
-                            <button type="button" id="staffAddActivityToggle" class="text-[11px] px-2 py-1 rounded border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover-bg-gray-700">Add Activity</button>
+                            <x-ui.action-button type="button" id="staffAddActivityToggle" variant="ghost" size="xs">Add Activity</x-ui.action-button>
                         </div>
                         <div class="border-t border-gray-200 dark:border-gray-700 mb-3"></div>
                         <div class="divide-y divide-gray-200 dark:divide-gray-700 text-sm text-gray-700 dark:text-gray-200">
@@ -338,7 +338,7 @@
                             <form id="staffActivityForm" class="flex flex-col gap-2 sm:flex-row sm:items-center hidden">
                                 <input type="date" id="staffActivityDate" class="flex-none w-full sm:w-auto border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-[11px] bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">
                                 <input type="text" id="staffActivityDesc" placeholder="Description" class="flex-1 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-[11px] bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100">
-                                <button type="submit" class="flex-none px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white text-[11px]">Save</button>
+                                <x-ui.action-button type="submit" variant="primary" size="xs">Save</x-ui.action-button>
                             </form>
                             <div id="staffActivityEmpty" class="text-[11px] text-gray-400">No personal activities yet.</div>
                             <div id="staffActivityList" class="space-y-1"></div>
@@ -351,7 +351,7 @@
                             <x-heroicon-o-lifebuoy class="w-5 h-5 text-amber-500 dark:text-amber-300" />
                             <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Remediation tickets</h3>
                         </div>
-                        <button type="button" id="refreshTickets" class="text-[11px] px-2 py-1 rounded border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Refresh</button>
+                        <x-ui.action-button type="button" id="refreshTickets" variant="ghost" size="xs">Refresh</x-ui.action-button>
                     </div>
                     <div class="border-t border-gray-200 dark:border-gray-700 mb-3"></div>
                     <div id="ticketsContainer" class="flex-1 space-y-2 overflow-y-auto">
@@ -607,21 +607,18 @@
 
             <!-- Action Buttons -->
             <div class="flex flex-wrap items-center justify-end gap-3">
-                <button id="viewPaymentHistory"
-                    class="hidden inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow transition">
+                <x-ui.action-button id="viewPaymentHistory" variant="primary" size="sm" class="hidden gap-2 shadow">
                     <x-heroicon-o-clock class="w-5 h-5" />
                     <span>Payment History</span>
-                </button>
-                <button id="checkPaymentStatus"
-                    class="hidden inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow transition">
+                </x-ui.action-button>
+                <x-ui.action-button id="checkPaymentStatus" variant="primary" size="sm" class="hidden gap-2 shadow">
                     <x-heroicon-o-information-circle class="w-5 h-5" />
                     <span>Payment Status</span>
-                </button>
-                <button id="saveBill"
-                    class="hidden inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow transition">
+                </x-ui.action-button>
+                <x-ui.action-button id="saveBill" variant="primary" size="sm" class="hidden gap-2 shadow">
                     <x-heroicon-o-check-circle class="w-5 h-5" />
                     <span>Save Bill</span>
-                </button>
+                </x-ui.action-button>
             </div>
         </div>
     </div>
@@ -633,8 +630,8 @@
         <h3 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">Bill Summary</h3>
         <div id="billSummary" class="space-y-3 text-gray-700 dark:text-gray-200"></div>
         <div class="mt-6 text-right space-x-3">
-            <button id="closeModal" class="px-4 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded-lg">Cancel</button>
-            <button id="confirmBill" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">Save Bill</button>
+            <x-ui.action-button id="closeModal" type="button" variant="neutral" size="sm">Cancel</x-ui.action-button>
+            <x-ui.action-button id="confirmBill" type="button" variant="success" size="sm">Save Bill</x-ui.action-button>
         </div>
     </div>
 </div>
@@ -647,7 +644,7 @@
             <!-- Content will be loaded here -->
         </div>
         <div class="mt-6 text-right">
-            <button id="closeHistoryModal" class="px-4 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded-lg">Close</button>
+            <x-ui.action-button id="closeHistoryModal" type="button" variant="neutral" size="sm">Close</x-ui.action-button>
         </div>
     </div>
 </div>
@@ -663,14 +660,14 @@
             <input type="color" id="progressBackgroundColor" value="#f3f4f6">
         </div>
         <div class="mt-6 text-right space-x-3">
-            <button id="closeProgressSettingsModal" class="px-4 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded-lg">Cancel</button>
+            <x-ui.action-button id="closeProgressSettingsModal" type="button" variant="neutral" size="sm">Cancel</x-ui.action-button>
         </div>
       </div>
       <div class="flex items-center justify-between p-4 border-t dark:border-gray-700">
-        <button id="progressReset" type="button" class="px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-xs hover:bg-gray-50 dark:hover:bg-gray-700">Reset today</button>
+        <x-ui.action-button id="progressReset" type="button" variant="ghost" size="xs">Reset today</x-ui.action-button>
         <div class="flex items-center gap-2">
-          <button id="progressSave" type="button" class="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm">Save</button>
-          <button type="button" data-modal-hide="staffProgressModal" class="px-4 py-2 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm">Close</button>
+          <x-ui.action-button id="progressSave" type="button" variant="primary" size="sm">Save</x-ui.action-button>
+          <x-ui.action-button type="button" data-modal-hide="staffProgressModal" variant="neutral" size="sm">Close</x-ui.action-button>
         </div>
       </div>
     </div>

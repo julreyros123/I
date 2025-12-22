@@ -312,6 +312,13 @@
                                 'Disconnected' => 'bg-gray-200 text-gray-800',
                                 default => 'bg-gray-100 text-gray-700'
                             };
+
+                            $rowHighlightClass = match($status) {
+                                'Overdue' => 'bg-amber-100/70 dark:bg-amber-900/35 border-l-4 border-amber-500',
+                                'Notice of Disconnection' => 'bg-rose-100/70 dark:bg-rose-900/30 border-l-4 border-rose-500',
+                                'Disconnected' => 'bg-rose-200/60 dark:bg-rose-900/45 border-l-4 border-rose-600',
+                                default => 'border-l-4 border-transparent',
+                            };
                             $daysOverdue = ($record->due_date && now()->greaterThan($record->due_date)) ? $record->due_date->diffInDays(now()) : 0;
                             $printed = (bool) $record->is_generated;
                             $collectBlockedMessage = match($status) {
@@ -322,7 +329,7 @@
                                 default => "This bill can't be collected because the status is " . ($status ?? 'not pending') . '.',
                             };
                         @endphp
-                        <tr class="transition hover:bg-blue-50/40 dark:hover:bg-gray-800" data-id="{{ $record->id }}">
+                        <tr class="{{ $rowHighlightClass }} transition hover:bg-blue-50/40 dark:hover:bg-gray-800" data-id="{{ $record->id }}">
                             <td class="px-6 py-3 align-middle">
                                 <div class="flex items-center gap-3">
                                     <input type="checkbox" class="row-check w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" value="{{ $record->id }}" {{ $printed ? 'disabled' : '' }}>

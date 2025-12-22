@@ -250,18 +250,18 @@
                                 </td>
                                 <td class="px-2.5 py-1.5">
                                     <div class="flex flex-wrap gap-2">
-                                        <button type="button" data-open-modal="meter-edit-modal-{{ $m->id }}" class="h-9 w-9 inline-flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800" aria-label="Edit meter {{ $m->serial }}">
+                                        <x-ui.icon-button variant="ghost" data-open-modal="meter-edit-modal-{{ $m->id }}" aria-label="Edit meter {{ $m->serial }}">
                                             <x-heroicon-o-pencil-square class="w-4 h-4" />
-                                        </button>
-                                        <button type="button" data-open-modal="meter-assign-modal-{{ $m->id }}" class="h-9 w-9 inline-flex items-center justify-center rounded-lg bg-blue-600 text-white hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" aria-label="Assign meter {{ $m->serial }}">
+                                        </x-ui.icon-button>
+                                        <x-ui.icon-button variant="primary" data-open-modal="meter-assign-modal-{{ $m->id }}" aria-label="Assign meter {{ $m->serial }}">
                                             <x-heroicon-o-user-plus class="w-4 h-4" />
-                                        </button>
-                                        <button type="button" data-open-modal="meter-unassign-modal-{{ $m->id }}" class="h-9 w-9 inline-flex items-center justify-center rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800" aria-label="Unassign meter {{ $m->serial }}">
+                                        </x-ui.icon-button>
+                                        <x-ui.icon-button variant="ghost" data-open-modal="meter-unassign-modal-{{ $m->id }}" aria-label="Unassign meter {{ $m->serial }}">
                                             <x-heroicon-o-user-minus class="w-4 h-4" />
-                                        </button>
-                                        <button type="button" data-open-modal="meter-delete-modal-{{ $m->id }}" class="h-9 w-9 inline-flex items-center justify-center rounded-lg bg-rose-600 text-white hover:bg-rose-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500" aria-label="Delete meter {{ $m->serial }}">
+                                        </x-ui.icon-button>
+                                        <x-ui.icon-button variant="danger" data-open-modal="meter-delete-modal-{{ $m->id }}" aria-label="Delete meter {{ $m->serial }}">
                                             <x-heroicon-o-trash class="w-4 h-4" />
-                                        </button>
+                                        </x-ui.icon-button>
                                     </div>
                                 </td>
                                 @push('modals')

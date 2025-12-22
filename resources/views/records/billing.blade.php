@@ -40,8 +40,15 @@
                             $isPaid = $r->bill_status === 'Paid';
                             $canGenerate = !($r->is_generated ?? false) && in_array($r->bill_status, ['Outstanding Payment','Overdue','Notice of Disconnection']);
                             $canSelect = $isPaid || $canGenerate;
+
+                            $rowHighlightClass = match($r->bill_status) {
+                                'Overdue' => 'bg-amber-100/70 dark:bg-amber-900/35 border-l-4 border-amber-500',
+                                'Notice of Disconnection' => 'bg-rose-100/70 dark:bg-rose-900/30 border-l-4 border-rose-500',
+                                'Disconnected' => 'bg-rose-200/60 dark:bg-rose-900/45 border-l-4 border-rose-600',
+                                default => 'border-l-4 border-transparent',
+                            };
                         @endphp
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-900/60 transition">
+                        <tr class="{{ $rowHighlightClass }} hover:bg-gray-50 dark:hover:bg-gray-900/60 transition">
                             <td class="px-4 py-4 align-top">
                                 @if($canSelect)
                                     <input type="checkbox"
