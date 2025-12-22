@@ -357,11 +357,16 @@
                             <td class="px-6 py-3 align-middle text-right font-semibold text-emerald-600">₱{{ number_format($record->total_amount, 2) }}</td>
                             <td class="px-6 py-3 align-middle text-right">
                                 <div class="inline-flex items-center gap-2">
-                                    <button onclick="generateBill({{ $record->id }})" title="Generate & Print Bill"
-                                            class="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-200 hover:bg-blue-600 hover:text-white transition {{ $printed ? 'opacity-50 cursor-not-allowed hover:bg-white hover:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-gray-500' : '' }}" {{ $printed ? 'disabled' : '' }}>
+                                    @php
+                                        $isDisconnected = ($status === 'Disconnected') || optional($record->customer)->status === 'Disconnected';
+                                    @endphp
+                                    <button onclick="generateBill({{ $record->id }})"
+                                            title="{{ $isDisconnected ? 'Printing disabled: account is disconnected' : 'Generate & Print Bill' }}"
+                                            class="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-200 transition {{ ($printed || $isDisconnected) ? 'opacity-50 cursor-not-allowed hover:bg-white hover:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-gray-500' : 'hover:bg-blue-600 hover:text-white' }}"
+                                            {{ ($printed || $isDisconnected) ? 'disabled' : '' }}>
                                         <x-heroicon-o-printer class="w-4 h-4" />
                                     </button>
-                                    @if($status === 'Pending')
+                                    @if($status === 'Pending' && !$isDisconnected)
                                         <a href="{{ route('payment.index', ['account' => $record->account_no]) }}" title="Collect payment"
                                            class="inline-flex items-center justify-center w-9 h-9 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-200 hover:bg-emerald-600 hover:text-white transition">
                                             <x-heroicon-o-credit-card class="w-4 h-4" />
