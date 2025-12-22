@@ -339,12 +339,7 @@
                             <td class="px-6 py-3 align-middle text-sm">{{ $record->getBillingPeriod() }}</td>
                             <td class="px-6 py-3 align-middle text-sm">{{ $record->due_date ? $record->due_date->format('Y-m-d') : '—' }}</td>
                             <td class="px-6 py-3 align-middle">
-                                <div class="inline-flex items-center gap-2">
-                                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold {{ $statusClass }}">{{ $status }}</span>
-                                    @if($daysOverdue > 0)
-                                        <span class="px-2 py-0.5 rounded-full text-[10px] bg-red-100 text-red-700 border border-red-200">{{ $daysOverdue }}d overdue</span>
-                                    @endif
-                                </div>
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold {{ $statusClass }}">{{ $status }}</span>
                             </td>
                             <td class="px-6 py-3 align-middle print-status-cell">
                                 @if($printed)
