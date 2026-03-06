@@ -3,7 +3,7 @@
 @section('title', 'Dashboard')
 
 @section('content')
-<div class="max-w-3xl mx-auto px-6 py-8 font-[Inter] space-y-4">
+<div class="max-w-3xl mx-auto px-6 py-8 font-[Poppins] space-y-4">
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-4 space-y-3">
         <p class="text-xs text-gray-600 dark:text-gray-400">Guide: Enter Account No. in the format 01-123456-7 and click Search to view a quick summary.</p>
         <div class="flex gap-3">

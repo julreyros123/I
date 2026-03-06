@@ -59,8 +59,33 @@
       box-shadow: none !important;
     }
     </style>
+    <style>
+    /* Page transition loading bar */
+    #page-loader{position:fixed;top:0;left:0;width:0;height:3px;background:linear-gradient(90deg,#3b82f6,#60a5fa,#2563eb);z-index:9999;transition:none;pointer-events:none;}
+    #page-loader.active{width:85%;transition:width 8s cubic-bezier(.1,.05,.1,1);}
+    #page-loader.done{width:100%;transition:width .15s ease;opacity:0;transition:width .15s ease, opacity .3s .15s ease;}
+    </style>
 </head>
 <body class="text-gray-900 dark:text-gray-100 transition-colors duration-300">
+
+    {{-- Page transition loader --}}
+    <div id="page-loader"></div>
+    <script>
+    (function(){
+        var bar=document.getElementById('page-loader');
+        if(!bar)return;
+        // Show bar when navigating away
+        window.addEventListener('beforeunload',function(){bar.className='active';});
+        // Also trigger on <a> clicks (catches same-origin navigations)
+        document.addEventListener('click',function(e){
+            var a=e.target.closest('a[href]');
+            if(!a||a.target==='_blank'||a.href.startsWith('javascript:')||a.href.startsWith('#'))return;
+            if(a.href.indexOf(location.origin)===0){bar.className='active';}
+        });
+        // Mark done when page is fully loaded (for back/forward cache)
+        window.addEventListener('pageshow',function(){bar.className='';bar.style.width='0';});
+    })();
+    </script>
 
     {{-- Navbar --}}
     @include('components.navbar')
