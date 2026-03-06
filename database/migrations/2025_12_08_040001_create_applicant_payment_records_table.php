@@ -22,7 +22,7 @@ return new class extends Migration
             $table->foreignId('processed_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
 
-            $table->index(['customer_application_id', 'invoice_number']);
+            $table->index(['customer_application_id', 'invoice_number'], 'apr_app_id_invoice_idx');
         });
     }
 

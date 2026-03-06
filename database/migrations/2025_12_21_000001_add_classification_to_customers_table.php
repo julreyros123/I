@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::table('customers', function (Blueprint $table) {
             if (!Schema::hasColumn('customers', 'classification')) {
-                $table->string('classification', 100)->nullable()->after('contact_no');
+                $table->string('classification', 100)->nullable();
             }
         });
     }
