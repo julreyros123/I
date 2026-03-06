@@ -6,30 +6,22 @@ use Illuminate\Http\Request;
 use App\Models\BillingRecord;
 use App\Models\Customer;
 use App\Models\PaymentRecord;
-use Illuminate\Support\Facades\Schema;
 
 class StaffPortalController extends Controller
 {
     public function index()
     {
         // Dashboard KPI stats
-        $pendingGenerate = 0;
-        $generatedTotal = 0;
-        $generatedToday = 0;
-        $generatedThisMonth = 0;
+        $pendingGenerate = BillingRecord::where('is_generated', false)->count();
 
-        if (Schema::hasColumn('billing_records', 'is_generated')) {
-            $pendingGenerate = BillingRecord::where('is_generated', false)->count();
-
-            $generatedQuery = BillingRecord::where('is_generated', true);
-            $generatedTotal = (clone $generatedQuery)->count();
-            $generatedToday = (clone $generatedQuery)
-                ->whereDate('created_at', now()->toDateString())
-                ->count();
-            $generatedThisMonth = (clone $generatedQuery)
-                ->whereBetween('created_at', [now()->startOfMonth(), now()])
-                ->count();
-        }
+        $generatedQuery = BillingRecord::where('is_generated', true);
+        $generatedTotal = (clone $generatedQuery)->count();
+        $generatedToday = (clone $generatedQuery)
+            ->whereDate('created_at', now()->toDateString())
+            ->count();
+        $generatedThisMonth = (clone $generatedQuery)
+            ->whereBetween('created_at', [now()->startOfMonth(), now()])
+            ->count();
 
         $overdue = BillingRecord::where('bill_status', 'Notice of Disconnection')->count();
 
@@ -78,7 +70,25 @@ class StaffPortalController extends Controller
         $recentActivityFull = $this->buildRecentActivity();
         $recentActivity = array_slice($recentActivityFull, 0, 6);
 
-        // Last 7 days activity for staff graph (system-wide for now)
+        // Last 7 days activity for staff graph — 3 grouped queries instead of 21 individual ones
+        $sevenDaysAgo = now()->subDays(6)->startOfDay();
+
+        $billsByDay = BillingRecord::selectRaw('DATE(created_at) as day, COUNT(*) as total')
+            ->where('created_at', '>=', $sevenDaysAgo)
+            ->where('is_generated', true)
+            ->groupByRaw('DATE(created_at)')
+            ->pluck('total', 'day');
+
+        $paymentsByDay = PaymentRecord::selectRaw('DATE(created_at) as day, COUNT(*) as total')
+            ->where('created_at', '>=', $sevenDaysAgo)
+            ->groupByRaw('DATE(created_at)')
+            ->pluck('total', 'day');
+
+        $registrationsByDay = Customer::selectRaw('DATE(created_at) as day, COUNT(*) as total')
+            ->where('created_at', '>=', $sevenDaysAgo)
+            ->groupByRaw('DATE(created_at)')
+            ->pluck('total', 'day');
+
         $labels = [];
         $seriesBills = [];
         $seriesPayments = [];
@@ -86,17 +96,11 @@ class StaffPortalController extends Controller
 
         for ($i = 6; $i >= 0; $i--) {
             $day = now()->subDays($i);
+            $dateKey = $day->toDateString();
             $labels[] = $day->format('M d');
-
-            $seriesBills[] = BillingRecord::whereDate('created_at', $day->toDateString())
-                ->where('is_generated', true)
-                ->count();
-
-            $seriesPayments[] = PaymentRecord::whereDate('created_at', $day->toDateString())
-                ->count();
-
-            $seriesRegistrations[] = Customer::whereDate('created_at', $day->toDateString())
-                ->count();
+            $seriesBills[] = (int) ($billsByDay[$dateKey] ?? 0);
+            $seriesPayments[] = (int) ($paymentsByDay[$dateKey] ?? 0);
+            $seriesRegistrations[] = (int) ($registrationsByDay[$dateKey] ?? 0);
         }
 
         $activity = [

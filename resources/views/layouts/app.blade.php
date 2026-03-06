@@ -9,6 +9,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'MAWASA Staff Portal')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
@@ -535,62 +537,16 @@
         }
     }
     </script>
-    <!-- Simple-DataTables (CDN) for Staff/App layout -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simple-datatables@latest/dist/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/simple-datatables@latest" defer></script>
-    <script>
-    window.initDatatables = function(){ /* disabled globally */ };
-    document.addEventListener('DOMContentLoaded', function(){ /* no-op */ });
-    </script>
-    <script>
-    // Auto-initialize on dynamically added tables
-    (function(){ /* disabled */ })();
-    </script>
     <style>
-    /* Simple-DataTables dark mode overrides for staff/app */
-    .dark .dataTable-wrapper .dataTable-top,
-    .dark .dataTable-wrapper .dataTable-bottom {
-      background-color: transparent !important;
-      color: #e5e7eb !important;
-    }
-    .dark .dataTable-wrapper .dataTable-input,
-    .dark .dataTable-wrapper .dataTable-selector {
-      background-color: #1f2937 !important;
-      color: #e5e7eb !important;
-      border-color: #374151 !important;
-    }
-    .dark .dataTable-wrapper .dataTable-input::placeholder { color: #9ca3af !important; }
-    .dark .dataTable-wrapper .dataTable-dropdown label { color: #d1d5db !important; }
-    .dark .dataTable-pagination li a {
-      background-color: #111827 !important;
-      color: #e5e7eb !important;
-      border-color: #374151 !important;
-    }
-    .dark .dataTable-pagination li.active a {
-      background-color: var(--brand-600) !important;
-      color: #ffffff !important;
-      border-color: var(--brand-600) !important;
-    }
-    .dark .dataTable-pagination li a:hover { background-color: #1f2937 !important; }
-    .dark table.dataTable-table { background-color: transparent !important; }
-    .dark table.dataTable-table thead th {
-      background-color: rgba(55,65,81,0.6) !important;
-      color: #d1d5db !important;
-    }
-    .dark table.dataTable-table,
-    .dark table.dataTable-table th,
-    .dark table.dataTable-table td {
-      border-color: #374151 !important;
-    }
-    .dark table { background-color: transparent !important; }
-    .dark th, .dark td { border-color: #374151 !important; }
     /* Softer zebra rows (applies to all tables unless .no-zebra is added) */
     table:not(.no-zebra) tbody tr:nth-child(odd) { background-color: #f8fafc; /* slate-50 */ }
     table:not(.no-zebra) tbody tr:nth-child(even) { background-color: #f1f5f9; /* slate-100 */ }
     table:not(.no-zebra) tbody tr:hover { background-color: #e2e8f0; /* slate-200 */ }
-    .dark table:not(.no-zebra) tbody tr:nth-child(odd) { background-color: rgba(59,130,246,0.12); /* blue-500 @ 12% */ }
-    .dark table:not(.no-zebra) tbody tr:nth-child(even) { background-color: rgba(59,130,246,0.20); /* blue-500 @ 20% */ }
-    .dark table:not(.no-zebra) tbody tr:hover { background-color: rgba(59,130,246,0.28); /* blue-500 @ 28% */ }
+    .dark table:not(.no-zebra) tbody tr:nth-child(odd) { background-color: rgba(59,130,246,0.12); }
+    .dark table:not(.no-zebra) tbody tr:nth-child(even) { background-color: rgba(59,130,246,0.20); }
+    .dark table:not(.no-zebra) tbody tr:hover { background-color: rgba(59,130,246,0.28); }
+    .dark table { background-color: transparent !important; }
+    .dark th, .dark td { border-color: #374151 !important; }
     /* Blue header and top accent for all tables (opt-out with .no-accent) */
     table:not(.no-accent){ border-top: 4px solid var(--brand-600); border-collapse: separate; border-spacing: 0; }
     table:not(.no-accent) thead th {

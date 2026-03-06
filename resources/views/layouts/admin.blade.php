@@ -9,6 +9,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'MAWASA Admin Portal')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
@@ -463,70 +465,9 @@
     </script>
 </body>
 @stack('scripts')
-<!-- Simple-DataTables (CDN) -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simple-datatables@latest/dist/style.css">
-<script src="https://cdn.jsdelivr.net/npm/simple-datatables@latest" defer></script>
-<script>
-window.initDatatables = function(){ /* disabled globally */ };
-document.addEventListener('DOMContentLoaded', function(){ /* no-op */ });
-</script>
-<script>
-// Auto-initialize on dynamically added tables
-(function(){ /* disabled */ })();
-</script>
+
 <style>
-/* Simple-DataTables dark mode overrides */
-.dark .dataTable-wrapper .dataTable-top,
-.dark .dataTable-wrapper .dataTable-bottom {
-  background-color: transparent !important;
-  color: #e5e7eb !important; /* slate-200 */
-}
-.dark .dataTable-wrapper .dataTable-input,
-.dark .dataTable-wrapper .dataTable-selector {
-  background-color: #0f172a !important; /* slate-900 */
-  color: #e2e8f0 !important; /* slate-200 */
-  border-color: #334155 !important; /* slate-700 */
-  box-shadow: none !important;
-}
-.dark .dataTable-top .dataTable-search input.dataTable-input,
-.dark .dataTable-top .dataTable-dropdown select.dataTable-selector {
-  background-color: #0f172a !important;
-  color: #e2e8f0 !important;
-  border-color: #334155 !important;
-}
-.dark .dataTable-top .dataTable-dropdown select.dataTable-selector option {
-  background-color: #0b1220 !important; /* slightly darker for options */
-  color: #e2e8f0 !important;
-}
-.dark .dataTable-wrapper .dataTable-input::placeholder { color: #94a3b8 !important; /* slate-400 */ }
-.dark .dataTable-wrapper .dataTable-dropdown label { color: #cbd5e1 !important; /* slate-300 */ }
-.dark .dataTable-wrapper .dataTable-input:focus,
-.dark .dataTable-wrapper .dataTable-selector:focus {
-  outline: 2px solid #3b82f6 !important; /* blue-500 */
-  border-color: #3b82f6 !important;
-}
-.dark .dataTable-pagination li a {
-  background-color: #111827 !important; /* gray-900 */
-  color: #e5e7eb !important;
-  border-color: #374151 !important;
-}
-.dark .dataTable-pagination li.active a {
-  background-color: #2563eb !important; /* blue-600 */
-  color: #ffffff !important;
-  border-color: #2563eb !important;
-}
-.dark .dataTable-pagination li a:hover { background-color: #1f2937 !important; }
-.dark table.dataTable-table { background-color: transparent !important; }
-.dark table.dataTable-table thead th {
-  background-color: rgba(55,65,81,0.6) !important; /* gray-700 */
-  color: #d1d5db !important;
-}
-.dark table.dataTable-table,
-.dark table.dataTable-table th,
-.dark table.dataTable-table td {
-  border-color: #374151 !important; /* gray-700 */
-}
-.dark table.dataTable-table tbody tr:hover { background-color: rgba(31,41,55,0.5) !important; }
+
 
 /* Softer zebra rows (applies to all tables unless .no-zebra is added) */
 table:not(.no-zebra) tbody tr:nth-child(odd) { background-color: #f8fafc; /* slate-50 */ }
