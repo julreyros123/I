@@ -1,4 +1,4 @@
-<?php
+\<?php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -9,7 +9,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('customers', function (Blueprint $table) {
-            $table->unique('account_no');
+            if (!collect(\DB::select("SHOW INDEX FROM customers WHERE Key_name = 'customers_account_no_unique'"))->count()) {
+                $table->unique('account_no');
+            }
         });
     }
 
