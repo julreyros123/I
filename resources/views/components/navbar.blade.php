@@ -53,7 +53,12 @@
         <div x-data="{ open: false }" class="relative">
             <button @click="open = !open" 
                 class="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">
-                <div class="h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-200 dark:border-gray-700 flex items-center justify-center text-[11px] font-semibold text-gray-700 dark:text-gray-200 select-none" aria-label="Profile">US</div>
+                @php
+                    $__uName = auth()->user()->name ?? 'U';
+                    $__uParts = explode(' ', trim($__uName));
+                    $__uInitials = strtoupper(substr($__uParts[0], 0, 1) . substr(end($__uParts) !== $__uParts[0] ? end($__uParts) : '', 0, 1));
+                @endphp
+                <div class="h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-200 dark:border-gray-700 flex items-center justify-center text-[11px] font-semibold text-gray-700 dark:text-gray-200 select-none" aria-label="Profile">{{ $__uInitials }}</div>
                 
                 <div class="hidden sm:block text-left">
                     @php($isAdmin = optional(auth()->user())->role === 'admin')
@@ -131,7 +136,9 @@ document.addEventListener('DOMContentLoaded', function(){
   }
   bell?.addEventListener('click', () => menu.classList.toggle('hidden'));
   document.addEventListener('click', (e) => { if (!e.target.closest('#topbarNotifMenu') && !e.target.closest('#topbarNotifBell')) menu.classList.add('hidden'); });
-  load();
+  // Delay initial poll so it doesn't block page render, then refresh every 60s
+  setTimeout(load, 2000);
+  setInterval(load, 60000);
 });
 </script>
 @endpush

@@ -9,7 +9,7 @@ use App\Models\BillingRecord;
 use App\Models\Customer;
 use App\Models\PaymentRecord;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Schema;
+
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Arr;
 use App\Models\ActivityLog;
@@ -43,9 +43,7 @@ class RecordController extends Controller
         };
 
         $recordsQuery = BillingRecord::with('customer', 'paymentRecords')
-            ->when(Schema::hasColumn('billing_records', 'deleted_at'), function ($query) {
-                $query->whereNull('billing_records.deleted_at');
-            })
+            ->whereNull('billing_records.deleted_at')
             ->whereHas('customer', $activeCustomerConstraint)
             ->when($q, function($query) use ($q) {
                 $query->where('account_no', 'like', "%{$q}%")
@@ -57,32 +55,24 @@ class RecordController extends Controller
             ->when($statuses, function($query) use ($statuses) {
                 $query->whereIn('bill_status', $statuses);
             })
-            ->when($generated !== '' && Schema::hasColumn('billing_records','is_generated'), function($query) use ($generated){
+            ->when($generated !== '', function($query) use ($generated){
                 $query->where('is_generated', $generated === '1');
             })
             ->when($issueFrom, function($query) use ($issueFrom) {
-                if (Schema::hasColumn('billing_records', 'issued_at')) {
-                    $query->where(function($inner) use ($issueFrom) {
-                        $inner->whereNotNull('issued_at')->where('issued_at', '>=', $issueFrom)
-                            ->orWhere(function($fallback) use ($issueFrom) {
-                                $fallback->whereNull('issued_at')->where('created_at', '>=', $issueFrom);
-                            });
-                    });
-                } else {
-                    $query->where('created_at', '>=', $issueFrom);
-                }
+                $query->where(function($inner) use ($issueFrom) {
+                    $inner->whereNotNull('issued_at')->where('issued_at', '>=', $issueFrom)
+                        ->orWhere(function($fallback) use ($issueFrom) {
+                            $fallback->whereNull('issued_at')->where('created_at', '>=', $issueFrom);
+                        });
+                });
             })
             ->when($issueTo, function($query) use ($issueTo) {
-                if (Schema::hasColumn('billing_records', 'issued_at')) {
-                    $query->where(function($inner) use ($issueTo) {
-                        $inner->whereNotNull('issued_at')->where('issued_at', '<=', $issueTo)
-                            ->orWhere(function($fallback) use ($issueTo) {
-                                $fallback->whereNull('issued_at')->where('created_at', '<=', $issueTo);
-                            });
-                    });
-                } else {
-                    $query->where('created_at', '<=', $issueTo);
-                }
+                $query->where(function($inner) use ($issueTo) {
+                    $inner->whereNotNull('issued_at')->where('issued_at', '<=', $issueTo)
+                        ->orWhere(function($fallback) use ($issueTo) {
+                            $fallback->whereNull('issued_at')->where('created_at', '<=', $issueTo);
+                        });
+                });
             });
 
         $records = (clone $recordsQuery)
@@ -90,20 +80,12 @@ class RecordController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        // Get statistics (generation-focused) with guard if column not migrated yet
-        if (Schema::hasColumn('billing_records', 'is_generated')) {
-            $statsBase = BillingRecord::whereHas('customer', $activeCustomerConstraint);
-            $stats = [
-                'pending_generate' => (clone $statsBase)->where('is_generated', false)->count(),
-                'generated' => (clone $statsBase)->where('is_generated', true)->count(),
-            ];
-        } else {
-            $statsBase = BillingRecord::whereHas('customer', $activeCustomerConstraint);
-            $stats = [
-                'pending_generate' => (clone $statsBase)->count(),
-                'generated' => 0,
-            ];
-        }
+        // Get statistics (generation-focused)
+        $statsBase = BillingRecord::whereHas('customer', $activeCustomerConstraint);
+        $stats = [
+            'pending_generate' => (clone $statsBase)->where('is_generated', false)->count(),
+            'generated' => (clone $statsBase)->where('is_generated', true)->count(),
+        ];
 
         return view('records.billing', compact('records', 'q', 'status', 'statuses', 'statusOptions', 'stats', 'generated', 'issueFrom', 'issueTo'));
     }
@@ -314,7 +296,7 @@ class RecordController extends Controller
             ->when($status, function ($query) use ($status) {
                 $query->where('bill_status', $status);
             })
-            ->when($generated !== '' && Schema::hasColumn('billing_records', 'is_generated'), function ($query) use ($generated) {
+            ->when($generated !== '', function ($query) use ($generated) {
                 $query->where('is_generated', $generated === '1');
             })
             ->where(function ($query) {
@@ -328,27 +310,15 @@ class RecordController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        if (Schema::hasColumn('billing_records', 'is_generated')) {
-            $statsBase = BillingRecord::whereHas('customer', $activeCustomerConstraint)
-                ->where(function ($query) {
-                    $query->whereNull('bill_status')
-                        ->orWhereNotIn('bill_status', ['Disconnected']);
-                });
-            $stats = [
-                'pending_generate' => (clone $statsBase)->where('is_generated', false)->count(),
-                'generated' => (clone $statsBase)->where('is_generated', true)->count(),
-            ];
-        } else {
-            $statsBase = BillingRecord::whereHas('customer', $activeCustomerConstraint)
-                ->where(function ($query) {
-                    $query->whereNull('bill_status')
-                        ->orWhereNotIn('bill_status', ['Disconnected']);
-                });
-            $stats = [
-                'pending_generate' => (clone $statsBase)->count(),
-                'generated' => 0,
-            ];
-        }
+        $statsBase = BillingRecord::whereHas('customer', $activeCustomerConstraint)
+            ->where(function ($query) {
+                $query->whereNull('bill_status')
+                    ->orWhereNotIn('bill_status', ['Disconnected']);
+            });
+        $stats = [
+            'pending_generate' => (clone $statsBase)->where('is_generated', false)->count(),
+            'generated' => (clone $statsBase)->where('is_generated', true)->count(),
+        ];
 
         $startOfDay = Carbon::now()->startOfDay();
         $endOfDay = Carbon::now()->endOfDay();
@@ -373,9 +343,7 @@ class RecordController extends Controller
 
         $pending = BillingRecord::with('customer')
             ->whereHas('customer', $activeCustomerConstraint)
-            ->when(Schema::hasColumn('billing_records', 'is_generated'), function ($qb) {
-                $qb->where('is_generated', false);
-            })
+            ->where('is_generated', false)
             ->where(function ($qb) {
                 $qb->whereNull('bill_status')
                     ->orWhereNotIn('bill_status', ['Paid', 'Disconnected']);
@@ -597,14 +565,10 @@ class RecordController extends Controller
 
     public function billingStats(Request $request)
     {
-        if (Schema::hasColumn('billing_records', 'is_generated')) {
-            $stats = [
-                'pending_generate' => BillingRecord::where('is_generated', false)->count(),
-                'generated' => BillingRecord::where('is_generated', true)->count(),
-            ];
-        } else {
-            $stats = [ 'pending_generate' => BillingRecord::count(), 'generated' => 0 ];
-        }
+        $stats = [
+            'pending_generate' => BillingRecord::where('is_generated', false)->count(),
+            'generated' => BillingRecord::where('is_generated', true)->count(),
+        ];
         return response()->json(['ok' => true] + $stats);
     }
 
@@ -671,21 +635,18 @@ class RecordController extends Controller
 
         $ids = $data['ids'];
 
-        $finalIds = $ids;
-        if (Schema::hasColumn('billing_records', 'is_generated')) {
-            // Filter out already generated records only if column exists
-            $records = BillingRecord::whereIn('id', $ids)->get();
-            $toGenerate = $records->where('is_generated', false)->pluck('id')->all();
+        // Mark un-generated records as generated
+        $records = BillingRecord::whereIn('id', $ids)->get();
+        $toGenerate = $records->where('is_generated', false)->pluck('id')->all();
 
-            if (!empty($toGenerate)) {
-                BillingRecord::whereIn('id', $toGenerate)->update([
-                    'is_generated' => true,
-                    'generated_at' => now(),
-                ]);
-            }
-
-            $finalIds = BillingRecord::whereIn('id', $ids)->pluck('id')->all();
+        if (!empty($toGenerate)) {
+            BillingRecord::whereIn('id', $toGenerate)->update([
+                'is_generated' => true,
+                'generated_at' => now(),
+            ]);
         }
+
+        $finalIds = BillingRecord::whereIn('id', $ids)->pluck('id')->all();
 
         $idsQuery = implode(',', $finalIds);
         return redirect()->route('records.billing.print-batch', ['ids' => $idsQuery]);
