@@ -19,7 +19,8 @@
                             'label' => 'Pending queue',
                             'title' => 'Bills to generate',
                             'value' => $stats['pending_generate'] ?? 0,
-                            'footer' => 'Awaiting generation'
+                            'footer' => 'Awaiting generation',
+                            'color' => '#d97706',
                         ],
                         [
                             'href' => route('records.billing'),
@@ -27,7 +28,8 @@
                             'label' => 'Generated bills',
                             'title' => 'Total processed',
                             'value' => $stats['generated_total'] ?? ($stats['generated'] ?? 0),
-                            'footer' => 'Today ' . ($stats['generated_today'] ?? 0) . ' · Month ' . ($stats['generated_month'] ?? 0)
+                            'footer' => 'Today ' . ($stats['generated_today'] ?? 0) . ' · Month ' . ($stats['generated_month'] ?? 0),
+                            'color' => '#059669',
                         ],
                         [
                             'href' => route('register.index'),
@@ -35,7 +37,8 @@
                             'label' => 'New registrations',
                             'title' => 'Customers added',
                             'value' => $stats['new_customers_today'] ?? 0,
-                            'footer' => 'This month ' . ($stats['new_customers_month'] ?? 0)
+                            'footer' => 'This month ' . ($stats['new_customers_month'] ?? 0),
+                            'color' => '#2563eb',
                         ],
                         [
                             'href' => route('records.billing'),
@@ -43,13 +46,14 @@
                             'label' => 'Disconnection risk',
                             'title' => 'Notice issued accounts',
                             'value' => $stats['overdue'] ?? 0,
-                            'footer' => 'Flagged with "Notice of Disconnection"'
+                            'footer' => 'Flagged with "Notice of Disconnection"',
+                            'color' => '#dc2626',
                         ],
                     ];
                 @endphp
 
                 @foreach($staffCards as $index => $card)
-                    <a href="{{ $card['href'] }}" class="group relative overflow-hidden rounded-2xl min-h-[150px] sm:min-h-[165px] shadow-lg p-3 sm:p-3.5 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--kpi-primary)] text-white" style="background-color: var(--kpi-primary);">
+                    <a href="{{ $card['href'] }}" class="group relative overflow-hidden rounded-2xl min-h-[150px] sm:min-h-[165px] shadow-lg p-3 sm:p-3.5 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 text-white" style="background-color: {{ $card['color'] }};">
                         <div class="relative flex h-full flex-col justify-between gap-3">
                             <div class="flex items-start gap-2.5">
                                 <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-white/25">
@@ -170,11 +174,11 @@
                         $actPayments = $activity['payments'] ?? [];
                         $actRegs = $activity['registrations'] ?? [];
                     @endphp
-                    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+                    <script src="https://cdn.jsdelivr.net/npm/apexcharts" defer></script>
                     <script>
-                        (function(){
+                        document.addEventListener('DOMContentLoaded', function(){
                             var el = document.getElementById('staffActivityChart');
-                            if (!el) return;
+                            if (!el || typeof ApexCharts === 'undefined') return;
 
                             var labels = @json($actLabels);
                             var bills = @json($actBills);
@@ -218,7 +222,6 @@
                                 grid: {
                                     borderColor: isDark() ? 'rgba(148,163,184,0.35)' : '#e5e7eb'
                                 },
-                                // Blue theme for all series
                                 colors: ['#1d4ed8', '#3b82f6', '#60a5fa'],
                                 legend: {
                                     fontSize: '11px',
@@ -242,7 +245,7 @@
                                 });
                             });
                             mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-                        })();
+                        });
                     </script>
                 </div>
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-5">

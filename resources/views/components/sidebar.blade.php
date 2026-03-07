@@ -31,7 +31,7 @@
             <li>
                 <a href="{{ route('dashboard') }}"
                    class="flex items-center gap-3 px-3 py-2 rounded-lg 
-                          hover:bg-[rgb(var(--kpi-secondary-rgb)/0.55)] dark:hover:bg-gray-800 
+                          {{ request()->routeIs('dashboard') ? 'bg-white/20 shadow-inner shadow-white/10' : 'hover:bg-[rgb(var(--kpi-secondary-rgb)/0.55)] dark:hover:bg-gray-800' }} 
                           transition-all duration-200 ease-in-out font-medium">
                     <x-heroicon-o-home class="w-5 h-5 text-white/80 dark:text-gray-400" />
                     <span>Dashboard</span>
@@ -45,7 +45,7 @@
                 @php($registerUrl = \Illuminate\Support\Facades\Route::has('register.index') ? route('register.index') : url('/register'))
                 <a href="{{ $registerUrl }}"
                    class="flex items-center gap-3 px-3 py-2 rounded-lg 
-                          hover:bg-[rgb(var(--brand-700-rgb)/0.55)] dark:hover:bg-gray-800 
+                          {{ request()->routeIs('register.*') ? 'bg-white/20 shadow-inner shadow-white/10' : 'hover:bg-[rgb(var(--brand-700-rgb)/0.55)] dark:hover:bg-gray-800' }} 
                           transition-all duration-200 ease-in-out font-medium">
                     <x-heroicon-o-pencil-square class="w-5 h-5 text-white/80 dark:text-gray-400" />
                     <span>Register</span>
@@ -56,7 +56,7 @@
             <li>
                 <a href="{{ route('customer.index') }}"
                    class="flex items-center gap-3 px-3 py-2 rounded-lg 
-                          hover:bg-[rgb(var(--brand-700-rgb)/0.55)] dark:hover:bg-gray-800 
+                          {{ request()->routeIs('customer.*') ? 'bg-white/20 shadow-inner shadow-white/10' : 'hover:bg-[rgb(var(--brand-700-rgb)/0.55)] dark:hover:bg-gray-800' }} 
                           transition-all duration-200 ease-in-out font-medium">
                     <x-heroicon-o-user-group class="w-5 h-5 text-white/80 dark:text-gray-400" />
                     <span>Customer</span>
@@ -67,7 +67,7 @@
             <li>
                 <a href="{{ route('staff.customer-issues.index') }}"
                    class="flex items-center gap-3 px-3 py-2 rounded-lg 
-                          hover:bg-[rgb(var(--brand-700-rgb)/0.55)] dark:hover:bg-gray-800 
+                          {{ request()->routeIs('staff.customer-issues.*') ? 'bg-white/20 shadow-inner shadow-white/10' : 'hover:bg-[rgb(var(--brand-700-rgb)/0.55)] dark:hover:bg-gray-800' }} 
                           transition-all duration-200 ease-in-out font-medium">
                     <x-heroicon-o-chat-bubble-left-right class="w-5 h-5 text-white/80 dark:text-gray-400" />
                     <span>Customer Issues</span>
@@ -78,7 +78,7 @@
             <li>
                 <a href="{{ route('billing.management') }}"
                    class="flex items-center gap-3 px-3 py-2 rounded-lg 
-                          hover:bg-[rgb(var(--brand-700-rgb)/0.55)] dark:hover:bg-gray-800 
+                          {{ request()->routeIs('billing.*') ? 'bg-white/20 shadow-inner shadow-white/10' : 'hover:bg-[rgb(var(--brand-700-rgb)/0.55)] dark:hover:bg-gray-800' }} 
                           transition-all duration-200 ease-in-out font-medium">
                     <x-heroicon-o-clipboard-document-list class="w-5 h-5 text-white/80 dark:text-gray-400" />
                     <span>Billing</span>
@@ -89,7 +89,7 @@
             <li>
                 <a href="{{ route('payment.index') }}"
                    class="flex items-center gap-3 px-3 py-2 rounded-lg 
-                          hover:bg-[rgb(var(--brand-700-rgb)/0.55)] dark:hover:bg-gray-800 
+                          {{ request()->routeIs('payment.*') ? 'bg-white/20 shadow-inner shadow-white/10' : 'hover:bg-[rgb(var(--brand-700-rgb)/0.55)] dark:hover:bg-gray-800' }} 
                           transition-all duration-200 ease-in-out font-medium">
                     <x-heroicon-o-credit-card class="w-5 h-5 text-white/80 dark:text-gray-400" />
                     <span>Payment</span>

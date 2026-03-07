@@ -47,21 +47,15 @@ class AdminController extends Controller
             'new_customers' => $newCustomers,
         ];
 
-        $pendingGenerationCount = 0;
-        $pendingGenerationAmount = 0.0;
-        $pendingGenerationList = collect();
+        $pendingBase = BillingRecord::with('customer')
+            ->where('is_generated', false);
 
-        if (\Illuminate\Support\Facades\Schema::hasColumn('billing_records', 'is_generated')) {
-            $pendingBase = BillingRecord::with('customer')
-                ->where('is_generated', false);
-
-            $pendingGenerationCount = (int) $pendingBase->count();
-            $pendingGenerationAmount = (float) (clone $pendingBase)->sum('total_amount');
-            $pendingGenerationList = (clone $pendingBase)
-                ->orderByDesc('created_at')
-                ->take(5)
-                ->get();
-        }
+        $pendingGenerationCount = (int) $pendingBase->count();
+        $pendingGenerationAmount = (float) (clone $pendingBase)->sum('total_amount');
+        $pendingGenerationList = (clone $pendingBase)
+            ->orderByDesc('created_at')
+            ->take(5)
+            ->get();
 
         // Admin task insights (applications awaiting approval/installation)
         $pendingApprovalQuery = CustomerApplication::query()

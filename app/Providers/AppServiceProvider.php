@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\URL; // Add this line
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +20,18 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        if ($this->app->environment('production')) {
+            $forwardedProto = (string) request()->headers->get('x-forwarded-proto', '');
+            $httpsServerVar = (string) request()->server->get('HTTPS', '');
+
+            $isHttpsBehindProxy = strtolower($forwardedProto) === 'https'
+                || strtolower($httpsServerVar) === 'on'
+                || $httpsServerVar === '1';
+
+            if ($isHttpsBehindProxy) {
+                URL::forceScheme('https');
+                $this->app['request']->server->set('HTTPS', 'on');
+            }
+        }
     }
 }
