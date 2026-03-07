@@ -28,10 +28,10 @@ Route::get('/', function () {
 });
 
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [LoginController::class, 'customLogin'])->name('login.custom');
+Route::post('/login', [LoginController::class, 'customLogin'])->name('login.custom')->middleware('throttle:10,1');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-Route::middleware(['auth', 'role:admin'])->group(function () {
+Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::get('/admin', [AdminController::class, 'index'])->name('admin.dashboard');
     Route::get('/admin/dashboard/stats', [AdminController::class, 'dashboardStats'])->name('admin.dashboard.stats');
     Route::get('/admin/dashboard/insights', [AdminController::class, 'dashboardInsightsData'])->name('admin.dashboard.insights');
@@ -123,14 +123,16 @@ Route::middleware('auth')->group(function () {
     Route::post('/api/notifications/broadcast', [NotificationController::class, 'broadcast'])->name('api.notifications.broadcast');
     Route::get('/api/notifications/recent', [NotificationController::class, 'recent'])->name('api.notifications.recent');
 
-    // Billing compute API
-    Route::post('/api/billing/compute', [BillingController::class, 'compute'])->name('api.billing.compute');
-    Route::post('/api/billing/store', [BillingController::class, 'store'])->name('api.billing.store');
+    // Billing compute API (throttled to prevent DoS during peak billing periods)
+    Route::middleware('throttle:60,1')->group(function () {
+        Route::post('/api/billing/compute', [BillingController::class, 'compute'])->name('api.billing.compute');
+        Route::post('/api/billing/store', [BillingController::class, 'store'])->name('api.billing.store');
+        Route::post('/api/billing/generate', [BillEventController::class, 'generate'])->name('api.billing.generate');
+        Route::post('/api/billing/deliver', [BillEventController::class, 'deliver'])->name('api.billing.deliver');
+    });
     Route::get('/api/billing/status', [BillingController::class, 'status'])->name('api.billing.status');
     Route::get('/api/billing/payment-history', [BillingController::class, 'getPaymentHistory'])->name('api.billing.payment-history');
-    // Billing events (generate, deliver)
-    Route::post('/api/billing/generate', [BillEventController::class, 'generate'])->name('api.billing.generate');
-    Route::post('/api/billing/deliver', [BillEventController::class, 'deliver'])->name('api.billing.deliver');
+    // Billing events (generate, deliver) — moved inside throttle group above
 
     // Staff progress API
     Route::get('/api/staff/progress/today', [StaffProgressController::class, 'today'])->name('api.staff.progress.today');
@@ -182,11 +184,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/payment/print/{paymentRecordId}', [PaymentController::class, 'printReceipt'])->name('payment.print');
 });
 
-// Customer Register module (public registration pages)
-Route::get('/register', [RegisterController::class, 'index'])->name('register.index');
+// Customer Register module
+// /register and /api/register/search expose customer data — auth required
+Route::get('/register', [RegisterController::class, 'index'])->middleware('auth')->name('register.index');
+Route::get('/api/register/search', [RegisterController::class, 'search'])->middleware('auth')->name('register.search');
+// Public-facing application form for prospective customers
 Route::get('/register/new', [RegisterController::class, 'new'])->name('register.new');
 Route::post('/register', [RegisterController::class, 'store'])->name('register.store');
-Route::get('/api/register/search', [RegisterController::class, 'search'])->name('register.search');
 Route::get('/customer', [CustomerController::class, 'index'])->middleware('auth')->name('customer.index');
 Route::post('/api/customer/delete-multiple', [CustomerController::class, 'deleteMultiple'])->middleware('auth')->name('customer.deleteMultiple');
 Route::get('/api/customer/next-account', [CustomerController::class, 'nextAccount'])->middleware('auth')->name('customer.nextAccount');

@@ -3,7 +3,8 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\URL; // Add this line
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -33,5 +34,8 @@ class AppServiceProvider extends ServiceProvider
                 $this->app['request']->server->set('HTTPS', 'on');
             }
         }
+
+        Gate::define('admin', fn($user) => $user->role === 'admin');
+        Gate::define('staff', fn($user) => in_array($user->role, ['admin', 'staff']));
     }
 }
