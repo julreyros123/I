@@ -17,8 +17,8 @@ return [
         Str::slug(env('APP_NAME', 'laravel')).'-session'
     ),
     'path' => env('SESSION_PATH', '/'),
-    'domain' => env('SESSION_DOMAIN', '.ngrok-free.dev'),  // Updated for ngrok
-    'secure' => env('SESSION_SECURE_COOKIE', true),  // Force HTTPS
+    'domain' => env('SESSION_DOMAIN', null),
+    'secure' => env('SESSION_SECURE_COOKIE', false),
     'http_only' => env('SESSION_HTTP_ONLY', true),
     'same_site' => env('SESSION_SAME_SITE', 'lax'),  // Keep as 'lax' for security
     'partitioned' => env('SESSION_PARTITIONED_COOKIE', false),
