@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use App\Events\BillingRecordCreated;
 use App\Models\ActivityLog;
 use App\Models\BillingRecord;
 use App\Models\Customer;
@@ -176,11 +177,14 @@ class BillingController extends Controller
             try {
                 $pdfPath = app(BillPdfService::class)->generateAndStore($billingRecord);
                 if ($pdfPath) {
-                    $billingRecord->update(['pdf_path' => $pdfPath]);
+                    $billingRecord->update(['pdf_path' => $pdfPath, 'backup_status' => 'success', 'backed_up_at' => now()]);
                 }
             } catch (\Throwable $e) {
                 // Ignore PDF generation failures to keep bill saving fast and reliable.
             }
+
+            // Fire event to confirm S3 backup (handled by BackupBillToS3 listener)
+            BillingRecordCreated::dispatch($billingRecord);
 
             // Update customer's previous reading
             $customer->update(['previous_reading' => $data['current_reading']]);

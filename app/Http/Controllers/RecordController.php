@@ -13,6 +13,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Arr;
 use App\Models\ActivityLog;
+use App\Services\BillPdfService;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -662,6 +663,21 @@ class RecordController extends Controller
                 'is_generated' => true,
                 'generated_at' => now(),
             ]);
+        }
+
+        // Upload PDFs to S3 for any records in this batch that are missing one
+        $pdfService = app(BillPdfService::class);
+        $s3 = Storage::disk('s3');
+        $needsPdf = $records->filter(fn($r) => !$r->pdf_path || !$s3->exists($r->pdf_path));
+        foreach ($needsPdf as $record) {
+            try {
+                $path = $pdfService->generateAndStore($record);
+                if ($path) {
+                    $record->update(['pdf_path' => $path, 'backup_status' => 'success', 'backed_up_at' => now()]);
+                }
+            } catch (\Throwable) {
+                // Non-fatal — print flow continues even if S3 fails
+            }
         }
 
         $finalIds = BillingRecord::whereIn('id', $ids)->pluck('id')->all();

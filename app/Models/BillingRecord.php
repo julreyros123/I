@@ -34,6 +34,8 @@ class BillingRecord extends Model
         'due_date',
         'prepared_by',
         'issued_at',
+        'backed_up_at',
+        'backup_status',
     ];
 
     protected $casts = [
@@ -52,6 +54,7 @@ class BillingRecord extends Model
         'date_to' => 'date',
         'due_date' => 'date',
         'issued_at' => 'datetime',
+        'backed_up_at' => 'datetime',
     ];
 
     public function customer()

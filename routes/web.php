@@ -19,6 +19,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\StaffProgressController;
 use App\Http\Controllers\BillEventController;
+use App\Http\Controllers\BillBackupController;
 use App\Http\Controllers\ConnectionsController;
 use App\Http\Controllers\ApplicationsController;
 
@@ -184,6 +185,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/api/payment/process', [PaymentController::class, 'processPayment'])->name('api.payment.process')->middleware('throttle:30,1');
     Route::get('/payment/receipt/{paymentRecordId}', [PaymentController::class, 'getPaymentReceipt'])->name('payment.receipt');
     Route::get('/payment/print/{paymentRecordId}', [PaymentController::class, 'printReceipt'])->name('payment.print');
+
+    // Bill S3 backup
+    Route::post('/api/billing/{billingRecord}/backup', [BillBackupController::class, 'backup'])->name('api.billing.backup');
+    Route::post('/api/billing/backup-all', [BillBackupController::class, 'backupAll'])->name('api.billing.backup-all');
+    Route::get('/api/billing/{billingRecord}/download', [BillBackupController::class, 'download'])->name('api.billing.download');
 });
 
 // Customer Register module
