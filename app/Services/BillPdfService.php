@@ -31,7 +31,7 @@ class BillPdfService
         $pdf->setPaper('a5', 'portrait');
 
         $content = $pdf->output();
-        Storage::disk('public')->put($relativePath, $content);
+        Storage::disk('s3')->put($relativePath, $content);
 
         return $relativePath;
     }

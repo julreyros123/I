@@ -10,6 +10,7 @@ use App\Models\Customer;
 use App\Services\PaymentService;
 use App\Services\BillPdfService;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Builder;
 
 class BillingController extends Controller
@@ -214,7 +215,7 @@ class BillingController extends Controller
                 'ok' => true,
                 'billing_record_id' => $billingRecord->id,
                 'invoice_number' => $billingRecord->invoice_number,
-                'pdf_url' => $billingRecord->pdf_path ? url('/storage/' . ltrim($billingRecord->pdf_path, '/')) : null,
+                'pdf_url' => $billingRecord->pdf_path ? Storage::disk('s3')->temporaryUrl($billingRecord->pdf_path, now()->addDay()) : null,
                 'message' => 'Bill saved successfully!',
             ]);
         } catch (\Exception $e) {
