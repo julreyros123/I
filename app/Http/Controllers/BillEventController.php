@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Bill;
 use App\Models\BillEvent;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -32,6 +33,18 @@ class BillEventController extends Controller
                     'type' => 'generated',
                     'note' => $data['note'] ?? null,
                 ]);
+
+                ActivityLog::create([
+                    'user_id' => $userId,
+                    'module' => 'Billing',
+                    'action' => 'BILL_GENERATED_EVENT',
+                    'description' => sprintf('Bill #%d marked as generated', $bill->id),
+                    'target_type' => Bill::class,
+                    'target_id' => $bill->id,
+                    'meta' => [
+                        'note' => $data['note'] ?? null,
+                    ],
+                ]);
             }
         });
 
@@ -58,6 +71,19 @@ class BillEventController extends Controller
             'staff_id' => $userId,
             'type' => 'delivered',
             'note' => $data['note'] ?? null,
+        ]);
+
+        ActivityLog::create([
+            'user_id' => $userId,
+            'module' => 'Billing',
+            'action' => 'BILL_DELIVERED',
+            'description' => sprintf('Bill #%d marked as delivered', $bill->id),
+            'target_type' => Bill::class,
+            'target_id' => $bill->id,
+            'meta' => [
+                'delivered_at' => $data['delivered_at'] ?? null,
+                'note' => $data['note'] ?? null,
+            ],
         ]);
 
         return response()->json(['ok' => true]);

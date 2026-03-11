@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use App\Http\Resources\CustomerResource;
+use App\Models\ActivityLog;
 use App\Models\Customer;
 use App\Models\TransferReconnectAudit;
 use App\Services\AccountNumberGenerator;
@@ -68,7 +70,7 @@ class CustomerController extends Controller
 
         return response()->json([
             'ok' => true,
-            'customer' => $customer,
+            'customer' => new CustomerResource($customer),
             'transfer_history' => $transferHistory,
             'original_owner' => $originalOwner,
         ]);
@@ -83,7 +85,22 @@ class CustomerController extends Controller
         $customer = Customer::findOrFail($id);
         $customer->status = 'Active';
         $customer->save();
-        return response()->json(['ok' => true, 'customer' => $customer, 'message' => 'Customer verified (Active).']);
+
+        ActivityLog::create([
+            'user_id' => optional($request->user())->id,
+            'module' => 'Customers',
+            'action' => 'CUSTOMER_VERIFIED',
+            'description' => sprintf('Verified customer %s (account: %s)', $customer->name, $customer->account_no),
+            'target_type' => Customer::class,
+            'target_id' => $customer->id,
+            'meta' => [
+                'account_no' => $customer->account_no,
+                'ip' => $request->ip(),
+                'user_agent' => substr((string) $request->userAgent(), 0, 255),
+            ],
+        ]);
+
+        return response()->json(['ok' => true, 'customer' => new CustomerResource($customer), 'message' => 'Customer verified (Active).']);
     }
 
     /**
@@ -163,7 +180,7 @@ class CustomerController extends Controller
         if (!$customer) {
             return response()->json(['ok' => false], 404);
         }
-        return response()->json(['ok' => true, 'customer' => $customer]);
+        return response()->json(['ok' => true, 'customer' => new CustomerResource($customer)]);
     }
 
     public function update(Request $request, $id): JsonResponse
@@ -182,7 +199,22 @@ class CustomerController extends Controller
             'contact_no' => $validated['contact_no'] ?? null,
         ], function($v) { return !is_null($v); }));
 
-        return response()->json(['ok' => true, 'customer' => $customer, 'message' => 'Customer updated']);
+        ActivityLog::create([
+            'user_id' => optional($request->user())->id,
+            'module' => 'Customers',
+            'action' => 'CUSTOMER_UPDATED',
+            'description' => sprintf('Updated customer %s (account: %s)', $customer->name, $customer->account_no),
+            'target_type' => Customer::class,
+            'target_id' => $customer->id,
+            'meta' => [
+                'account_no' => $customer->account_no,
+                'updated_fields' => array_keys(array_filter($validated, fn($v) => !is_null($v))),
+                'ip' => $request->ip(),
+                'user_agent' => substr((string) $request->userAgent(), 0, 255),
+            ],
+        ]);
+
+        return response()->json(['ok' => true, 'customer' => new CustomerResource($customer), 'message' => 'Customer updated']);
     }
 
     public function searchAccounts(Request $request): JsonResponse
@@ -257,7 +289,21 @@ class CustomerController extends Controller
             'created_by' => optional($request->user())->id,
         ]);
 
-        return response()->json(['ok' => true, 'customer' => $customer]);
+        ActivityLog::create([
+            'user_id' => optional($request->user())->id,
+            'module' => 'Customers',
+            'action' => 'CUSTOMER_CREATED',
+            'description' => sprintf('Created customer %s (account: %s)', $customer->name, $customer->account_no),
+            'target_type' => Customer::class,
+            'target_id' => $customer->id,
+            'meta' => [
+                'account_no' => $customer->account_no,
+                'ip' => $request->ip(),
+                'user_agent' => substr((string) $request->userAgent(), 0, 255),
+            ],
+        ]);
+
+        return response()->json(['ok' => true, 'customer' => new CustomerResource($customer)]);
     }
 
     /**

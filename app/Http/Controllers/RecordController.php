@@ -266,7 +266,25 @@ class RecordController extends Controller
     public function forceDelete($id): RedirectResponse
     {
         $record = BillingRecord::onlyTrashed()->findOrFail($id);
+        $accountNo = $record->account_no;
+        $totalAmount = $record->total_amount;
         $record->forceDelete();
+
+        ActivityLog::create([
+            'user_id' => optional(request()->user())->id,
+            'module' => 'Billing',
+            'action' => 'BILL_PERMANENTLY_DELETED',
+            'description' => sprintf('Permanently deleted bill #%d for account %s', $id, $accountNo),
+            'target_type' => BillingRecord::class,
+            'target_id' => (int) $id,
+            'meta' => [
+                'account_no' => $accountNo,
+                'total_amount' => $totalAmount,
+                'ip' => request()->ip(),
+                'user_agent' => substr((string) request()->userAgent(), 0, 255),
+            ],
+        ]);
+
         return back()->with('status', 'Record permanently deleted');
     }
 

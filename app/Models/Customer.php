@@ -33,6 +33,13 @@ class Customer extends Model
         'reconnect_requested_at' => 'datetime',
     ];
 
+    /**
+     * Hide sensitive PII from JSON/array serialization.
+     */
+    protected $hidden = [
+        'contact_no',
+    ];
+
     // Scope for active customers
     public function scopeActive($query)
     {

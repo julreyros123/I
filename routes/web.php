@@ -28,7 +28,7 @@ Route::get('/', function () {
 });
 
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [LoginController::class, 'customLogin'])->name('login.custom')->middleware('throttle:10,1');
+Route::post('/login', [LoginController::class, 'customLogin'])->name('login.custom')->middleware(['throttle:10,1', 'track.violations']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
@@ -84,12 +84,12 @@ Route::middleware('auth')->group(function () {
 
     // Settings
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
-    Route::post('/settings/password', [SettingsController::class, 'updatePassword'])->name('settings.password.update');
+    Route::post('/settings/password', [SettingsController::class, 'updatePassword'])->name('settings.password.update')->middleware('throttle:5,1');
 
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update')->middleware('throttle:10,1');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy')->middleware('throttle:5,1');
 
     // Staff Bill Generation
     Route::view('/bill-generation', 'billing-generation.index')->name('billing.generation');
@@ -141,16 +141,18 @@ Route::middleware('auth')->group(function () {
     Route::post('/api/staff/progress/reset', [StaffProgressController::class, 'resetToday'])->name('api.staff.progress.reset');
 
     // Customer API
-    Route::post('/api/customer/attach', [CustomerController::class, 'attach'])->name('customer.attach');
-    Route::post('/api/customer/transfer', [CustomerController::class, 'transferOwnership'])->name('customer.transfer');
-    Route::post('/api/customer/reconnect', [CustomerController::class, 'reconnectService'])->name('customer.reconnect');
-    Route::post('/api/customer/{id}/request-reconnect', [CustomerController::class, 'requestReconnect'])->name('customer.requestReconnect');
+    Route::middleware('throttle:30,1')->group(function () {
+        Route::post('/api/customer/attach', [CustomerController::class, 'attach'])->name('customer.attach');
+        Route::post('/api/customer/transfer', [CustomerController::class, 'transferOwnership'])->name('customer.transfer');
+        Route::post('/api/customer/reconnect', [CustomerController::class, 'reconnectService'])->name('customer.reconnect');
+        Route::post('/api/customer/{id}/request-reconnect', [CustomerController::class, 'requestReconnect'])->name('customer.requestReconnect');
+        Route::post('/api/customer', [CustomerController::class, 'store'])->name('customer.store');
+        Route::patch('/api/customer/{id}', [CustomerController::class, 'update'])->name('customer.update');
+        Route::put('/api/customer/{id}/verify', [CustomerController::class, 'verify'])->name('customer.verify');
+    });
     Route::get('/api/customer/find', [CustomerController::class, 'findByAccount'])->name('customer.findByAccount');
     Route::get('/api/customer/search', [CustomerController::class, 'searchAccounts'])->name('customer.searchAccounts');
-    Route::post('/api/customer', [CustomerController::class, 'store'])->name('customer.store');
     Route::get('/api/customer/{id}', [CustomerController::class, 'show'])->name('customer.show');
-    Route::patch('/api/customer/{id}', [CustomerController::class, 'update'])->name('customer.update');
-    Route::put('/api/customer/{id}/verify', [CustomerController::class, 'verify'])->name('customer.verify');
     Route::get('/api/customer/duplicates', [CustomerController::class, 'duplicates'])->name('customer.duplicates');
 
     // Applications scoring and decisions
@@ -179,7 +181,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/payment', [PaymentController::class, 'index'])->name('payment.index');
     Route::get('/api/payment/quick-search', [PaymentController::class, 'quickSearch'])->name('api.payment.quick-search');
     Route::post('/api/payment/search-customer', [PaymentController::class, 'searchCustomer'])->name('api.payment.search-customer');
-    Route::post('/api/payment/process', [PaymentController::class, 'processPayment'])->name('api.payment.process');
+    Route::post('/api/payment/process', [PaymentController::class, 'processPayment'])->name('api.payment.process')->middleware('throttle:30,1');
     Route::get('/payment/receipt/{paymentRecordId}', [PaymentController::class, 'getPaymentReceipt'])->name('payment.receipt');
     Route::get('/payment/print/{paymentRecordId}', [PaymentController::class, 'printReceipt'])->name('payment.print');
 });
