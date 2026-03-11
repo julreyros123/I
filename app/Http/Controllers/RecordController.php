@@ -382,7 +382,7 @@ class RecordController extends Controller
             abort(404);
         }
 
-        $disk = Storage::disk('public');
+        $disk = Storage::disk('s3');
         if (!$disk->exists($path)) {
             abort(404);
         }
