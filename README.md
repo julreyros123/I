@@ -1,61 +1,183 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+Absolutely! Since your MAWASA Laravel project is now on an **Ubuntu server with Nginx, PHP 8.3, MySQL, and Vite**, here’s a **professional `README.md`** you can use and share. I made it clear, detailed, and deployment-friendly.
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+---
 
-## About Laravel
+````markdown
+# MAWASA Water Billing System
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+MAWASA is a Laravel-based web application for managing billing and customer data for private water providers. This project uses **Laravel 10**, **MySQL**, **Nginx**, **PHP 8.3**, and **Vite/Tailwind CSS** for the frontend.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Table of Contents
 
-## Learning Laravel
+- [Features](#features)  
+- [Requirements](#requirements)  
+- [Installation](#installation)  
+- [Environment Setup](#environment-setup)  
+- [Database Setup](#database-setup)  
+- [Asset Compilation](#asset-compilation)  
+- [Permissions](#permissions)  
+- [Running the Application](#running-the-application)  
+- [Troubleshooting](#troubleshooting)  
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## Features
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- Customer management (accounts, billing, and payment tracking)  
+- Billing generation for private water providers  
+- Role-based access control (admin, staff, finance, super-admin)  
+- Responsive frontend using Tailwind CSS & Vite  
+- File storage and asset management  
 
-## Laravel Sponsors
+---
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Requirements
 
-### Premium Partners
+- Ubuntu 22.04+ (or similar)  
+- PHP 8.3 with extensions:
+  - `php-mysql`, `php-cli`, `php-curl`, `php-mbstring`, `php-xml`, `php-bcmath`, `php-zip`
+- MySQL 8+  
+- Nginx  
+- Node.js 20+ & NPM  
+- Composer  
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+---
 
-## Contributing
+## Installation
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Clone the repository to `/var/www`:
 
-## Code of Conduct
+```bash
+cd /var/www
+sudo git clone https://github.com/julreyros123/I.git mawasa
+cd mawasa
+````
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Install PHP dependencies:
 
-## Security Vulnerabilities
+```bash
+sudo composer install
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+---
+
+## Environment Setup
+
+Create `.env` file from template:
+
+```bash
+sudo cp .env.example .env
+sudo nano .env
+```
+
+Update `.env` with your database and app settings:
+
+```env
+APP_NAME=MAWASA
+APP_ENV=production
+APP_KEY=
+APP_DEBUG=true
+APP_URL=http://your-server-ip
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=mawasa_db
+DB_USERNAME=mawasa_user
+DB_PASSWORD=YourStrongPassword
+```
+
+Generate the Laravel application key:
+
+```bash
+sudo php artisan key:generate
+```
+
+---
+
+## Database Setup
+
+Log in to MySQL and create the database and user:
+
+```sql
+sudo mysql
+CREATE DATABASE mawasa_db;
+CREATE USER 'mawasa_user'@'localhost' IDENTIFIED BY 'YourStrongPassword';
+GRANT ALL PRIVILEGES ON mawasa_db.* TO 'mawasa_user'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+```
+
+Run Laravel migrations:
+
+```bash
+sudo php artisan migrate
+```
+
+---
+
+## Asset Compilation (Vite)
+
+Install Node dependencies and build assets:
+
+```bash
+sudo npm install
+sudo npm run build
+```
+
+* This generates `public/build/manifest.json` and compiled CSS/JS.
+* For development with hot reload: `sudo npm run dev`
+
+---
+
+## Permissions
+
+Set correct permissions for Laravel:
+
+```bash
+sudo chown -R www-data:www-data /var/www/mawasa
+sudo chmod -R 775 /var/www/mawasa/storage /var/www/mawasa/bootstrap/cache /var/www/mawasa/public/build
+```
+
+---
+
+## Running the Application
+
+Make sure PHP-FPM and Nginx are running:
+
+```bash
+sudo systemctl restart php8.3-fpm
+sudo systemctl restart nginx
+```
+
+Access the application in your browser:
+
+```
+http://your-server-ip
+```
+
+---
+
+## Troubleshooting
+
+* **500 Internal Server Error**: Check `.env`, permissions, and `php artisan config:clear`.
+* **Vite manifest not found**: Run `npm install` and `npm run build`.
+* **Database connection errors**: Make sure MySQL user credentials match `.env`.
+* **Nginx 502/505 Bad Gateway**: Ensure `fastcgi_pass` in Nginx points to `/run/php/php8.3-fpm.sock`.
+
+---
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This project is open-source and free to use.
+
+```
+
+---
+
+If you want, I can also **create a shorter “Quick Start” version** that a new developer can run on EC2 in **one single set of commands** without touching Nginx, `.env`, or Node manually.  
+
+Do you want me to do that?
+```
