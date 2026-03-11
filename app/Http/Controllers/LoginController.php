@@ -22,6 +22,7 @@ class LoginController extends Controller
     $credentials = $request->only('email', 'password');
 
     if (Auth::attempt($credentials, $request->boolean('remember'))) {
+        $request->session()->regenerate();
         $user = Auth::user();
 
         $requestedRole = $request->input('role');
